@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package notekeeper;
+
+service Backend {
+	rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
+	rpc UnlockAccount(UnlockAccountRequest) returns (UnlockAccountResponse) {}
+	rpc SigninAccount(SigninAccountRequest) returns (SigninAccountResponse) {}
+
+	rpc CreateNotebook(CreateNotebookRequest) returns (CreateNotebookResponse) {}
+}
+
+message CreateAccountRequest {
+	string email = 1;
+	string passphrase = 2;
+}
+
+message CreateAccountResponse {
+	string status = 1;
+	string id = 2;
+}
+
+message UnlockAccountRequest {
+	string id = 1;
+	string passphrase = 2;
+}
+
+message UnlockAccountResponse {
+	string status = 1;
+}
+
+message SigninAccountRequest {
+	string email = 1;
+	string passphrase = 2;
+}
+
+message SigninAccountResponse {
+	string status = 1;
+	string id = 2;
+}
+
+message CreateNotebookRequest {
+	string name = 1;
+	string account_id = 2;
+}
+
+message CreateNotebookResponse {
+	string status = 1;
+	string id = 2;
+}

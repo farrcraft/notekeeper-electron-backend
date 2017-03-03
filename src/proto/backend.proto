@@ -11,8 +11,9 @@ service Backend {
 }
 
 message CreateAccountRequest {
-	string email = 1;
-	string passphrase = 2;
+	string name = 1; // account name
+	string email = 2; // user email
+	string passphrase = 3; // user password
 }
 
 message CreateAccountResponse {
@@ -41,7 +42,8 @@ message SigninAccountResponse {
 
 message CreateNotebookRequest {
 	string name = 1;
-	string account_id = 2;
+	string user_id = 2;
+	string shelf_id = 3;
 }
 
 message CreateNotebookResponse {

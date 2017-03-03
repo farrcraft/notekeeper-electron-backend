@@ -1,11 +1,19 @@
 package main
 
-import (
-	pb "./proto"
-)
-
+// Account is the database holding one or more users and their collection of notes
 type Account struct {
-	Email string
-	Id    string // UUID
-	DB    *bolt.DB
+	ID      string // UUID
+	Name    string
+	Users   []*User
+	DB      *bolt.DB
+	Shelves []*Shelf
+	Created string
+	Updated string
+}
+
+// NewAccount creates a new Account object
+func NewAccount() *Account {
+	account := &Account{
+		ID: uuid.NewV4(),
+	}
 }

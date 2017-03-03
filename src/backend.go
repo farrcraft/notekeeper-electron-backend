@@ -24,8 +24,9 @@ const (
 )
 
 type Backend struct {
-	Logger *logrus.Logger
-	DB     *bolt.DB // This is the master application DB
+	Logger  *logrus.Logger
+	DB      *bolt.DB // This is the master application DB
+	Account *Account
 }
 
 func NewBackend() *Backend {
@@ -92,6 +93,18 @@ func (backend *Backend) Run() {
 		backend.Logger.Error("Server error - ", err)
 		os.Exit(1)
 	}
+}
+
+func (backend *Backend) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
+
+}
+
+func (backend *Backend) UnlockAccount(ctx context.Context, request *pb.UnlockAccountRequest) (*pb.UnlockAccountResponse, error) {
+
+}
+
+func (backend *Backend) SigninAccount(ctx context.Context, request *pb.SigninAccountRequest) (*pb.SigninAccountResponse, error) {
+
 }
 
 func (backend *Backend) CreateNotebook(ctx context.Context, request *pb.CreateNotebookRequest) (*pb.CreateNotebookResponse, error) {

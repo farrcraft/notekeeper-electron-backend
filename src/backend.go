@@ -1,58 +1,64 @@
 package main
 
 import (
-	pb "./proto"
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
-	"github.com/satori/go.uuid"
-	"golang.org/x/crypto/nacl/box"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/reflection"
 	"net"
 	"os"
 	"time"
+
+	pb "./proto"
+	"github.com/Sirupsen/logrus"
+	"github.com/boltdb/bolt"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+	//	"google.golang.org/grpc/credentials"
+	//	"github.com/satori/go.uuid"
+	//	"golang.org/x/crypto/nacl/box"
 )
 
 const (
-	BACKEND_PORT   = ":53017"
-	LOG_LEVEL      = "DEBUG"
-	LOG_FILE       = "notekeeper.log"
-	MASTER_DB_FILE = "notekeeper.db"
+	// BackendPort is the GRPC service port
+	BackendPort = ":53017"
+	// LogLevel is the default log level
+	LogLevel = "DEBUG"
+	// LogFile is the default log file name
+	LogFile = "notekeeper.log"
+	// MasterDbFile is the core bolt database filename
+	MasterDbFile = "notekeeper.db"
 )
 
+// Backend is the main service type
 type Backend struct {
 	Logger  *logrus.Logger
 	DB      *bolt.DB // This is the master application DB
 	Account *Account
 }
 
+// NewBackend creates a new backend object
 func NewBackend() *Backend {
 	backend := &Backend{
 		Logger: logrus.New(),
 	}
 
 	backend.Logger.Formatter = &logrus.JSONFormatter{}
-	level, err := logrus.ParseLevel(LOG_LEVEL)
+	level, err := logrus.ParseLevel(LogLevel)
 	if err != nil {
-		fmt.Println("Invalid log level [", LOG_LEVEL, "]")
+		fmt.Println("Invalid log level [", LogLevel, "]")
 		os.Exit(1)
 	}
 	backend.Logger.Level = level
 
 	var file *os.File
-	file, err = os.OpenFile(LOG_FILE, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0640)
+	file, err = os.OpenFile(LogFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0640)
 	if err != nil {
-		fmt.Println("Unable to open log file [", LOG_FILE, "] - ", err)
+		fmt.Println("Unable to open log file [", LogFile, "] - ", err)
 		os.Exit(1)
 	}
 	backend.Logger.Out = file
 
 	// This is the master index db
 	// There are additional databases where actual notebook data is stored (one DB file per account)
-	backend.DB, err = bolt.Open(MASTER_DB_FILE, 0600, &bolt.Options{Timeout: 1 * time.second})
+	backend.DB, err = bolt.Open(MasterDbFile, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		backend.Logger.Error("Unable to open DB - ", err)
 		os.Exit(1)
@@ -61,12 +67,14 @@ func NewBackend() *Backend {
 	return backend
 }
 
+// Shutdown is called when the application is terminated
 func (backend *Backend) Shutdown() {
 	backend.DB.Close()
 }
 
+// Run is called when the application is started
 func (backend *Backend) Run() {
-	listener, err := net.Listen("tcp", BACKEND_PORT)
+	listener, err := net.Listen("tcp", BackendPort)
 	if err != nil {
 		backend.Logger.Error("Listen error - ", err)
 		os.Exit(1)
@@ -86,50 +94,11 @@ func (backend *Backend) Run() {
 
 	pb.RegisterBackendServer(server, backend)
 
-	reflection.Register(s)
+	reflection.Register(server)
 
 	err = server.Serve(listener)
 	if err != nil {
 		backend.Logger.Error("Server error - ", err)
 		os.Exit(1)
 	}
-}
-
-func (backend *Backend) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
-
-}
-
-func (backend *Backend) UnlockAccount(ctx context.Context, request *pb.UnlockAccountRequest) (*pb.UnlockAccountResponse, error) {
-
-}
-
-func (backend *Backend) SigninAccount(ctx context.Context, request *pb.SigninAccountRequest) (*pb.SigninAccountResponse, error) {
-
-}
-
-func (backend *Backend) CreateNotebook(ctx context.Context, request *pb.CreateNotebookRequest) (*pb.CreateNotebookResponse, error) {
-	id := uuid.NewV4()
-	response := &pb.CreateNotebookResponse{
-		Status: "OK",
-		Id:     id,
-	}
-	// [FIXME] - encrypt requested notebook name value
-	//ciphertext, _ := cryptosecretbox.CryptoSecretBox([]byte(request.Name), nonce, key)
-
-	// [FIXME] - need to use account-specific DB
-	backend.DB.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucket([]byte("notebooks"))
-		if err != nil {
-			backend.Logger.Error("Error creating notebook bucket - ", err)
-			return err
-		}
-		// [FIXME] - use encrypted name value
-		err = b.Put(id, []byte(request.Name))
-		if err != nil {
-			backend.Logger.Error("Error saving notebook - ", err)
-			return err
-		}
-		return nil
-	})
-	return response, nil
 }

@@ -1,18 +1,24 @@
 package main
 
 import (
+	"crypto/rand"
 	"errors"
-	"golang.org/x/crypto/nacl/secretbox"
 	"io"
+
+	"golang.org/x/crypto/nacl/secretbox"
 )
 
 const (
-	KeySize   = 32
+	// KeySize is the number of bytes used for encryption keys
+	KeySize = 32
+	// NonceSize is the number of bytes used for the unique nonce
 	NonceSize = 24
 )
 
 var (
+	// ErrEncrypt is the default error for encryption failures
 	ErrEncrypt = errors.New("secret: encryption failed")
+	// ErrDecrypt is the default error for decryption failures
 	ErrDecrypt = errors.New("secret: decryption failed")
 )
 

@@ -1,22 +1,21 @@
 package main
 
 import (
-	"github.com/codegangsta/cli"
 	"os"
+
+	"github.com/codegangsta/cli"
 )
 
-func RunCli(c *cli.Context) error {
+func runCli(c *cli.Context) {
 	backend := NewBackend()
 	backend.Run()
 	backend.Shutdown()
-
-	return nil
 }
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "notekeeper-backend"
 	app.Usage = "NoteKeeper.io Backend"
-	app.Action = RunCli
+	app.Action = runCli
 	app.Run(os.Args)
 }

@@ -9,4 +9,4 @@ proto-gen:
 # rebuild the proto definitions
 # export PATH=$PATH:/cygdrive/c/code/go/bin 
 proto:
-	cd src/proto; protoc -I . backend.proto --go_out=plugins=grpc:.
+	cd src/proto; PATH=$$PATH:/cygdrive/c/code/go/bin protoc -I . backend.proto --go_out=plugins=grpc:.

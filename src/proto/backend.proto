@@ -6,6 +6,8 @@ service Backend {
 	rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
 	rpc UnlockAccount(UnlockAccountRequest) returns (UnlockAccountResponse) {}
 	rpc SigninAccount(SigninAccountRequest) returns (SigninAccountResponse) {}
+	rpc SignoutAccount(SignoutAccountRequest) returns(SignoutAccountResponse) {}
+	rpc LockAccount(LockAccountRequest) returns (LockAccountResponse) {}
 
 	rpc CreateNotebook(CreateNotebookRequest) returns (CreateNotebookResponse) {}
 }
@@ -31,13 +33,30 @@ message UnlockAccountResponse {
 }
 
 message SigninAccountRequest {
-	string email = 1;
-	string passphrase = 2;
+	string name = 1;
+	string email = 2;
+	string passphrase = 3;
 }
 
 message SigninAccountResponse {
 	string status = 1;
 	string id = 2;
+}
+
+message SignoutAccountRequest {
+	string id = 1;
+}
+
+message SignoutAccountResponse {
+	string status = 1;
+}
+
+message LockAccountRequest {
+	string id = 1;
+}
+
+message LockAccountResponse {
+	string status = 1;
 }
 
 message CreateNotebookRequest {

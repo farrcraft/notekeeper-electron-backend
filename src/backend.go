@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	//	"google.golang.org/grpc/credentials"
-	//	"github.com/satori/go.uuid"
 	//	"golang.org/x/crypto/nacl/box"
 )
 

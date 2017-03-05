@@ -69,6 +69,9 @@ func NewBackend() *Backend {
 // Shutdown is called when the application is terminated
 func (backend *Backend) Shutdown() {
 	backend.DB.Close()
+	if backend.Account != nil && backend.Account.DB != nil {
+		backend.Account.DB.Close()
+	}
 }
 
 // Run is called when the application is started

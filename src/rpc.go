@@ -92,6 +92,11 @@ func (backend *Backend) UnlockAccount(ctx context.Context, request *pb.UnlockAcc
 		return nil, errors.New("invalid credentials")
 	}
 
+	err = backend.Account.OpenAccountDb()
+	if err != nil {
+		return nil, errors.New("unable to open account db")
+	}
+
 	response := &pb.UnlockAccountResponse{}
 	return response, nil
 }
@@ -145,6 +150,7 @@ func (backend *Backend) SignoutAccount(ctx context.Context, request *pb.SignoutA
 	if backend.Account.ActiveUser != nil {
 		Zero(backend.Account.ActiveUser.PassphraseKey)
 	}
+	backend.Account.DB.Close()
 	backend.Account = nil
 
 	response := &pb.SignoutAccountResponse{}
@@ -154,6 +160,8 @@ func (backend *Backend) SignoutAccount(ctx context.Context, request *pb.SignoutA
 // LockAccount is the GRPC method to lock the active account
 func (backend *Backend) LockAccount(ctx context.Context, request *pb.LockAccountRequest) (*pb.LockAccountResponse, error) {
 	Zero(backend.Account.ActiveUser.PassphraseKey)
+	backend.Account.DB.Close()
+	backend.Account.DB = nil
 	return nil, nil
 }
 

@@ -13,6 +13,7 @@ import (
 type Notebook struct {
 	ID           uuid.UUID `json:"id"`             // ID is the unique identifier for this notebook
 	Account      *Account  `json:"-"`              // Account is the account that the notebook belongs to
+	UserID       uuid.UUID `json:"user_id"`        // UserID is the user that owns the notebook (only if this is a user-scoped notebook, otherwise nil)
 	Title        *Title    `json:"title"`          // Title is the title of the notebook
 	Default      bool      `json:"default"`        // Default indicates whether this is the default notebook
 	EncryptedKey []byte    `json:"encryption_key"` // EncryptedKey is the encrypted version of the notebook's encryption key
@@ -31,6 +32,8 @@ func NewNotebook(account *Account) *Notebook {
 		Account: account,
 		Created: now,
 		Updated: now,
+		Default: false,
+		Locked:  false,
 	}
 	return notebook
 }
@@ -53,19 +56,14 @@ func (notebook *Notebook) Save() error {
 		}
 
 		// retrieve the encryption key
-		_, userKey := ExtractSalt(notebook.Account.ActiveUser.PassphraseKey)
-		decryptedKey, err := Decrypt(userKey, notebook.EncryptedKey)
+		decryptedKey, err := Open(notebook.Account.ActiveUser.PassphraseKey, notebook.EncryptedKey)
 		if err != nil {
 			notebook.Account.Logger.Error("Error retrieving notebook key - ", err)
 			return err
 		}
 
-		// decrypted encryption key is a byte slice, but to encrypt we need the key to be an array
-		var key [KeySize]byte
-		copy(key[:], decryptedKey[0:32])
-
 		// encrypt the data
-		encryptedData, err := Encrypt(&key, data)
+		encryptedData, err := Seal(decryptedKey, data)
 		if err != nil {
 			notebook.Account.Logger.Error("Error encrypting notebook data - ", err)
 			return err

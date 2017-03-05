@@ -126,7 +126,6 @@ func DeriveSaltedKey(passphrase []byte) ([]byte, error) {
 		return nil, ErrEncrypt
 	}
 	out := key[0:len(key)]
-	Zero(key[:])
 	out = append(salt, out...)
 	return out, nil
 }

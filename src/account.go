@@ -16,7 +16,7 @@ import (
 type Account struct {
 	ID         uuid.UUID      `json:"id"`
 	Name       string         `json:"name"`
-	Users      []*User        `json:"users"`
+	Users      []*UserProfile `json:"users"`
 	ActiveUser *User          `json:"-"`           // ActiveUser is the currently active user of the account
 	MasterDB   *bolt.DB       `json:"-"`           // MasterDB is the application-wide master database
 	DB         *bolt.DB       `json:"-"`           // DB is the account-local database
@@ -27,16 +27,16 @@ type Account struct {
 	Logger     *logrus.Logger `json:"-"`
 }
 
-// CreateAccountDb creates the database file for a new account
-func (backend *Backend) CreateAccountDb(account *Account) error {
+// OpenAccountDb opens the database file for a account
+// The file is created if it doesn't already exist
+func (account *Account) OpenAccountDb() error {
 	fileName := fmt.Sprint(account.ID.String(), ".db")
 	var err error
 	account.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		backend.Logger.Error("Unable to open account DB [", fileName, "] - ", err)
+		account.Logger.Error("Unable to open account DB [", fileName, "] - ", err)
 		return errors.New("unable to open account DB")
 	}
-	backend.Account = account
 	return nil
 }
 
@@ -69,7 +69,14 @@ func (account *Account) Save() error {
 			return err
 		}
 
-		encryptedData, err := Seal(account.ActiveUser.PassphraseKey, data)
+		// account data must be encrypted with the account key and not the user key
+		accountKey, err := Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
+		if err != nil {
+			account.Logger.Error("Error opening account key - ", err)
+			return err
+		}
+		encryptedData, err := Seal(accountKey, data)
+		Zero(accountKey)
 		if err != nil {
 			account.Logger.Error("Error encrypting account content - ", err)
 			return err
@@ -98,6 +105,7 @@ func (account *Account) Save() error {
 		encryptedName, err := DeriveSaltedKey([]byte(account.Name))
 		if err != nil {
 			account.Logger.Error("Error creating account map key - ", err)
+			return err
 		}
 		err = bucket.Put(encryptedName, account.ID.Bytes())
 		if err != nil {
@@ -115,6 +123,8 @@ func (account *Account) Save() error {
 
 // Lookup searches the database for a matching account name and loads it from the db
 func (account *Account) Lookup() error {
+	originalID := account.ID
+	account.ID = uuid.Nil
 	// we don't expect many accounts to exist in the db (typically just one), so we iterate through them all
 	account.MasterDB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
@@ -143,6 +153,7 @@ func (account *Account) Lookup() error {
 		return nil
 	})
 	if account.ID == uuid.Nil {
+		account.ID = originalID
 		return errors.New("no account found")
 	}
 	return nil
@@ -160,7 +171,15 @@ func (account *Account) Load() error {
 			account.Logger.Error(err)
 			return err
 		}
-		err := json.Unmarshal(value, account)
+
+		// need to decrypt value
+		decryptedData, err := Open(account.ActiveUser.PassphraseKey, value)
+		if err != nil {
+			account.Logger.Error("Error decrypting account data - ", err)
+			return err
+		}
+
+		err = json.Unmarshal(decryptedData, account)
 		if err != nil {
 			account.Logger.Error("Error decoding account json - ", err)
 			return err

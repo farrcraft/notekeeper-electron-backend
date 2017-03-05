@@ -14,14 +14,16 @@ func (backend *Backend) CreateAccount(ctx context.Context, request *pb.CreateAcc
 	account := NewAccount(backend.DB, backend.Logger, request.Name)
 
 	// create a new db file for the account
-	err := backend.CreateAccountDb(account)
+	err := account.OpenAccountDb()
 	if err != nil {
 		return nil, err
 	}
+	// make this the active account
+	backend.Account = account
 
 	// create user object & attach it to the account
 	user := NewUser(backend.DB, backend.Logger, request.Email)
-	account.Users = append(account.Users, user)
+	account.Users = append(account.Users, user.Profile)
 	account.ActiveUser = user
 
 	// generate account-level encryption key
@@ -44,7 +46,9 @@ func (backend *Backend) CreateAccount(ctx context.Context, request *pb.CreateAcc
 	Zero(accountKey[:])
 	Zero(slicedKey)
 
-	// [FIXME] - save user
+	// save user
+	user.Save()
+	account.ActiveUser = user
 
 	err = account.Save()
 	if err != nil {
@@ -95,9 +99,42 @@ func (backend *Backend) UnlockAccount(ctx context.Context, request *pb.UnlockAcc
 // SigninAccount is the GRPC method to sign in to an existing account
 func (backend *Backend) SigninAccount(ctx context.Context, request *pb.SigninAccountRequest) (*pb.SigninAccountResponse, error) {
 	// attempt to find the account (lookup)
-	// load the account
+	account := NewAccount(backend.DB, backend.Logger, request.Name)
+	err := account.Lookup()
+	if err != nil {
+		return nil, errors.New("invalid account")
+	}
+
+	err = account.OpenAccountDb()
+	if err != nil {
+		return nil, errors.New("unable to open account db")
+	}
+
 	// authenticate the user
-	return nil, nil
+	user := NewUser(account.DB, backend.Logger, request.Email)
+	err = user.Lookup()
+	if err != nil {
+		return nil, errors.New("invalid user")
+	}
+	err = user.Load(request.Passphrase)
+	if err != nil {
+		// this error is probably because the passphrase was incorrect
+		return nil, errors.New("unable to load user")
+	}
+
+	// connect the user to the account & make it the active user
+	account.ActiveUser = user
+
+	// load the account
+	err = account.Load()
+	if err != nil {
+		return nil, errors.New("unable to load account")
+	}
+
+	// user should be signed in & account in an unlocked state at this point
+	response := &pb.SigninAccountResponse{}
+
+	return response, nil
 }
 
 // SignoutAccount is the GRPC method to sign out from the active account

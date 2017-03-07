@@ -95,6 +95,22 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/kardianos/osext",
+			"repository": "https://github.com/kardianos/osext",
+			"vcs": "git",
+			"revision": "9b883c5eb462dd5cb1b0a7a104fe86bc6b9bd391",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/kardianos/service",
+			"repository": "https://github.com/kardianos/service",
+			"vcs": "git",
+			"revision": "ef06f2f890aa4f20d1ff55da91b29392ba6af3af",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/satori/go.uuid",
 			"repository": "https://github.com/satori/go.uuid",
 			"vcs": "git",
@@ -214,6 +230,15 @@
 			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
 			"branch": "master",
 			"path": "/unix",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sys/windows",
+			"repository": "https://go.googlesource.com/sys",
+			"vcs": "git",
+			"revision": "e48874b42435b4347fc52bdee0424a52abc974d7",
+			"branch": "master",
+			"path": "windows",
 			"notests": true
 		},
 		{

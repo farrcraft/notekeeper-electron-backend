@@ -187,3 +187,25 @@ func (user *User) Save() error {
 	}
 	return err
 }
+
+// CreateKeys creates the account and user key from a passphrase
+func (user *User) CreateKeys(passphrase []byte) error {
+	// generate account-level encryption key
+	accountKey, err := GenerateKey()
+	if err != nil {
+		return err
+	}
+	// derive key from passphrase
+	var key = new([KeySize]byte)
+	key, user.Salt, err = DeriveKeyAndSalt(passphrase)
+	if err != nil {
+		return err
+	}
+	slicedKey := key[:]
+	user.PassphraseKey = append(user.Salt, slicedKey...)
+	user.AccountKey, err = Seal(user.PassphraseKey, accountKey[:])
+	if err != nil {
+		return err
+	}
+	return nil
+}

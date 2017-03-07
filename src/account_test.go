@@ -29,6 +29,27 @@ func TestAccount(t *testing.T) {
 		t.Error("Expected to open account db - ", err)
 	}
 
+	userEmail := "bob@notekeeper.io"
+	userPassphrase := "supersecret"
+	user := NewUser(account.DB, logger, userEmail)
+	err = user.CreateKeys([]byte(userPassphrase))
+	if err != nil {
+		t.Error("Expected to create user keys - ", err)
+	}
+
+	// save user
+	err = user.Save()
+	if err != nil {
+		t.Error("Expected to save user")
+	}
+	account.Users = append(account.Users, user.Profile)
+	account.ActiveUser = user
+
+	err = account.Save()
+	if err != nil {
+		t.Error("Expected to save account")
+	}
+
 	// Teardown
 	masterDB.Close()
 	err = os.Remove(masterDbFileName)

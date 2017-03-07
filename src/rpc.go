@@ -22,32 +22,19 @@ func (backend *Backend) CreateAccount(ctx context.Context, request *pb.CreateAcc
 	backend.Account = account
 
 	// create user object & attach it to the account
-	user := NewUser(backend.DB, backend.Logger, request.Email)
-	account.Users = append(account.Users, user.Profile)
-	account.ActiveUser = user
+	user := NewUser(account.DB, backend.Logger, request.Email)
 
-	// generate account-level encryption key
-	accountKey, err := GenerateKey()
+	err = user.CreateKeys([]byte(request.Passphrase))
 	if err != nil {
 		return nil, err
 	}
-	// derive key from passphrase
-	var key = new([KeySize]byte)
-	key, user.Salt, err = DeriveKeyAndSalt([]byte(request.Passphrase))
-	if err != nil {
-		return nil, err
-	}
-	slicedKey := key[:]
-	user.PassphraseKey = append(user.Salt, slicedKey...)
-	user.AccountKey, err = Seal(user.PassphraseKey, accountKey[:])
-	if err != nil {
-		return nil, err
-	}
-	Zero(accountKey[:])
-	Zero(slicedKey)
 
 	// save user
-	user.Save()
+	err = user.Save()
+	if err != nil {
+		return nil, err
+	}
+	account.Users = append(account.Users, user.Profile)
 	account.ActiveUser = user
 
 	err = account.Save()

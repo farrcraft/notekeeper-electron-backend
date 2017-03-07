@@ -1,5 +1,12 @@
+# default target
 build:
 	cd src; go build
+
+test:
+	cd src; go test -v
+
+gvt:
+	go get -u github.com/FiloSottile/gvt
 
 # install the protoc golang plugin
 # export GOPATH=C:/code/go

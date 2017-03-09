@@ -3,6 +3,8 @@ syntax = "proto3";
 package notekeeper;
 
 service Backend {
+	rpc OpenMasterDb(OpenMasterDbRequest) returns (OpenMasterDbResponse) {}
+
 	rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
 	rpc UnlockAccount(UnlockAccountRequest) returns (UnlockAccountResponse) {}
 	rpc SigninAccount(SigninAccountRequest) returns (SigninAccountResponse) {}
@@ -10,6 +12,14 @@ service Backend {
 	rpc LockAccount(LockAccountRequest) returns (LockAccountResponse) {}
 
 	rpc CreateNotebook(CreateNotebookRequest) returns (CreateNotebookResponse) {}
+}
+
+message OpenMasterDbRequest {
+	string path = 1; // user data directory path
+}
+
+message OpenMasterDbResponse {
+	string status = 1;
 }
 
 message CreateAccountRequest {

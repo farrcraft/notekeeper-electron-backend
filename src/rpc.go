@@ -2,11 +2,31 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"path/filepath"
+	"time"
 
 	pb "./proto"
+	"github.com/boltdb/bolt"
 	"golang.org/x/net/context"
 	//	"google.golang.org/grpc/credentials"
 )
+
+// OpenMasterDb opens the master database in the requested directory
+func (backend *Backend) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.OpenMasterDbResponse, error) {
+	// This is the master index db
+	// There are additional databases where actual notebook data is stored (one DB file per account)
+	fileName := fmt.Sprint(filepath.Clean(request.Path), filepath.Separator, MasterDbFile)
+	backend.Logger.Info("Opening master db file [", fileName, "]")
+	var err error
+	backend.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		backend.Logger.Error("Unable to open DB - ", err)
+		return nil, err
+	}
+	response := &pb.OpenMasterDbResponse{}
+	return response, nil
+}
 
 // CreateAccount is the GRPC method to create a new account
 func (backend *Backend) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {

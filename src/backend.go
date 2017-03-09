@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"time"
 
 	pb "./proto"
 	"github.com/Sirupsen/logrus"
@@ -13,6 +12,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	//	"google.golang.org/grpc/credentials"
 	//	"golang.org/x/crypto/nacl/box"
+	"github.com/kardianos/service"
 )
 
 const (
@@ -55,23 +55,35 @@ func NewBackend() *Backend {
 	}
 	backend.Logger.Out = file
 
-	// This is the master index db
-	// There are additional databases where actual notebook data is stored (one DB file per account)
-	backend.DB, err = bolt.Open(MasterDbFile, 0600, &bolt.Options{Timeout: 1 * time.Second})
-	if err != nil {
-		backend.Logger.Error("Unable to open DB - ", err)
-		os.Exit(1)
-	}
-
 	return backend
 }
 
+// Stop stops the backend service
+func (backend *Backend) Stop(s service.Service) error {
+	backend.Logger.Debug("Stopping service...")
+	// Stop should not block. Return with a few seconds.
+	backend.Shutdown()
+	return nil
+}
+
 // Shutdown is called when the application is terminated
+// Caveat - running via CLI on Windows under MSYS2 (e.g. babun) doesn't seem to capture ctrl^c
+// So shutdown won't get called. Use normal CMD prompt or powershell in that scenario instead.
 func (backend *Backend) Shutdown() {
-	backend.DB.Close()
+	backend.Logger.Debug("Shutting down service...")
+	if backend.DB != nil {
+		backend.DB.Close()
+	}
 	if backend.Account != nil && backend.Account.DB != nil {
 		backend.Account.DB.Close()
 	}
+}
+
+// Start starts the backend service
+func (backend *Backend) Start(svc service.Service) error {
+	// Start should not block. Do the actual work async.
+	go backend.Run()
+	return nil
 }
 
 // Run is called when the application is started
@@ -98,6 +110,7 @@ func (backend *Backend) Run() {
 
 	reflection.Register(server)
 
+	backend.Logger.Debug("Backend listening on port [", BackendPort, "]")
 	err = server.Serve(listener)
 	if err != nil {
 		backend.Logger.Error("Server error - ", err)

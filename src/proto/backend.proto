@@ -11,7 +11,28 @@ service Backend {
 	rpc SignoutAccount(SignoutAccountRequest) returns(SignoutAccountResponse) {}
 	rpc LockAccount(LockAccountRequest) returns (LockAccountResponse) {}
 
+	rpc UIState(UIStateRequest) returns (UIStateResponse) {}
+	rpc AccountState(AccountStateRequest) returns (AccountStateResponse) {}
+
 	rpc CreateNotebook(CreateNotebookRequest) returns (CreateNotebookResponse) {}
+}
+
+message UIStateRequest {
+	string token = 1;
+}
+
+message UIStateResponse {
+	int32 windowWidth = 1;
+	int32 windowHeight = 2;
+}
+
+message AccountStateRequest {
+	string token = 1;
+}
+
+message AccountStateResponse {
+	bool signedIn = 1;
+	bool locked = 2;
 }
 
 message OpenMasterDbRequest {

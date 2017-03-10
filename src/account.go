@@ -27,6 +27,17 @@ type Account struct {
 	Logger     *logrus.Logger `json:"-"`
 }
 
+// IsLocked returns whether the account is in a locked state or not
+func (account *Account) IsLocked() bool {
+	if account.ActiveUser == nil {
+		return true
+	}
+	if len(account.ActiveUser.PassphraseKey) == 0 {
+		return true
+	}
+	return false
+}
+
 // OpenAccountDb opens the database file for a account
 // The file is created if it doesn't already exist
 func (account *Account) OpenAccountDb() error {

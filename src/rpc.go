@@ -12,6 +12,25 @@ import (
 	//	"google.golang.org/grpc/credentials"
 )
 
+// UIState returns the the UI state as saved by the master DB
+func (backend *Backend) UIState(ctx context.Context, request *pb.UIStateRequest) (*pb.UIStateResponse, error) {
+	response := &pb.UIStateResponse{}
+	return response, nil
+}
+
+// AccountState returns the accessible state of the account
+func (backend *Backend) AccountState(ctx context.Context, request *pb.AccountStateRequest) (*pb.AccountStateResponse, error) {
+	response := &pb.AccountStateResponse{
+		SignedIn: false,
+		Locked:   true,
+	}
+	if backend.Account != nil {
+		response.SignedIn = true
+		response.Locked = backend.Account.IsLocked()
+	}
+	return response, nil
+}
+
 // OpenMasterDb opens the master database in the requested directory
 func (backend *Backend) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.OpenMasterDbResponse, error) {
 	// This is the master index db

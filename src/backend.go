@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"./rpc"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	//	"google.golang.org/grpc/credentials"
@@ -18,15 +20,14 @@ const (
 	LogLevel = "DEBUG"
 	// LogFile is the default log file name
 	LogFile = "notekeeper.log"
-	// MasterDbFile is the core bolt database filename
-	MasterDbFile = "notekeeper.db"
 )
 
 // Backend is the main service type
 type Backend struct {
-	Logger  *logrus.Logger
-	DB      *bolt.DB // This is the master application DB
-	Account *Account
+	Logger *logrus.Logger
+	DB     *bolt.DB // This is the master application DB
+	RPC    *rpc.Server
+	//Account *Account
 }
 
 // NewBackend creates a new backend object
@@ -67,12 +68,7 @@ func (backend *Backend) Stop(s service.Service) error {
 // So shutdown won't get called. Use normal CMD prompt or powershell in that scenario instead.
 func (backend *Backend) Shutdown() {
 	backend.Logger.Debug("Shutting down service...")
-	if backend.DB != nil {
-		backend.DB.Close()
-	}
-	if backend.Account != nil && backend.Account.DB != nil {
-		backend.Account.DB.Close()
-	}
+	backend.RPC.Stop()
 }
 
 // Start starts the backend service
@@ -84,8 +80,8 @@ func (backend *Backend) Start(svc service.Service) error {
 
 // Run is called when the application is started
 func (backend *Backend) Run() {
-	rpc := NewRPCServer(backend.Logger)
-	ok := rpc.Start(BackendPort)
+	backend.RPC = rpc.NewServer(backend.Logger)
+	ok := backend.RPC.Start(BackendPort)
 	if !ok {
 		os.Exit(1)
 	}

@@ -6,7 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"../account"
 	pb "../proto"
+	"../uistate"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"golang.org/x/net/context"
@@ -15,22 +17,28 @@ import (
 	//	"google.golang.org/grpc/credentials"
 )
 
-// RPCServer is a gRPC server instance
-type RPCServer struct {
-	DB     *bolt.DB
-	Logger *logrus.Logger
+const (
+	// MasterDbFile is the core bolt database filename
+	MasterDbFile = "notekeeper.db"
+)
+
+// Server is a gRPC server instance
+type Server struct {
+	Logger  *logrus.Logger
+	DB      *bolt.DB // This is the master application DB
+	Account *account.Account
 }
 
-// NewRPCServer creates a new RPCServer instance
-func NewRPCServer(logger *logrus.Logger) *RPCServer {
-	server := &RPCServer{
+// NewServer creates a new RPCServer instance
+func NewServer(logger *logrus.Logger) *Server {
+	server := &Server{
 		Logger: logger,
 	}
 	return server
 }
 
 // Start starts an RPCServer
-func (rpc *RPCServer) Start(port string) bool {
+func (rpc *Server) Start(port string) bool {
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		rpc.Logger.Error("Listen error - ", err)
@@ -63,21 +71,31 @@ func (rpc *RPCServer) Start(port string) bool {
 	return true
 }
 
+// Stop performs shutdown routines before application termination
+func (rpc *Server) Stop() {
+	if rpc.DB != nil {
+		rpc.DB.Close()
+	}
+	if rpc.Account != nil && rpc.Account.DB != nil {
+		rpc.Account.DB.Close()
+	}
+}
+
 // OpenMasterDb opens the master database in the requested directory
-func (rpc *RPCServer) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.OpenMasterDbResponse, error) {
+func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.OpenMasterDbResponse, error) {
 	// This is the master index db
 	// There are additional databases where actual notebook data is stored (one DB file per account)
 	fileName := fmt.Sprint(filepath.Clean(request.Path), filepath.Separator, MasterDbFile)
 	rpc.Logger.Info("Opening master db file [", fileName, "]")
 	var err error
-	backend.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	rpc.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		rpc.Logger.Error("Unable to open DB - ", err)
 		return nil, err
 	}
 
 	// make sure DB has a default UIState saved
-	state := NewUIState(backend.DB, backend.Logger)
+	state := uistate.NewUIState(rpc.DB, rpc.Logger)
 	err = state.Create()
 	if err != nil {
 		return nil, err

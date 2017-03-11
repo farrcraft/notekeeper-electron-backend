@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"../crypto"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
@@ -81,13 +82,13 @@ func (account *Account) Save() error {
 		}
 
 		// account data must be encrypted with the account key and not the user key
-		accountKey, err := Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
+		accountKey, err := crypto.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
 		if err != nil {
 			account.Logger.Error("Error opening account key - ", err)
 			return err
 		}
-		encryptedData, err := Seal(accountKey, data)
-		Zero(accountKey)
+		encryptedData, err := crypto.Seal(accountKey, data)
+		crypto.Zero(accountKey)
 		if err != nil {
 			account.Logger.Error("Error encrypting account content - ", err)
 			return err
@@ -113,7 +114,7 @@ func (account *Account) Save() error {
 			account.Logger.Error("Error creating account_map bucket - ", err)
 			return err
 		}
-		encryptedName, err := DeriveSaltedKey([]byte(account.Name))
+		encryptedName, err := crypto.DeriveSaltedKey([]byte(account.Name))
 		if err != nil {
 			account.Logger.Error("Error creating account map key - ", err)
 			return err
@@ -144,9 +145,9 @@ func (account *Account) Lookup() error {
 
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
 			// extract the salt from the existing encrypted name
-			encryptedName, salt := ExtractSalt(key)
+			encryptedName, salt := crypto.ExtractSalt(key)
 			// create a new key using the extracted salt and the unencrypted name we're searching for
-			checkName, err := DeriveKey([]byte(account.Name), salt[:])
+			checkName, err := crypto.DeriveKey([]byte(account.Name), salt[:])
 			if err != nil {
 				account.Logger.Error("Error deriving account map key - ", err)
 				return err
@@ -184,7 +185,7 @@ func (account *Account) Load() error {
 		}
 
 		// need to decrypt value
-		decryptedData, err := Open(account.ActiveUser.PassphraseKey, value)
+		decryptedData, err := crypto.Open(account.ActiveUser.PassphraseKey, value)
 		if err != nil {
 			account.Logger.Error("Error decrypting account data - ", err)
 			return err

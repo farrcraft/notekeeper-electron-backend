@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"../crypto"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
@@ -62,9 +63,9 @@ func (user *User) Lookup() error {
 
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
 			// extract the salt from the existing encrypted email
-			encryptedEmail, salt := ExtractSalt(key)
+			encryptedEmail, salt := crypto.ExtractSalt(key)
 			// create a new key using the extracted salt and the unencrypted email we're searching for
-			checkEmail, err := DeriveKey([]byte(user.Profile.Email), salt[:])
+			checkEmail, err := crypto.DeriveKey([]byte(user.Profile.Email), salt[:])
 			if err != nil {
 				user.Logger.Error("Error deriving user map key - ", err)
 				return err
@@ -104,13 +105,13 @@ func (user *User) Load(passphrase string) error {
 		}
 
 		// salt will have already been provided from a previous Lookup() operation
-		passphraseKey, err := DeriveKey([]byte(passphrase), user.Salt)
+		passphraseKey, err := crypto.DeriveKey([]byte(passphrase), user.Salt)
 		if err != nil {
 			user.Logger.Error("Error deriving key from passphrase - ", err)
 			return err
 		}
 		// need to decrypt value
-		decryptedData, err := Open(passphraseKey[:], value)
+		decryptedData, err := crypto.Open(passphraseKey[:], value)
 		if err != nil {
 			// this error condition is most likely caused by an incorrect passphrase
 			user.Logger.Error("Error decrypting user data - ", err)
@@ -123,7 +124,7 @@ func (user *User) Load(passphrase string) error {
 			return err
 		}
 		user.PassphraseKey = passphraseKey[:]
-		Zero(passphraseKey[:])
+		crypto.Zero(passphraseKey[:])
 		return nil
 	})
 	return nil
@@ -143,7 +144,7 @@ func (user *User) Save() error {
 			return err
 		}
 
-		encryptedData, err := Seal(user.PassphraseKey, data)
+		encryptedData, err := crypto.Seal(user.PassphraseKey, data)
 		if err != nil {
 			user.Logger.Error("Error encrypting user content - ", err)
 			return err
@@ -169,7 +170,7 @@ func (user *User) Save() error {
 			user.Logger.Error("Error creating user_map bucket - ", err)
 			return err
 		}
-		encryptedEmail, err := DeriveKey([]byte(user.Profile.Email), user.Salt)
+		encryptedEmail, err := crypto.DeriveKey([]byte(user.Profile.Email), user.Salt)
 		if err != nil {
 			user.Logger.Error("Error creating user map key - ", err)
 			return err
@@ -191,19 +192,19 @@ func (user *User) Save() error {
 // CreateKeys creates the account and user key from a passphrase
 func (user *User) CreateKeys(passphrase []byte) error {
 	// generate account-level encryption key
-	accountKey, err := GenerateKey()
+	accountKey, err := crypto.GenerateKey()
 	if err != nil {
 		return err
 	}
 	// derive key from passphrase
-	var key = new([KeySize]byte)
-	key, user.Salt, err = DeriveKeyAndSalt(passphrase)
+	var key = new([crypto.KeySize]byte)
+	key, user.Salt, err = crypto.DeriveKeyAndSalt(passphrase)
 	if err != nil {
 		return err
 	}
 	slicedKey := key[:]
 	user.PassphraseKey = append(user.Salt, slicedKey...)
-	user.AccountKey, err = Seal(user.PassphraseKey, accountKey[:])
+	user.AccountKey, err = crypto.Seal(user.PassphraseKey, accountKey[:])
 	if err != nil {
 		return err
 	}

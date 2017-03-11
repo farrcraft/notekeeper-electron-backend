@@ -1,4 +1,4 @@
-package main
+package uistate
 
 import (
 	"encoding/json"

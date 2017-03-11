@@ -2,14 +2,10 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os"
 
-	pb "./proto"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	//	"google.golang.org/grpc/credentials"
 	//	"golang.org/x/crypto/nacl/box"
 	"github.com/kardianos/service"
@@ -88,32 +84,9 @@ func (backend *Backend) Start(svc service.Service) error {
 
 // Run is called when the application is started
 func (backend *Backend) Run() {
-	listener, err := net.Listen("tcp", BackendPort)
-	if err != nil {
-		backend.Logger.Error("Listen error - ", err)
-		os.Exit(1)
-	}
-	// [FIXME] - need to make this use TLS
-	// can we just generate a certificate on the fly to use here?
-	var opts []grpc.ServerOption
-	/*
-		creds, err := credentials.NewServerTLSFromFile(*certFile, *keyFile)
-		if err != nil {
-			backend.Logger.Error("Credentials error - ", err)
-			os.Exit(1)
-		}
-		opts = []grpc.ServerOption{grpc.Creds(creds)}
-	*/
-	server := grpc.NewServer(opts...)
-
-	pb.RegisterBackendServer(server, backend)
-
-	reflection.Register(server)
-
-	backend.Logger.Debug("Backend listening on port [", BackendPort, "]")
-	err = server.Serve(listener)
-	if err != nil {
-		backend.Logger.Error("Server error - ", err)
+	rpc := NewRPCServer(backend.Logger)
+	ok := rpc.Start(BackendPort)
+	if !ok {
 		os.Exit(1)
 	}
 }

@@ -1,9 +1,13 @@
-package main
+package notebook
 
 import (
 	"encoding/json"
 	"time"
 
+	"../crypto"
+	"../note"
+	"../tag"
+	"../title"
 	"github.com/boltdb/bolt"
 
 	uuid "github.com/satori/go.uuid"
@@ -11,17 +15,17 @@ import (
 
 // Notebook contains a set of notes
 type Notebook struct {
-	ID           uuid.UUID `json:"id"`             // ID is the unique identifier for this notebook
-	Account      *Account  `json:"-"`              // Account is the account that the notebook belongs to
-	UserID       uuid.UUID `json:"user_id"`        // UserID is the user that owns the notebook (only if this is a user-scoped notebook, otherwise nil)
-	Title        *Title    `json:"title"`          // Title is the title of the notebook
-	Default      bool      `json:"default"`        // Default indicates whether this is the default notebook
-	EncryptedKey []byte    `json:"encryption_key"` // EncryptedKey is the encrypted version of the notebook's encryption key
-	Notes        []*Note   `json:"-"`              // Notes is the set of notes that belong to this notebook
-	Tags         []*Tag    `json:"tags"`           // Tags is the set of tags assigned to this notebook
-	Created      time.Time `json:"created"`        // Created is the time when the notebook was created
-	Updated      time.Time `json:"updated"`        // Updated is the time when the notebook was last updated
-	Locked       bool      `json:"locked"`         // Locked indicates whether the notebook can be modified
+	ID uuid.UUID `json:"id"` // ID is the unique identifier for this notebook
+	//Account      *Account     `json:"-"`              // Account is the account that the notebook belongs to
+	UserID       uuid.UUID    `json:"user_id"`        // UserID is the user that owns the notebook (only if this is a user-scoped notebook, otherwise nil)
+	Title        *title.Title `json:"title"`          // Title is the title of the notebook
+	Default      bool         `json:"default"`        // Default indicates whether this is the default notebook
+	EncryptedKey []byte       `json:"encryption_key"` // EncryptedKey is the encrypted version of the notebook's encryption key
+	Notes        []*note.Note `json:"-"`              // Notes is the set of notes that belong to this notebook
+	Tags         []*tag.Tag   `json:"tags"`           // Tags is the set of tags assigned to this notebook
+	Created      time.Time    `json:"created"`        // Created is the time when the notebook was created
+	Updated      time.Time    `json:"updated"`        // Updated is the time when the notebook was last updated
+	Locked       bool         `json:"locked"`         // Locked indicates whether the notebook can be modified
 }
 
 // NewNotebook creates a new notebook object
@@ -56,14 +60,14 @@ func (notebook *Notebook) Save() error {
 		}
 
 		// retrieve the encryption key
-		decryptedKey, err := Open(notebook.Account.ActiveUser.PassphraseKey, notebook.EncryptedKey)
+		decryptedKey, err := crypto.Open(notebook.Account.ActiveUser.PassphraseKey, notebook.EncryptedKey)
 		if err != nil {
 			notebook.Account.Logger.Error("Error retrieving notebook key - ", err)
 			return err
 		}
 
 		// encrypt the data
-		encryptedData, err := Seal(decryptedKey, data)
+		encryptedData, err := crypto.Seal(decryptedKey, data)
 		if err != nil {
 			notebook.Account.Logger.Error("Error encrypting notebook data - ", err)
 			return err

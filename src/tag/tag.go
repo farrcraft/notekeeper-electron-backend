@@ -1,17 +1,18 @@
-package main
+package tag
 
 import (
 	"time"
 
+	"../title"
 	uuid "github.com/satori/go.uuid"
 )
 
 // Tag is used for assigning labels to various object types
 type Tag struct {
-	ID      uuid.UUID `json:"id"`    // ID is the unique identifier of the tab
-	Title   *Title    `json:"title"` // Title is the title of the tag
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	ID      uuid.UUID    `json:"id"`    // ID is the unique identifier of the tab
+	Title   *title.Title `json:"title"` // Title is the title of the tag
+	Created time.Time    `json:"created"`
+	Updated time.Time    `json:"updated"`
 }
 
 // NewTag creates a new tag object

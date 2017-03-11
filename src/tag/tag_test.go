@@ -1,9 +1,9 @@
-package main
+package tag
 
-import(
+import (
 	"testing"
 )
 
 func TestTag(t *testing.T) {
-	
+
 }

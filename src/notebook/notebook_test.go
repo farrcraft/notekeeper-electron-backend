@@ -1,9 +1,9 @@
-package main
+package notebook
 
-import(
+import (
 	"testing"
 )
 
 func TestNotebook(t *testing.T) {
-	
+
 }

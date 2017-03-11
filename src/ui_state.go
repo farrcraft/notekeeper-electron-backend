@@ -10,8 +10,8 @@ import (
 
 // UIState contains the saved settings for the UI
 type UIState struct {
-	WindowWidth  int            `json:"window_width"`
-	WindowHeight int            `json:"window_height"`
+	WindowWidth  int32          `json:"window_width"`
+	WindowHeight int32          `json:"window_height"`
 	DB           *bolt.DB       `json:"-"`
 	Logger       *logrus.Logger `json:"-"`
 }
@@ -25,6 +25,37 @@ func NewUIState(db *bolt.DB, logger *logrus.Logger) *UIState {
 		Logger:       logger,
 	}
 	return state
+}
+
+// Create creates a default UI state if none exists yet
+func (state *UIState) Create() error {
+	err := state.DB.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("ui_state"))
+		if bucket == nil {
+			bucket, err := tx.CreateBucket([]byte("ui_state"))
+			if err != nil {
+				state.Logger.Error("Error creating ui_state bucket - ", err)
+				return err
+			}
+			data, err := json.Marshal(state)
+			if err != nil {
+				state.Logger.Error("Error marshaling default UI State - ", err)
+				return err
+			}
+
+			err = bucket.Put([]byte("ui_state"), data)
+			if err != nil {
+				state.Logger.Error("Error saving default UI State - ", err)
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		state.Logger.Error(err)
+		return err
+	}
+	return nil
 }
 
 // Load loads the UI's saved state from the database

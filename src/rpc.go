@@ -14,7 +14,29 @@ import (
 
 // UIState returns the the UI state as saved by the master DB
 func (backend *Backend) UIState(ctx context.Context, request *pb.UIStateRequest) (*pb.UIStateResponse, error) {
-	response := &pb.UIStateResponse{}
+	state := NewUIState(backend.DB, backend.Logger)
+	err := state.Load()
+	if err != nil {
+		return nil, err
+	}
+	response := &pb.UIStateResponse{
+		WindowWidth:  state.WindowWidth,
+		WindowHeight: state.WindowHeight,
+	}
+	return response, nil
+}
+
+// SaveUIState saves the current UI state to the master DB
+func (backend *Backend) SaveUIState(ctx context.Context, request *pb.SaveUIStateRequest) (*pb.SaveUIStateResponse, error) {
+	state := NewUIState(backend.DB, backend.Logger)
+	state.WindowWidth = request.WindowWidth
+	state.WindowHeight = request.WindowHeight
+	err := state.Save()
+	if err != nil {
+		return nil, err
+	}
+	response := &pb.SaveUIStateResponse{}
+
 	return response, nil
 }
 
@@ -43,6 +65,14 @@ func (backend *Backend) OpenMasterDb(ctx context.Context, request *pb.OpenMaster
 		backend.Logger.Error("Unable to open DB - ", err)
 		return nil, err
 	}
+
+	// make sure DB has a default UIState saved
+	state := NewUIState(backend.DB, backend.Logger)
+	err = state.Create()
+	if err != nil {
+		return nil, err
+	}
+
 	response := &pb.OpenMasterDbResponse{}
 	return response, nil
 }

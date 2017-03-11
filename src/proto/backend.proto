@@ -12,6 +12,7 @@ service Backend {
 	rpc LockAccount(LockAccountRequest) returns (LockAccountResponse) {}
 
 	rpc UIState(UIStateRequest) returns (UIStateResponse) {}
+	rpc SaveUIState(SaveUIStateRequest) returns (SaveUIStateResponse) {}
 	rpc AccountState(AccountStateRequest) returns (AccountStateResponse) {}
 
 	rpc CreateNotebook(CreateNotebookRequest) returns (CreateNotebookResponse) {}
@@ -24,6 +25,15 @@ message UIStateRequest {
 message UIStateResponse {
 	int32 windowWidth = 1;
 	int32 windowHeight = 2;
+}
+
+message SaveUIStateRequest {
+	int32 windowWidth = 1;
+	int32 windowHeight = 2;
+}
+
+message SaveUIStateResponse {
+	string status = 1;
 }
 
 message AccountStateRequest {

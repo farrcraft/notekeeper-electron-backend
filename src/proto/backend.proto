@@ -3,23 +3,42 @@ syntax = "proto3";
 package notekeeper;
 
 service Backend {
-	rpc OpenMasterDb(OpenMasterDbRequest) returns (OpenMasterDbResponse) {}
+	rpc OpenMasterDb(OpenMasterDbRequest) returns (StatusResponse) {}
 
-	rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse) {}
-	rpc UnlockAccount(UnlockAccountRequest) returns (UnlockAccountResponse) {}
-	rpc SigninAccount(SigninAccountRequest) returns (SigninAccountResponse) {}
-	rpc SignoutAccount(SignoutAccountRequest) returns(SignoutAccountResponse) {}
-	rpc LockAccount(LockAccountRequest) returns (LockAccountResponse) {}
+	rpc CreateAccount(CreateAccountRequest) returns (IdResponse) {}
+	rpc UnlockAccount(UnlockAccountRequest) returns (StatusResponse) {}
+	rpc SigninAccount(SigninAccountRequest) returns (IdResponse) {}
+	rpc SignoutAccount(IdRequest) returns(StatusResponse) {}
+	rpc LockAccount(IdRequest) returns (StatusResponse) {}
 
-	rpc UIState(UIStateRequest) returns (UIStateResponse) {}
-	rpc SaveUIState(SaveUIStateRequest) returns (SaveUIStateResponse) {}
-	rpc AccountState(AccountStateRequest) returns (AccountStateResponse) {}
+	rpc UIState(TokenRequest) returns (UIStateResponse) {}
+	rpc SaveUIState(SaveUIStateRequest) returns (StatusResponse) {}
+	rpc AccountState(TokenRequest) returns (AccountStateResponse) {}
 
-	rpc CreateNotebook(CreateNotebookRequest) returns (CreateNotebookResponse) {}
+	rpc CreateNotebook(CreateNotebookRequest) returns (IdResponse) {}
 }
 
-message UIStateRequest {
+// a generic RPC response message when we only need a status returned
+message StatusResponse {
+	string status = 1;
+	int32 code = 2;
+}
+
+// a generic RPC request message
+message TokenRequest {
 	string token = 1;
+}
+
+// a generic RPC request message containing a common UUID string
+message IdRequest {
+	string id = 1;
+}
+
+// a generic RPC response message containing a common UUID string and status
+message IdResponse {
+	string id = 1;
+	string status = 2;
+	int32 code = 3;
 }
 
 message UIStateResponse {
@@ -32,14 +51,6 @@ message SaveUIStateRequest {
 	int32 windowHeight = 2;
 }
 
-message SaveUIStateResponse {
-	string status = 1;
-}
-
-message AccountStateRequest {
-	string token = 1;
-}
-
 message AccountStateResponse {
 	bool signedIn = 1;
 	bool locked = 2;
@@ -49,28 +60,15 @@ message OpenMasterDbRequest {
 	string path = 1; // user data directory path
 }
 
-message OpenMasterDbResponse {
-	string status = 1;
-}
-
 message CreateAccountRequest {
 	string name = 1; // account name
 	string email = 2; // user email
 	string passphrase = 3; // user password
 }
 
-message CreateAccountResponse {
-	string status = 1;
-	string id = 2;
-}
-
 message UnlockAccountRequest {
 	string id = 1;
 	string passphrase = 2;
-}
-
-message UnlockAccountResponse {
-	string status = 1;
 }
 
 message SigninAccountRequest {
@@ -79,34 +77,8 @@ message SigninAccountRequest {
 	string passphrase = 3;
 }
 
-message SigninAccountResponse {
-	string status = 1;
-	string id = 2;
-}
-
-message SignoutAccountRequest {
-	string id = 1;
-}
-
-message SignoutAccountResponse {
-	string status = 1;
-}
-
-message LockAccountRequest {
-	string id = 1;
-}
-
-message LockAccountResponse {
-	string status = 1;
-}
-
 message CreateNotebookRequest {
 	string name = 1;
 	string user_id = 2;
 	string shelf_id = 3;
-}
-
-message CreateNotebookResponse {
-	string status = 1;
-	string id = 2;
 }

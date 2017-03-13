@@ -10,7 +10,7 @@ import (
 )
 
 // AccountState returns the accessible state of the account
-func (rpc *Server) AccountState(ctx context.Context, request *pb.AccountStateRequest) (*pb.AccountStateResponse, error) {
+func (rpc *Server) AccountState(ctx context.Context, request *pb.TokenRequest) (*pb.AccountStateResponse, error) {
 	response := &pb.AccountStateResponse{
 		SignedIn: false,
 		Locked:   true,
@@ -23,7 +23,7 @@ func (rpc *Server) AccountState(ctx context.Context, request *pb.AccountStateReq
 }
 
 // CreateAccount is the GRPC method to create a new account
-func (rpc *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.CreateAccountResponse, error) {
+func (rpc *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.IdResponse, error) {
 	// create account object
 	newAccount := account.NewAccount(rpc.DB, rpc.Logger, request.Name)
 
@@ -59,14 +59,14 @@ func (rpc *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountR
 	// creating the account automatically makes it the active account
 	rpc.Account = newAccount
 
-	response := &pb.CreateAccountResponse{
+	response := &pb.IdResponse{
 		Id: newAccount.ID.String(),
 	}
 	return response, nil
 }
 
 // UnlockAccount is the GRPC method to unlock the current account
-func (rpc *Server) UnlockAccount(ctx context.Context, request *pb.UnlockAccountRequest) (*pb.UnlockAccountResponse, error) {
+func (rpc *Server) UnlockAccount(ctx context.Context, request *pb.UnlockAccountRequest) (*pb.StatusResponse, error) {
 	if rpc.Account == nil {
 		return nil, errors.New("no active account")
 	}
@@ -98,12 +98,12 @@ func (rpc *Server) UnlockAccount(ctx context.Context, request *pb.UnlockAccountR
 		return nil, errors.New("unable to open account db")
 	}
 
-	response := &pb.UnlockAccountResponse{}
+	response := &pb.StatusResponse{}
 	return response, nil
 }
 
 // SigninAccount is the GRPC method to sign in to an existing account
-func (rpc *Server) SigninAccount(ctx context.Context, request *pb.SigninAccountRequest) (*pb.SigninAccountResponse, error) {
+func (rpc *Server) SigninAccount(ctx context.Context, request *pb.SigninAccountRequest) (*pb.IdResponse, error) {
 	// attempt to find the account (lookup)
 	newAccount := account.NewAccount(rpc.DB, rpc.Logger, request.Name)
 	err := newAccount.Lookup()
@@ -140,13 +140,13 @@ func (rpc *Server) SigninAccount(ctx context.Context, request *pb.SigninAccountR
 	rpc.Account = newAccount
 
 	// user should be signed in & account in an unlocked state at this point
-	response := &pb.SigninAccountResponse{}
+	response := &pb.IdResponse{}
 
 	return response, nil
 }
 
 // SignoutAccount is the GRPC method to sign out from the active account
-func (rpc *Server) SignoutAccount(ctx context.Context, request *pb.SignoutAccountRequest) (*pb.SignoutAccountResponse, error) {
+func (rpc *Server) SignoutAccount(ctx context.Context, request *pb.IdRequest) (*pb.StatusResponse, error) {
 	if rpc.Account == nil {
 		return nil, errors.New("no active account")
 	}
@@ -156,12 +156,12 @@ func (rpc *Server) SignoutAccount(ctx context.Context, request *pb.SignoutAccoun
 	rpc.Account.DB.Close()
 	rpc.Account = nil
 
-	response := &pb.SignoutAccountResponse{}
+	response := &pb.StatusResponse{}
 	return response, nil
 }
 
 // LockAccount is the GRPC method to lock the active account
-func (rpc *Server) LockAccount(ctx context.Context, request *pb.LockAccountRequest) (*pb.LockAccountResponse, error) {
+func (rpc *Server) LockAccount(ctx context.Context, request *pb.IdRequest) (*pb.StatusResponse, error) {
 	crypto.Zero(rpc.Account.ActiveUser.PassphraseKey)
 	rpc.Account.DB.Close()
 	rpc.Account.DB = nil

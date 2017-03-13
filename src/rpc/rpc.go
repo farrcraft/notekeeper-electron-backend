@@ -82,7 +82,7 @@ func (rpc *Server) Stop() {
 }
 
 // OpenMasterDb opens the master database in the requested directory
-func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.OpenMasterDbResponse, error) {
+func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.StatusResponse, error) {
 	// This is the master index db
 	// There are additional databases where actual notebook data is stored (one DB file per account)
 	fileName := fmt.Sprint(filepath.Clean(request.Path), filepath.Separator, MasterDbFile)
@@ -101,6 +101,6 @@ func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbReq
 		return nil, err
 	}
 
-	response := &pb.OpenMasterDbResponse{}
+	response := &pb.StatusResponse{}
 	return response, nil
 }

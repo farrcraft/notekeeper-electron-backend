@@ -8,13 +8,13 @@ import (
 )
 
 // CreateNotebook is the GRPC method to create a new notebook
-func (rpc *Server) CreateNotebook(ctx context.Context, request *pb.CreateNotebookRequest) (*pb.CreateNotebookResponse, error) {
+func (rpc *Server) CreateNotebook(ctx context.Context, request *pb.CreateNotebookRequest) (*pb.IdResponse, error) {
 	notebook := notebook.NewNotebook(rpc.DB, rpc.Logger)
 	err := notebook.Save(rpc.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		return nil, err
 	}
-	response := &pb.CreateNotebookResponse{
+	response := &pb.IdResponse{
 		Status: "OK",
 		Id:     notebook.ID.String(),
 	}

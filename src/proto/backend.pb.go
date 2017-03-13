@@ -9,26 +9,18 @@ It is generated from these files:
 	backend.proto
 
 It has these top-level messages:
-	UIStateRequest
+	StatusResponse
+	TokenRequest
+	IdRequest
+	IdResponse
 	UIStateResponse
 	SaveUIStateRequest
-	SaveUIStateResponse
-	AccountStateRequest
 	AccountStateResponse
 	OpenMasterDbRequest
-	OpenMasterDbResponse
 	CreateAccountRequest
-	CreateAccountResponse
 	UnlockAccountRequest
-	UnlockAccountResponse
 	SigninAccountRequest
-	SigninAccountResponse
-	SignoutAccountRequest
-	SignoutAccountResponse
-	LockAccountRequest
-	LockAccountResponse
 	CreateNotebookRequest
-	CreateNotebookResponse
 */
 package notekeeper
 
@@ -52,20 +44,96 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type UIStateRequest struct {
+// a generic RPC response message when we only need a status returned
+type StatusResponse struct {
+	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
+	Code   int32  `protobuf:"varint,2,opt,name=code" json:"code,omitempty"`
+}
+
+func (m *StatusResponse) Reset()                    { *m = StatusResponse{} }
+func (m *StatusResponse) String() string            { return proto.CompactTextString(m) }
+func (*StatusResponse) ProtoMessage()               {}
+func (*StatusResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+func (m *StatusResponse) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *StatusResponse) GetCode() int32 {
+	if m != nil {
+		return m.Code
+	}
+	return 0
+}
+
+// a generic RPC request message
+type TokenRequest struct {
 	Token string `protobuf:"bytes,1,opt,name=token" json:"token,omitempty"`
 }
 
-func (m *UIStateRequest) Reset()                    { *m = UIStateRequest{} }
-func (m *UIStateRequest) String() string            { return proto.CompactTextString(m) }
-func (*UIStateRequest) ProtoMessage()               {}
-func (*UIStateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *TokenRequest) Reset()                    { *m = TokenRequest{} }
+func (m *TokenRequest) String() string            { return proto.CompactTextString(m) }
+func (*TokenRequest) ProtoMessage()               {}
+func (*TokenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-func (m *UIStateRequest) GetToken() string {
+func (m *TokenRequest) GetToken() string {
 	if m != nil {
 		return m.Token
 	}
 	return ""
+}
+
+// a generic RPC request message containing a common UUID string
+type IdRequest struct {
+	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+}
+
+func (m *IdRequest) Reset()                    { *m = IdRequest{} }
+func (m *IdRequest) String() string            { return proto.CompactTextString(m) }
+func (*IdRequest) ProtoMessage()               {}
+func (*IdRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *IdRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+// a generic RPC response message containing a common UUID string and status
+type IdResponse struct {
+	Id     string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Status string `protobuf:"bytes,2,opt,name=status" json:"status,omitempty"`
+	Code   int32  `protobuf:"varint,3,opt,name=code" json:"code,omitempty"`
+}
+
+func (m *IdResponse) Reset()                    { *m = IdResponse{} }
+func (m *IdResponse) String() string            { return proto.CompactTextString(m) }
+func (*IdResponse) ProtoMessage()               {}
+func (*IdResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *IdResponse) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *IdResponse) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *IdResponse) GetCode() int32 {
+	if m != nil {
+		return m.Code
+	}
+	return 0
 }
 
 type UIStateResponse struct {
@@ -76,7 +144,7 @@ type UIStateResponse struct {
 func (m *UIStateResponse) Reset()                    { *m = UIStateResponse{} }
 func (m *UIStateResponse) String() string            { return proto.CompactTextString(m) }
 func (*UIStateResponse) ProtoMessage()               {}
-func (*UIStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*UIStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *UIStateResponse) GetWindowWidth() int32 {
 	if m != nil {
@@ -100,7 +168,7 @@ type SaveUIStateRequest struct {
 func (m *SaveUIStateRequest) Reset()                    { *m = SaveUIStateRequest{} }
 func (m *SaveUIStateRequest) String() string            { return proto.CompactTextString(m) }
 func (*SaveUIStateRequest) ProtoMessage()               {}
-func (*SaveUIStateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*SaveUIStateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *SaveUIStateRequest) GetWindowWidth() int32 {
 	if m != nil {
@@ -116,38 +184,6 @@ func (m *SaveUIStateRequest) GetWindowHeight() int32 {
 	return 0
 }
 
-type SaveUIStateResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-}
-
-func (m *SaveUIStateResponse) Reset()                    { *m = SaveUIStateResponse{} }
-func (m *SaveUIStateResponse) String() string            { return proto.CompactTextString(m) }
-func (*SaveUIStateResponse) ProtoMessage()               {}
-func (*SaveUIStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *SaveUIStateResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-type AccountStateRequest struct {
-	Token string `protobuf:"bytes,1,opt,name=token" json:"token,omitempty"`
-}
-
-func (m *AccountStateRequest) Reset()                    { *m = AccountStateRequest{} }
-func (m *AccountStateRequest) String() string            { return proto.CompactTextString(m) }
-func (*AccountStateRequest) ProtoMessage()               {}
-func (*AccountStateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
-
-func (m *AccountStateRequest) GetToken() string {
-	if m != nil {
-		return m.Token
-	}
-	return ""
-}
-
 type AccountStateResponse struct {
 	SignedIn bool `protobuf:"varint,1,opt,name=signedIn" json:"signedIn,omitempty"`
 	Locked   bool `protobuf:"varint,2,opt,name=locked" json:"locked,omitempty"`
@@ -156,7 +192,7 @@ type AccountStateResponse struct {
 func (m *AccountStateResponse) Reset()                    { *m = AccountStateResponse{} }
 func (m *AccountStateResponse) String() string            { return proto.CompactTextString(m) }
 func (*AccountStateResponse) ProtoMessage()               {}
-func (*AccountStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*AccountStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 func (m *AccountStateResponse) GetSignedIn() bool {
 	if m != nil {
@@ -179,27 +215,11 @@ type OpenMasterDbRequest struct {
 func (m *OpenMasterDbRequest) Reset()                    { *m = OpenMasterDbRequest{} }
 func (m *OpenMasterDbRequest) String() string            { return proto.CompactTextString(m) }
 func (*OpenMasterDbRequest) ProtoMessage()               {}
-func (*OpenMasterDbRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (*OpenMasterDbRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *OpenMasterDbRequest) GetPath() string {
 	if m != nil {
 		return m.Path
-	}
-	return ""
-}
-
-type OpenMasterDbResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-}
-
-func (m *OpenMasterDbResponse) Reset()                    { *m = OpenMasterDbResponse{} }
-func (m *OpenMasterDbResponse) String() string            { return proto.CompactTextString(m) }
-func (*OpenMasterDbResponse) ProtoMessage()               {}
-func (*OpenMasterDbResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
-
-func (m *OpenMasterDbResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
 	}
 	return ""
 }
@@ -236,30 +256,6 @@ func (m *CreateAccountRequest) GetPassphrase() string {
 	return ""
 }
 
-type CreateAccountResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Id     string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
-}
-
-func (m *CreateAccountResponse) Reset()                    { *m = CreateAccountResponse{} }
-func (m *CreateAccountResponse) String() string            { return proto.CompactTextString(m) }
-func (*CreateAccountResponse) ProtoMessage()               {}
-func (*CreateAccountResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
-
-func (m *CreateAccountResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *CreateAccountResponse) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
 type UnlockAccountRequest struct {
 	Id         string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
 	Passphrase string `protobuf:"bytes,2,opt,name=passphrase" json:"passphrase,omitempty"`
@@ -268,7 +264,7 @@ type UnlockAccountRequest struct {
 func (m *UnlockAccountRequest) Reset()                    { *m = UnlockAccountRequest{} }
 func (m *UnlockAccountRequest) String() string            { return proto.CompactTextString(m) }
 func (*UnlockAccountRequest) ProtoMessage()               {}
-func (*UnlockAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+func (*UnlockAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
 func (m *UnlockAccountRequest) GetId() string {
 	if m != nil {
@@ -284,22 +280,6 @@ func (m *UnlockAccountRequest) GetPassphrase() string {
 	return ""
 }
 
-type UnlockAccountResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-}
-
-func (m *UnlockAccountResponse) Reset()                    { *m = UnlockAccountResponse{} }
-func (m *UnlockAccountResponse) String() string            { return proto.CompactTextString(m) }
-func (*UnlockAccountResponse) ProtoMessage()               {}
-func (*UnlockAccountResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
-
-func (m *UnlockAccountResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
 type SigninAccountRequest struct {
 	Name       string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 	Email      string `protobuf:"bytes,2,opt,name=email" json:"email,omitempty"`
@@ -309,7 +289,7 @@ type SigninAccountRequest struct {
 func (m *SigninAccountRequest) Reset()                    { *m = SigninAccountRequest{} }
 func (m *SigninAccountRequest) String() string            { return proto.CompactTextString(m) }
 func (*SigninAccountRequest) ProtoMessage()               {}
-func (*SigninAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+func (*SigninAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
 func (m *SigninAccountRequest) GetName() string {
 	if m != nil {
@@ -332,94 +312,6 @@ func (m *SigninAccountRequest) GetPassphrase() string {
 	return ""
 }
 
-type SigninAccountResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Id     string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
-}
-
-func (m *SigninAccountResponse) Reset()                    { *m = SigninAccountResponse{} }
-func (m *SigninAccountResponse) String() string            { return proto.CompactTextString(m) }
-func (*SigninAccountResponse) ProtoMessage()               {}
-func (*SigninAccountResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
-
-func (m *SigninAccountResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *SigninAccountResponse) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-type SignoutAccountRequest struct {
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-}
-
-func (m *SignoutAccountRequest) Reset()                    { *m = SignoutAccountRequest{} }
-func (m *SignoutAccountRequest) String() string            { return proto.CompactTextString(m) }
-func (*SignoutAccountRequest) ProtoMessage()               {}
-func (*SignoutAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
-
-func (m *SignoutAccountRequest) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-type SignoutAccountResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-}
-
-func (m *SignoutAccountResponse) Reset()                    { *m = SignoutAccountResponse{} }
-func (m *SignoutAccountResponse) String() string            { return proto.CompactTextString(m) }
-func (*SignoutAccountResponse) ProtoMessage()               {}
-func (*SignoutAccountResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
-
-func (m *SignoutAccountResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-type LockAccountRequest struct {
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-}
-
-func (m *LockAccountRequest) Reset()                    { *m = LockAccountRequest{} }
-func (m *LockAccountRequest) String() string            { return proto.CompactTextString(m) }
-func (*LockAccountRequest) ProtoMessage()               {}
-func (*LockAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
-
-func (m *LockAccountRequest) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-type LockAccountResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-}
-
-func (m *LockAccountResponse) Reset()                    { *m = LockAccountResponse{} }
-func (m *LockAccountResponse) String() string            { return proto.CompactTextString(m) }
-func (*LockAccountResponse) ProtoMessage()               {}
-func (*LockAccountResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
-
-func (m *LockAccountResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
 type CreateNotebookRequest struct {
 	Name    string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 	UserId  string `protobuf:"bytes,2,opt,name=user_id,json=userId" json:"user_id,omitempty"`
@@ -429,7 +321,7 @@ type CreateNotebookRequest struct {
 func (m *CreateNotebookRequest) Reset()                    { *m = CreateNotebookRequest{} }
 func (m *CreateNotebookRequest) String() string            { return proto.CompactTextString(m) }
 func (*CreateNotebookRequest) ProtoMessage()               {}
-func (*CreateNotebookRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
+func (*CreateNotebookRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
 
 func (m *CreateNotebookRequest) GetName() string {
 	if m != nil {
@@ -452,51 +344,19 @@ func (m *CreateNotebookRequest) GetShelfId() string {
 	return ""
 }
 
-type CreateNotebookResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Id     string `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
-}
-
-func (m *CreateNotebookResponse) Reset()                    { *m = CreateNotebookResponse{} }
-func (m *CreateNotebookResponse) String() string            { return proto.CompactTextString(m) }
-func (*CreateNotebookResponse) ProtoMessage()               {}
-func (*CreateNotebookResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{19} }
-
-func (m *CreateNotebookResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *CreateNotebookResponse) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
 func init() {
-	proto.RegisterType((*UIStateRequest)(nil), "notekeeper.UIStateRequest")
+	proto.RegisterType((*StatusResponse)(nil), "notekeeper.StatusResponse")
+	proto.RegisterType((*TokenRequest)(nil), "notekeeper.TokenRequest")
+	proto.RegisterType((*IdRequest)(nil), "notekeeper.IdRequest")
+	proto.RegisterType((*IdResponse)(nil), "notekeeper.IdResponse")
 	proto.RegisterType((*UIStateResponse)(nil), "notekeeper.UIStateResponse")
 	proto.RegisterType((*SaveUIStateRequest)(nil), "notekeeper.SaveUIStateRequest")
-	proto.RegisterType((*SaveUIStateResponse)(nil), "notekeeper.SaveUIStateResponse")
-	proto.RegisterType((*AccountStateRequest)(nil), "notekeeper.AccountStateRequest")
 	proto.RegisterType((*AccountStateResponse)(nil), "notekeeper.AccountStateResponse")
 	proto.RegisterType((*OpenMasterDbRequest)(nil), "notekeeper.OpenMasterDbRequest")
-	proto.RegisterType((*OpenMasterDbResponse)(nil), "notekeeper.OpenMasterDbResponse")
 	proto.RegisterType((*CreateAccountRequest)(nil), "notekeeper.CreateAccountRequest")
-	proto.RegisterType((*CreateAccountResponse)(nil), "notekeeper.CreateAccountResponse")
 	proto.RegisterType((*UnlockAccountRequest)(nil), "notekeeper.UnlockAccountRequest")
-	proto.RegisterType((*UnlockAccountResponse)(nil), "notekeeper.UnlockAccountResponse")
 	proto.RegisterType((*SigninAccountRequest)(nil), "notekeeper.SigninAccountRequest")
-	proto.RegisterType((*SigninAccountResponse)(nil), "notekeeper.SigninAccountResponse")
-	proto.RegisterType((*SignoutAccountRequest)(nil), "notekeeper.SignoutAccountRequest")
-	proto.RegisterType((*SignoutAccountResponse)(nil), "notekeeper.SignoutAccountResponse")
-	proto.RegisterType((*LockAccountRequest)(nil), "notekeeper.LockAccountRequest")
-	proto.RegisterType((*LockAccountResponse)(nil), "notekeeper.LockAccountResponse")
 	proto.RegisterType((*CreateNotebookRequest)(nil), "notekeeper.CreateNotebookRequest")
-	proto.RegisterType((*CreateNotebookResponse)(nil), "notekeeper.CreateNotebookResponse")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -510,16 +370,16 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Backend service
 
 type BackendClient interface {
-	OpenMasterDb(ctx context.Context, in *OpenMasterDbRequest, opts ...grpc.CallOption) (*OpenMasterDbResponse, error)
-	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error)
-	UnlockAccount(ctx context.Context, in *UnlockAccountRequest, opts ...grpc.CallOption) (*UnlockAccountResponse, error)
-	SigninAccount(ctx context.Context, in *SigninAccountRequest, opts ...grpc.CallOption) (*SigninAccountResponse, error)
-	SignoutAccount(ctx context.Context, in *SignoutAccountRequest, opts ...grpc.CallOption) (*SignoutAccountResponse, error)
-	LockAccount(ctx context.Context, in *LockAccountRequest, opts ...grpc.CallOption) (*LockAccountResponse, error)
-	UIState(ctx context.Context, in *UIStateRequest, opts ...grpc.CallOption) (*UIStateResponse, error)
-	SaveUIState(ctx context.Context, in *SaveUIStateRequest, opts ...grpc.CallOption) (*SaveUIStateResponse, error)
-	AccountState(ctx context.Context, in *AccountStateRequest, opts ...grpc.CallOption) (*AccountStateResponse, error)
-	CreateNotebook(ctx context.Context, in *CreateNotebookRequest, opts ...grpc.CallOption) (*CreateNotebookResponse, error)
+	OpenMasterDb(ctx context.Context, in *OpenMasterDbRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*IdResponse, error)
+	UnlockAccount(ctx context.Context, in *UnlockAccountRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	SigninAccount(ctx context.Context, in *SigninAccountRequest, opts ...grpc.CallOption) (*IdResponse, error)
+	SignoutAccount(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	LockAccount(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	UIState(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*UIStateResponse, error)
+	SaveUIState(ctx context.Context, in *SaveUIStateRequest, opts ...grpc.CallOption) (*StatusResponse, error)
+	AccountState(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*AccountStateResponse, error)
+	CreateNotebook(ctx context.Context, in *CreateNotebookRequest, opts ...grpc.CallOption) (*IdResponse, error)
 }
 
 type backendClient struct {
@@ -530,8 +390,8 @@ func NewBackendClient(cc *grpc.ClientConn) BackendClient {
 	return &backendClient{cc}
 }
 
-func (c *backendClient) OpenMasterDb(ctx context.Context, in *OpenMasterDbRequest, opts ...grpc.CallOption) (*OpenMasterDbResponse, error) {
-	out := new(OpenMasterDbResponse)
+func (c *backendClient) OpenMasterDb(ctx context.Context, in *OpenMasterDbRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/OpenMasterDb", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -539,8 +399,8 @@ func (c *backendClient) OpenMasterDb(ctx context.Context, in *OpenMasterDbReques
 	return out, nil
 }
 
-func (c *backendClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*CreateAccountResponse, error) {
-	out := new(CreateAccountResponse)
+func (c *backendClient) CreateAccount(ctx context.Context, in *CreateAccountRequest, opts ...grpc.CallOption) (*IdResponse, error) {
+	out := new(IdResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/CreateAccount", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -548,8 +408,8 @@ func (c *backendClient) CreateAccount(ctx context.Context, in *CreateAccountRequ
 	return out, nil
 }
 
-func (c *backendClient) UnlockAccount(ctx context.Context, in *UnlockAccountRequest, opts ...grpc.CallOption) (*UnlockAccountResponse, error) {
-	out := new(UnlockAccountResponse)
+func (c *backendClient) UnlockAccount(ctx context.Context, in *UnlockAccountRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/UnlockAccount", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -557,8 +417,8 @@ func (c *backendClient) UnlockAccount(ctx context.Context, in *UnlockAccountRequ
 	return out, nil
 }
 
-func (c *backendClient) SigninAccount(ctx context.Context, in *SigninAccountRequest, opts ...grpc.CallOption) (*SigninAccountResponse, error) {
-	out := new(SigninAccountResponse)
+func (c *backendClient) SigninAccount(ctx context.Context, in *SigninAccountRequest, opts ...grpc.CallOption) (*IdResponse, error) {
+	out := new(IdResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/SigninAccount", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -566,8 +426,8 @@ func (c *backendClient) SigninAccount(ctx context.Context, in *SigninAccountRequ
 	return out, nil
 }
 
-func (c *backendClient) SignoutAccount(ctx context.Context, in *SignoutAccountRequest, opts ...grpc.CallOption) (*SignoutAccountResponse, error) {
-	out := new(SignoutAccountResponse)
+func (c *backendClient) SignoutAccount(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/SignoutAccount", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -575,8 +435,8 @@ func (c *backendClient) SignoutAccount(ctx context.Context, in *SignoutAccountRe
 	return out, nil
 }
 
-func (c *backendClient) LockAccount(ctx context.Context, in *LockAccountRequest, opts ...grpc.CallOption) (*LockAccountResponse, error) {
-	out := new(LockAccountResponse)
+func (c *backendClient) LockAccount(ctx context.Context, in *IdRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/LockAccount", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -584,7 +444,7 @@ func (c *backendClient) LockAccount(ctx context.Context, in *LockAccountRequest,
 	return out, nil
 }
 
-func (c *backendClient) UIState(ctx context.Context, in *UIStateRequest, opts ...grpc.CallOption) (*UIStateResponse, error) {
+func (c *backendClient) UIState(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*UIStateResponse, error) {
 	out := new(UIStateResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/UIState", in, out, c.cc, opts...)
 	if err != nil {
@@ -593,8 +453,8 @@ func (c *backendClient) UIState(ctx context.Context, in *UIStateRequest, opts ..
 	return out, nil
 }
 
-func (c *backendClient) SaveUIState(ctx context.Context, in *SaveUIStateRequest, opts ...grpc.CallOption) (*SaveUIStateResponse, error) {
-	out := new(SaveUIStateResponse)
+func (c *backendClient) SaveUIState(ctx context.Context, in *SaveUIStateRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	out := new(StatusResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/SaveUIState", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -602,7 +462,7 @@ func (c *backendClient) SaveUIState(ctx context.Context, in *SaveUIStateRequest,
 	return out, nil
 }
 
-func (c *backendClient) AccountState(ctx context.Context, in *AccountStateRequest, opts ...grpc.CallOption) (*AccountStateResponse, error) {
+func (c *backendClient) AccountState(ctx context.Context, in *TokenRequest, opts ...grpc.CallOption) (*AccountStateResponse, error) {
 	out := new(AccountStateResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/AccountState", in, out, c.cc, opts...)
 	if err != nil {
@@ -611,8 +471,8 @@ func (c *backendClient) AccountState(ctx context.Context, in *AccountStateReques
 	return out, nil
 }
 
-func (c *backendClient) CreateNotebook(ctx context.Context, in *CreateNotebookRequest, opts ...grpc.CallOption) (*CreateNotebookResponse, error) {
-	out := new(CreateNotebookResponse)
+func (c *backendClient) CreateNotebook(ctx context.Context, in *CreateNotebookRequest, opts ...grpc.CallOption) (*IdResponse, error) {
+	out := new(IdResponse)
 	err := grpc.Invoke(ctx, "/notekeeper.Backend/CreateNotebook", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
@@ -623,16 +483,16 @@ func (c *backendClient) CreateNotebook(ctx context.Context, in *CreateNotebookRe
 // Server API for Backend service
 
 type BackendServer interface {
-	OpenMasterDb(context.Context, *OpenMasterDbRequest) (*OpenMasterDbResponse, error)
-	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
-	UnlockAccount(context.Context, *UnlockAccountRequest) (*UnlockAccountResponse, error)
-	SigninAccount(context.Context, *SigninAccountRequest) (*SigninAccountResponse, error)
-	SignoutAccount(context.Context, *SignoutAccountRequest) (*SignoutAccountResponse, error)
-	LockAccount(context.Context, *LockAccountRequest) (*LockAccountResponse, error)
-	UIState(context.Context, *UIStateRequest) (*UIStateResponse, error)
-	SaveUIState(context.Context, *SaveUIStateRequest) (*SaveUIStateResponse, error)
-	AccountState(context.Context, *AccountStateRequest) (*AccountStateResponse, error)
-	CreateNotebook(context.Context, *CreateNotebookRequest) (*CreateNotebookResponse, error)
+	OpenMasterDb(context.Context, *OpenMasterDbRequest) (*StatusResponse, error)
+	CreateAccount(context.Context, *CreateAccountRequest) (*IdResponse, error)
+	UnlockAccount(context.Context, *UnlockAccountRequest) (*StatusResponse, error)
+	SigninAccount(context.Context, *SigninAccountRequest) (*IdResponse, error)
+	SignoutAccount(context.Context, *IdRequest) (*StatusResponse, error)
+	LockAccount(context.Context, *IdRequest) (*StatusResponse, error)
+	UIState(context.Context, *TokenRequest) (*UIStateResponse, error)
+	SaveUIState(context.Context, *SaveUIStateRequest) (*StatusResponse, error)
+	AccountState(context.Context, *TokenRequest) (*AccountStateResponse, error)
+	CreateNotebook(context.Context, *CreateNotebookRequest) (*IdResponse, error)
 }
 
 func RegisterBackendServer(s *grpc.Server, srv BackendServer) {
@@ -712,7 +572,7 @@ func _Backend_SigninAccount_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _Backend_SignoutAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SignoutAccountRequest)
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -724,13 +584,13 @@ func _Backend_SignoutAccount_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: "/notekeeper.Backend/SignoutAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BackendServer).SignoutAccount(ctx, req.(*SignoutAccountRequest))
+		return srv.(BackendServer).SignoutAccount(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Backend_LockAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LockAccountRequest)
+	in := new(IdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -742,13 +602,13 @@ func _Backend_LockAccount_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/notekeeper.Backend/LockAccount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BackendServer).LockAccount(ctx, req.(*LockAccountRequest))
+		return srv.(BackendServer).LockAccount(ctx, req.(*IdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Backend_UIState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UIStateRequest)
+	in := new(TokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -760,7 +620,7 @@ func _Backend_UIState_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: "/notekeeper.Backend/UIState",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BackendServer).UIState(ctx, req.(*UIStateRequest))
+		return srv.(BackendServer).UIState(ctx, req.(*TokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -784,7 +644,7 @@ func _Backend_SaveUIState_Handler(srv interface{}, ctx context.Context, dec func
 }
 
 func _Backend_AccountState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AccountStateRequest)
+	in := new(TokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -796,7 +656,7 @@ func _Backend_AccountState_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: "/notekeeper.Backend/AccountState",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BackendServer).AccountState(ctx, req.(*AccountStateRequest))
+		return srv.(BackendServer).AccountState(ctx, req.(*TokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -871,43 +731,40 @@ var _Backend_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("backend.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 608 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xb4, 0x56, 0x7d, 0x6f, 0x12, 0x4f,
-	0x10, 0xa6, 0xfc, 0x7e, 0x05, 0x3a, 0x6d, 0x31, 0x59, 0x28, 0xe2, 0x99, 0xb4, 0xb8, 0x31, 0xbe,
-	0xc4, 0x88, 0x46, 0x3f, 0x80, 0x6f, 0x8d, 0x11, 0x53, 0x5f, 0x72, 0xa4, 0x36, 0xfa, 0x4f, 0x5d,
-	0xb8, 0x11, 0x2e, 0xd0, 0xdd, 0xf3, 0x76, 0xb1, 0x1f, 0xd6, 0x2f, 0x63, 0xee, 0xf6, 0xc0, 0x9b,
-	0x63, 0x0b, 0x92, 0xe8, 0x7f, 0xcc, 0xed, 0xec, 0x33, 0xcf, 0x3c, 0xf7, 0xcc, 0x0d, 0xb0, 0x3f,
-	0x10, 0xc3, 0x09, 0xca, 0xa0, 0x1b, 0xc5, 0xca, 0x28, 0x06, 0x52, 0x19, 0x9c, 0x20, 0x46, 0x18,
-	0xf3, 0x3b, 0x50, 0x3f, 0xed, 0xf5, 0x8d, 0x30, 0xe8, 0xe3, 0xf7, 0x19, 0x6a, 0xc3, 0x9a, 0xb0,
-	0x6d, 0xd4, 0x04, 0x65, 0x7b, 0xab, 0xb3, 0x75, 0x6f, 0xc7, 0xb7, 0x01, 0x3f, 0x83, 0x6b, 0x8b,
-	0x3c, 0x1d, 0x29, 0xa9, 0x91, 0x75, 0x60, 0xf7, 0x32, 0x94, 0x81, 0xba, 0x3c, 0x0b, 0x03, 0x33,
-	0x4e, 0xd3, 0xb7, 0xfd, 0xfc, 0x23, 0xc6, 0x61, 0xcf, 0x86, 0x6f, 0x30, 0x1c, 0x8d, 0x4d, 0xbb,
-	0x9c, 0xa6, 0x90, 0x67, 0xfc, 0x0b, 0xb0, 0xbe, 0xf8, 0x81, 0x05, 0x12, 0x7f, 0x07, 0xfb, 0x21,
-	0x34, 0x08, 0x76, 0x46, 0xbc, 0x05, 0x15, 0x6d, 0x84, 0x99, 0xe9, 0xac, 0xc5, 0x2c, 0xe2, 0x0f,
-	0xa0, 0xf1, 0x62, 0x38, 0x54, 0x33, 0x69, 0xfe, 0x40, 0x90, 0xb7, 0xd0, 0xa4, 0xc9, 0x19, 0xb8,
-	0x07, 0x35, 0x1d, 0x8e, 0x24, 0x06, 0x3d, 0x7b, 0xa1, 0xe6, 0x2f, 0xe2, 0xa4, 0xf0, 0x54, 0x0d,
-	0x27, 0x18, 0xa4, 0x6c, 0x6b, 0x7e, 0x16, 0xf1, 0xfb, 0xd0, 0xf8, 0x10, 0xa1, 0x7c, 0x27, 0xb4,
-	0xc1, 0xf8, 0x78, 0x30, 0x2f, 0xcc, 0xe0, 0xff, 0x48, 0x64, 0xdd, 0xef, 0xf8, 0xe9, 0x6f, 0xde,
-	0x85, 0x26, 0x4d, 0x5d, 0xd3, 0xd3, 0x57, 0x68, 0xbe, 0x8a, 0x51, 0x18, 0xcc, 0xc8, 0xe6, 0xb0,
-	0xa5, 0xb8, 0xc0, 0x39, 0x76, 0xf2, 0x3b, 0x69, 0x14, 0x2f, 0x44, 0x38, 0x4d, 0xd9, 0xed, 0xf8,
-	0x36, 0x60, 0x87, 0x00, 0x91, 0xd0, 0x3a, 0x1a, 0xc7, 0x42, 0x63, 0xfb, 0xbf, 0xf4, 0x28, 0xf7,
-	0x84, 0x3f, 0x83, 0x83, 0x42, 0x85, 0xd5, 0x94, 0x58, 0x1d, 0xca, 0x61, 0x90, 0xd5, 0x28, 0x87,
-	0x01, 0x7f, 0x0d, 0xcd, 0x53, 0x99, 0x28, 0x51, 0xa0, 0x68, 0xf3, 0xb6, 0xe6, 0x79, 0x05, 0x22,
-	0xe5, 0x25, 0x22, 0x8f, 0xe0, 0xa0, 0x80, 0xb3, 0x5e, 0x9b, 0x7e, 0x38, 0x92, 0xa1, 0xfc, 0x97,
-	0xda, 0x14, 0x2a, 0x6c, 0xa8, 0xcd, 0x5d, 0x0b, 0xa0, 0x66, 0x66, 0xb5, 0x38, 0xfc, 0x31, 0xb4,
-	0x8a, 0x89, 0x6b, 0xba, 0xbf, 0x0d, 0xec, 0x64, 0xad, 0xe8, 0xc9, 0x08, 0x9d, 0x6c, 0x20, 0xe9,
-	0xf9, 0xdc, 0x0c, 0xef, 0x95, 0xc1, 0x81, 0x52, 0x93, 0x55, 0x9a, 0x5e, 0x87, 0xea, 0x4c, 0x63,
-	0x7c, 0xbe, 0xe8, 0xb8, 0x92, 0x84, 0xbd, 0x80, 0xdd, 0x80, 0x9a, 0x1e, 0xe3, 0xf4, 0x5b, 0x72,
-	0x62, 0x45, 0xad, 0xa6, 0x71, 0x2f, 0xe0, 0xcf, 0xa1, 0x55, 0x2c, 0xb0, 0x99, 0xa4, 0x4f, 0x7e,
-	0x56, 0xa0, 0xfa, 0xd2, 0x7e, 0x0f, 0x59, 0x1f, 0xf6, 0xf2, 0xd3, 0xc4, 0x8e, 0xba, 0xbf, 0x3f,
-	0x8d, 0x5d, 0xc7, 0x48, 0x7a, 0x9d, 0xab, 0x13, 0x2c, 0x0d, 0x5e, 0x62, 0x9f, 0x60, 0x9f, 0x0c,
-	0x04, 0x23, 0x97, 0x5c, 0xd3, 0xe8, 0xdd, 0x5a, 0x91, 0x91, 0xc7, 0x25, 0xfe, 0xa6, 0xb8, 0xae,
-	0x11, 0xa2, 0xb8, 0xce, 0xe1, 0xb0, 0xb8, 0xc4, 0xa4, 0x14, 0xd7, 0x35, 0x21, 0x14, 0xd7, 0xe9,
-	0x70, 0x5e, 0x62, 0x9f, 0xa1, 0x4e, 0x2d, 0xc9, 0x96, 0xae, 0x2d, 0xf9, 0xda, 0xe3, 0xab, 0x52,
-	0x16, 0xd0, 0x1f, 0x61, 0x37, 0xe7, 0x4a, 0x76, 0x98, 0xbf, 0xb4, 0x6c, 0x6a, 0xef, 0xe8, 0xca,
-	0xf3, 0x05, 0xe2, 0x31, 0x54, 0xb3, 0x35, 0xc1, 0x3c, 0x22, 0x1a, 0xd9, 0x4b, 0xde, 0x4d, 0xe7,
-	0x59, 0x9e, 0x57, 0x6e, 0xe1, 0x50, 0x5e, 0xcb, 0x5b, 0x8e, 0xf2, 0x72, 0x6c, 0x2a, 0x5e, 0x4a,
-	0x1c, 0x9a, 0x5f, 0x33, 0xd4, 0xa1, 0x8e, 0x6d, 0x45, 0x1d, 0xea, 0xda, 0x50, 0xf6, 0xcd, 0xd0,
-	0x21, 0x62, 0x0e, 0x03, 0x16, 0x26, 0x98, 0xbe, 0x19, 0xf7, 0x0c, 0xf2, 0xd2, 0xa0, 0x92, 0xfe,
-	0xc5, 0x78, 0xfa, 0x2b, 0x00, 0x00, 0xff, 0xff, 0xb7, 0x94, 0xb1, 0x27, 0x73, 0x08, 0x00, 0x00,
+	// 556 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xb4, 0x55, 0x4d, 0x6f, 0x13, 0x31,
+	0x10, 0x6d, 0x42, 0xd3, 0x24, 0x93, 0x0f, 0x24, 0x93, 0x96, 0x90, 0x4a, 0x25, 0x58, 0x1c, 0xca,
+	0x25, 0x07, 0xb8, 0x72, 0xa1, 0x7c, 0xa8, 0x81, 0x86, 0x4a, 0x1b, 0xaa, 0x4a, 0x5c, 0x5a, 0x27,
+	0x1e, 0x12, 0x2b, 0xa9, 0xbd, 0xac, 0x1d, 0xfa, 0xe7, 0x39, 0x20, 0xef, 0x3a, 0xa9, 0x9d, 0x2c,
+	0x29, 0x42, 0x70, 0xf3, 0xb3, 0x67, 0xdf, 0x3c, 0xcf, 0xf3, 0xcc, 0x42, 0x63, 0xc4, 0xc6, 0x33,
+	0x94, 0xbc, 0x17, 0x27, 0xca, 0x28, 0x02, 0x52, 0x19, 0x9c, 0x21, 0xc6, 0x98, 0xd0, 0xd7, 0xd0,
+	0x1c, 0x1a, 0x66, 0x16, 0x3a, 0x42, 0x1d, 0x2b, 0xa9, 0x91, 0x1c, 0xc0, 0x9e, 0x4e, 0x77, 0xda,
+	0x85, 0x6e, 0xe1, 0xb8, 0x1a, 0x39, 0x44, 0x08, 0xec, 0x8e, 0x15, 0xc7, 0x76, 0xb1, 0x5b, 0x38,
+	0x2e, 0x45, 0xe9, 0x9a, 0x3e, 0x87, 0xfa, 0x17, 0x35, 0x43, 0x19, 0xe1, 0xf7, 0x05, 0x6a, 0x43,
+	0x5a, 0x50, 0x32, 0x16, 0xbb, 0x4f, 0x33, 0x40, 0x0f, 0xa1, 0xda, 0xe7, 0xcb, 0x90, 0x26, 0x14,
+	0x05, 0x77, 0xe7, 0x45, 0xc1, 0xe9, 0x29, 0x80, 0x3d, 0x74, 0xc9, 0xd7, 0x4e, 0x3d, 0x31, 0xc5,
+	0x5c, 0x31, 0x0f, 0x3c, 0x31, 0x97, 0xf0, 0xf0, 0xa2, 0x6f, 0x2f, 0x83, 0x2b, 0xba, 0x2e, 0xd4,
+	0x6e, 0x85, 0xe4, 0xea, 0xf6, 0x52, 0x70, 0x33, 0x4d, 0x79, 0x4b, 0x91, 0xbf, 0x45, 0x28, 0xd4,
+	0x33, 0x78, 0x8a, 0x62, 0x32, 0x35, 0xee, 0x76, 0xc1, 0x1e, 0xfd, 0x0a, 0x64, 0xc8, 0x7e, 0xe0,
+	0x8a, 0x3c, 0xbb, 0xc8, 0xbf, 0xe1, 0xfe, 0x08, 0xad, 0x37, 0xe3, 0xb1, 0x5a, 0x48, 0x13, 0x2a,
+	0xef, 0x40, 0x45, 0x8b, 0x89, 0x44, 0xde, 0xcf, 0x8a, 0x59, 0x89, 0x56, 0xd8, 0x16, 0x65, 0xae,
+	0xc6, 0x33, 0xe4, 0x29, 0x63, 0x25, 0x72, 0x88, 0xbe, 0x80, 0x47, 0xe7, 0x31, 0xca, 0x01, 0xd3,
+	0x06, 0x93, 0x77, 0xa3, 0xa5, 0x50, 0x02, 0xbb, 0x31, 0x73, 0x0a, 0xab, 0x51, 0xba, 0xa6, 0xd7,
+	0xd0, 0x7a, 0x9b, 0x20, 0x33, 0xe8, 0x92, 0x7b, 0xb1, 0x92, 0xdd, 0xe0, 0x32, 0xd6, 0xae, 0xad,
+	0xa9, 0x78, 0xc3, 0xc4, 0xdc, 0x59, 0x90, 0x01, 0x72, 0x04, 0x10, 0x33, 0xad, 0xe3, 0x69, 0xc2,
+	0x74, 0xe6, 0x43, 0x35, 0xf2, 0x76, 0xe8, 0x07, 0x68, 0x5d, 0x48, 0x2b, 0x6c, 0x2d, 0xc3, 0xba,
+	0xc3, 0x21, 0x4f, 0x71, 0x83, 0xe7, 0x1a, 0x5a, 0x43, 0x31, 0x91, 0x42, 0xfe, 0x37, 0xa5, 0x57,
+	0xb0, 0x9f, 0xd5, 0xe2, 0xb3, 0x32, 0x38, 0x52, 0x6a, 0xb6, 0x2d, 0xc5, 0x63, 0x28, 0x2f, 0x34,
+	0x26, 0x57, 0x82, 0x2f, 0x5f, 0xa4, 0x85, 0x7d, 0x4e, 0x9e, 0x40, 0x45, 0x4f, 0x71, 0xfe, 0xcd,
+	0x9e, 0x64, 0x39, 0xca, 0x29, 0xee, 0xf3, 0x97, 0x3f, 0x4b, 0x50, 0x3e, 0xc9, 0x3a, 0x90, 0x0c,
+	0xa0, 0xee, 0x7b, 0x44, 0x9e, 0xf6, 0xee, 0x9a, 0xb1, 0x97, 0xe3, 0x5e, 0xa7, 0xe3, 0x07, 0x84,
+	0xad, 0x4a, 0x77, 0xc8, 0x27, 0x68, 0x04, 0x3e, 0x92, 0xae, 0x1f, 0x9e, 0x67, 0x71, 0xe7, 0xc0,
+	0x8f, 0xb8, 0x6b, 0x3d, 0xba, 0x43, 0xce, 0xa1, 0x11, 0x58, 0x16, 0x92, 0xe5, 0xb9, 0x79, 0xbf,
+	0xba, 0xc0, 0xbb, 0x90, 0x30, 0xcf, 0xd6, 0x2d, 0xea, 0xde, 0x43, 0xd3, 0x7e, 0xa1, 0x16, 0x66,
+	0xc9, 0xb6, 0xbf, 0x1e, 0xfb, 0x27, 0x9a, 0x4e, 0xa0, 0x76, 0xe6, 0x5d, 0xf1, 0x2f, 0x39, 0xca,
+	0x6e, 0x18, 0x90, 0xb6, 0x1f, 0xe8, 0xcf, 0xc2, 0xce, 0x61, 0x50, 0xbc, 0x70, 0x30, 0xa5, 0xb5,
+	0xa9, 0x79, 0x43, 0x85, 0x1c, 0x05, 0x09, 0x37, 0xa6, 0xcd, 0x3d, 0x82, 0xce, 0xa0, 0xee, 0x4f,
+	0x91, 0x2d, 0xaa, 0x02, 0x07, 0xf2, 0x26, 0x0f, 0xdd, 0x21, 0x03, 0x68, 0x86, 0x0d, 0x41, 0x9e,
+	0x6d, 0xbe, 0xaa, 0xb5, 0x66, 0xf9, 0xbd, 0x71, 0xa3, 0xbd, 0xf4, 0xaf, 0xf3, 0xea, 0x57, 0x00,
+	0x00, 0x00, 0xff, 0xff, 0x63, 0xc9, 0xe2, 0xdb, 0x86, 0x06, 0x00, 0x00,
 }

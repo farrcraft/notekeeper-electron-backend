@@ -1,32 +1,23 @@
 package rpc
 
 import (
-	"fmt"
 	"net"
-	"path/filepath"
-	"time"
 
 	"../account"
 	pb "../proto"
-	"../uistate"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	//	"google.golang.org/grpc/credentials"
 )
 
-const (
-	// MasterDbFile is the core bolt database filename
-	MasterDbFile = "notekeeper.db"
-)
-
 // Server is a gRPC server instance
 type Server struct {
-	Logger  *logrus.Logger
-	DB      *bolt.DB // This is the master application DB
-	Account *account.Account
+	Logger   *logrus.Logger
+	DB       *bolt.DB // This is the master application DB
+	DataPath string
+	Account  *account.Account
 }
 
 // NewServer creates a new RPCServer instance
@@ -75,32 +66,10 @@ func (rpc *Server) Start(port string) bool {
 func (rpc *Server) Stop() {
 	if rpc.DB != nil {
 		rpc.DB.Close()
+		rpc.DB = nil
 	}
 	if rpc.Account != nil && rpc.Account.DB != nil {
 		rpc.Account.DB.Close()
+		rpc.Account.DB = nil
 	}
-}
-
-// OpenMasterDb opens the master database in the requested directory
-func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.StatusResponse, error) {
-	// This is the master index db
-	// There are additional databases where actual notebook data is stored (one DB file per account)
-	fileName := fmt.Sprint(filepath.Clean(request.Path), filepath.Separator, MasterDbFile)
-	rpc.Logger.Info("Opening master db file [", fileName, "]")
-	var err error
-	rpc.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
-	if err != nil {
-		rpc.Logger.Error("Unable to open DB - ", err)
-		return nil, err
-	}
-
-	// make sure DB has a default UIState saved
-	state := uistate.NewUIState(rpc.DB, rpc.Logger)
-	err = state.Create()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &pb.StatusResponse{}
-	return response, nil
 }

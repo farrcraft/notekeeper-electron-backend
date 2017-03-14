@@ -9,6 +9,8 @@ import (
 )
 
 // UIState contains the saved settings for the UI
+// The UI state includes only the most generic persistent UI settings
+// !!!!The stored representation **IS NOT ENCRYPTED**!!!
 type UIState struct {
 	WindowWidth  int32          `json:"window_width"`
 	WindowHeight int32          `json:"window_height"`

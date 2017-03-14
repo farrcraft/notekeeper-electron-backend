@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"../codes"
 	pb "../proto"
 	"../uistate"
 	"golang.org/x/net/context"
@@ -10,13 +11,17 @@ import (
 func (rpc *Server) UIState(ctx context.Context, request *pb.TokenRequest) (*pb.UIStateResponse, error) {
 	state := uistate.NewUIState(rpc.DB, rpc.Logger)
 	err := state.Load()
-	if err != nil {
-		return nil, err
-	}
 	response := &pb.UIStateResponse{
-		WindowWidth:  state.WindowWidth,
-		WindowHeight: state.WindowHeight,
+		Status: &pb.StatusResponse{},
 	}
+	if err != nil {
+		response.Status.Status = codes.StatusError
+		response.Status.Code = int32(codes.ErrorLoadUIState)
+		return response, nil
+	}
+	response.Status.Status = codes.StatusOK
+	response.WindowWidth = state.WindowWidth
+	response.WindowHeight = state.WindowHeight
 	return response, nil
 }
 
@@ -26,10 +31,12 @@ func (rpc *Server) SaveUIState(ctx context.Context, request *pb.SaveUIStateReque
 	state.WindowWidth = request.WindowWidth
 	state.WindowHeight = request.WindowHeight
 	err := state.Save()
-	if err != nil {
-		return nil, err
-	}
 	response := &pb.StatusResponse{}
-
+	if err != nil {
+		response.Status = codes.StatusError
+		response.Code = int32(codes.ErrorSaveUIState)
+		return response, nil
+	}
+	response.Status = codes.StatusOK
 	return response, nil
 }

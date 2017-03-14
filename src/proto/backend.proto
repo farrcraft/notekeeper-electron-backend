@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package notekeeper;
 
+// N.B. - In the go bindings, case of the generated methods matches these proto definitions
+// However, in the JS bindings, method names start lowercase (so it's, e.g. "openMasterDb" instead of "OpenMasterDb")
+// If you try to invoke the latter, the client will just hang indefinitely.
 service Backend {
 	rpc OpenMasterDb(OpenMasterDbRequest) returns (StatusResponse) {}
 
@@ -42,13 +45,15 @@ message IdResponse {
 }
 
 message UIStateResponse {
-	int32 windowWidth = 1;
-	int32 windowHeight = 2;
+	StatusResponse status = 1;
+	int32 windowWidth = 2;
+	int32 windowHeight = 3;
 }
 
 message SaveUIStateRequest {
-	int32 windowWidth = 1;
-	int32 windowHeight = 2;
+	StatusResponse status = 1;
+	int32 windowWidth = 2;
+	int32 windowHeight = 3;
 }
 
 message AccountStateResponse {

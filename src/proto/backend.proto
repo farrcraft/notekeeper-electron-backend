@@ -5,6 +5,10 @@ package notekeeper;
 // N.B. - In the go bindings, case of the generated methods matches these proto definitions
 // However, in the JS bindings, method names start lowercase (so it's, e.g. "openMasterDb" instead of "OpenMasterDb")
 // If you try to invoke the latter, the client will just hang indefinitely.
+// Another gotcha with the JS bindings is getter/setter method names -
+// The entire fieldname is lowercase except for the first character in the method name.
+// E.g., if the message field is named "windowWidth", the getter/setter pair is "getWindowwidth"/"setWindowwidth".
+// Trying to call, e.g. "getWindowWidth" will cause the client to hang as with incorrect service method names.
 service Backend {
 	rpc OpenMasterDb(OpenMasterDbRequest) returns (StatusResponse) {}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/reflection"
 	//	"google.golang.org/grpc/credentials"
 )
@@ -35,6 +36,10 @@ func (rpc *Server) Start(port string) bool {
 		rpc.Logger.Error("Listen error - ", err)
 		return false
 	}
+
+	// make sure gRPC logging goes to our logger and not the default stderr
+	grpclog.SetLogger(rpc.Logger)
+
 	// [FIXME] - need to make this use TLS
 	// can we just generate a certificate on the fly to use here?
 	var opts []grpc.ServerOption

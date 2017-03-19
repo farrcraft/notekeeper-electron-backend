@@ -15,7 +15,7 @@ import (
 
 const (
 	// BackendPort is the GRPC service port
-	BackendPort = ":53017"
+	BackendPort = "localhost:53017"
 	// LogLevel is the default log level
 	LogLevel = "DEBUG"
 	// LogFile is the default log file name

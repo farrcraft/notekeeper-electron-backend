@@ -3,7 +3,7 @@ build:
 	cd src; go build
 
 test:
-	cd src; go test -v
+	cd src; go test ./... -v -race
 
 gvt:
 	go get -u github.com/FiloSottile/gvt

@@ -28,6 +28,23 @@ type Account struct {
 	Logger     *logrus.Logger `json:"-"`
 }
 
+// MapCount returns the number of records in the account_map table
+func MapCount(db *bolt.DB) int {
+	count := 0
+	db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("account_map"))
+		if bucket == nil {
+			return nil
+		}
+		cursor := bucket.Cursor()
+		for key, _ := cursor.First(); key != nil; key, _ = cursor.Next() {
+			count++
+		}
+		return nil
+	})
+	return count
+}
+
 // IsLocked returns whether the account is in a locked state or not
 func (account *Account) IsLocked() bool {
 	if account.ActiveUser == nil {
@@ -141,6 +158,10 @@ func (account *Account) Lookup() error {
 	account.MasterDB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("account_map"))
+		// If bucket doesn't exist, no accounts have been created yet
+		if bucket == nil {
+			return nil
+		}
 		cursor := bucket.Cursor()
 
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {

@@ -19,6 +19,11 @@ func TestAccount(t *testing.T) {
 		t.Error("Failed to create master db - ", err)
 	}
 
+	count := MapCount(masterDB)
+	if count != 0 {
+		t.Error("Expected account map count to be 0")
+	}
+
 	account := NewAccount(masterDB, logger, "test_account")
 	if account.Name != "test_account" {
 		t.Error("Expected account name to be test_account")
@@ -48,6 +53,11 @@ func TestAccount(t *testing.T) {
 	err = account.Save()
 	if err != nil {
 		t.Error("Expected to save account")
+	}
+
+	count = MapCount(masterDB)
+	if count != 1 {
+		t.Error("Expected account map count to be 1")
 	}
 
 	// Teardown

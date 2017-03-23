@@ -63,6 +63,7 @@ message SaveUIStateRequest {
 message AccountStateResponse {
 	bool signedIn = 1;
 	bool locked = 2;
+	bool exists = 3;
 }
 
 message OpenMasterDbRequest {

@@ -14,10 +14,17 @@ func (rpc *Server) AccountState(ctx context.Context, request *pb.TokenRequest) (
 	response := &pb.AccountStateResponse{
 		SignedIn: false,
 		Locked:   true,
+		Exists:   false,
 	}
 	if rpc.Account != nil {
 		response.SignedIn = true
 		response.Locked = rpc.Account.IsLocked()
+		response.Exists = true
+	} else {
+		count := account.MapCount(rpc.DB)
+		if count > 0 {
+			response.Exists = true
+		}
 	}
 	return response, nil
 }

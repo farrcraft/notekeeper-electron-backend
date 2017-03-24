@@ -35,7 +35,7 @@ func (rpc *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountR
 	newAccount := account.NewAccount(rpc.DB, rpc.Logger, request.Name)
 
 	// create a new db file for the account
-	err := newAccount.OpenAccountDb()
+	err := newAccount.OpenAccountDb(rpc.DataPath)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (rpc *Server) UnlockAccount(ctx context.Context, request *pb.UnlockAccountR
 		return nil, errors.New("invalid credentials")
 	}
 
-	err = rpc.Account.OpenAccountDb()
+	err = rpc.Account.OpenAccountDb(rpc.DataPath)
 	if err != nil {
 		return nil, errors.New("unable to open account db")
 	}
@@ -118,7 +118,7 @@ func (rpc *Server) SigninAccount(ctx context.Context, request *pb.SigninAccountR
 		return nil, errors.New("invalid account")
 	}
 
-	err = newAccount.OpenAccountDb()
+	err = newAccount.OpenAccountDb(rpc.DataPath)
 	if err != nil {
 		return nil, errors.New("unable to open account db")
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"../crypto"
@@ -58,8 +59,10 @@ func (account *Account) IsLocked() bool {
 
 // OpenAccountDb opens the database file for a account
 // The file is created if it doesn't already exist
-func (account *Account) OpenAccountDb() error {
-	fileName := fmt.Sprint(account.ID.String(), ".db")
+func (account *Account) OpenAccountDb(dataPath string) error {
+	dbFile := fmt.Sprint(account.ID.String(), ".db")
+	fileName := filepath.Join(dataPath, dbFile)
+	account.Logger.Info("Opening account db file [", fileName, "]")
 	var err error
 	account.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {

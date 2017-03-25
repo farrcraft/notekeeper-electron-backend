@@ -17,7 +17,7 @@ const (
 	// BackendPort is the GRPC service port
 	BackendPort = "localhost:53017"
 	// LogLevel is the default log level
-	LogLevel = "DEBUG"
+	LogLevel = "DEBUG" // [FIXME] - don't ship debug logging
 	// LogFile is the default log file name
 	LogFile = "notekeeper.log"
 )

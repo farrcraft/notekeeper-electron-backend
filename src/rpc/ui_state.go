@@ -9,6 +9,7 @@ import (
 
 // UIState returns the the UI state as saved by the master DB
 func (rpc *Server) UIState(ctx context.Context, request *pb.TokenRequest) (*pb.UIStateResponse, error) {
+	rpc.Logger.Debug("rpc - getting ui state")
 	state := uistate.NewUIState(rpc.DB, rpc.Logger)
 	err := state.Load()
 	response := &pb.UIStateResponse{
@@ -37,6 +38,7 @@ func (rpc *Server) UIState(ctx context.Context, request *pb.TokenRequest) (*pb.U
 
 // SaveUIState saves the current UI state to the master DB
 func (rpc *Server) SaveUIState(ctx context.Context, request *pb.SaveUIStateRequest) (*pb.StatusResponse, error) {
+	rpc.Logger.Debug("rpc - saving ui state")
 	state := uistate.NewUIState(rpc.DB, rpc.Logger)
 	state.WindowWidth = request.WindowWidth
 	state.WindowHeight = request.WindowHeight

@@ -19,6 +19,7 @@ const (
 
 // OpenMasterDb opens the master database in the requested directory
 func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.StatusResponse, error) {
+	rpc.Logger.Debug("rpc - opening master db")
 	// need to close any existing db
 	if rpc.DB != nil {
 		rpc.DB.Close()

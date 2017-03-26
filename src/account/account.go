@@ -119,6 +119,7 @@ func (account *Account) Save() error {
 			account.Logger.Error("Error saving account - ", err)
 			return err
 		}
+		account.Logger.Debug("Saved account")
 		return nil
 	})
 	if err != nil {
@@ -163,13 +164,14 @@ func (account *Account) Lookup() error {
 		bucket := tx.Bucket([]byte("account_map"))
 		// If bucket doesn't exist, no accounts have been created yet
 		if bucket == nil {
+			account.Logger.Debug("account map bucket does not exist")
 			return nil
 		}
 		cursor := bucket.Cursor()
 
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
 			// extract the salt from the existing encrypted name
-			encryptedName, salt := crypto.ExtractSalt(key)
+			salt, encryptedName := crypto.ExtractSalt(key)
 			// create a new key using the extracted salt and the unencrypted name we're searching for
 			checkName, err := crypto.DeriveKey([]byte(account.Name), salt[:])
 			if err != nil {
@@ -177,7 +179,7 @@ func (account *Account) Lookup() error {
 				return err
 			}
 			// the new key should match the existing key if we have the right name and salt
-			if subtle.ConstantTimeCompare(encryptedName, checkName[:]) == 1 {
+			if subtle.ConstantTimeCompare(encryptedName[:], checkName[:]) == 1 {
 				account.ID, err = uuid.FromBytes(value)
 				if err != nil {
 					account.Logger.Error("Error converting account map uuid - ", err)
@@ -190,6 +192,7 @@ func (account *Account) Lookup() error {
 	})
 	if account.ID == uuid.Nil {
 		account.ID = originalID
+		account.Logger.Debug("account lookup - no account found for [", account.Name, "]")
 		return errors.New("no account found")
 	}
 	return nil
@@ -197,9 +200,14 @@ func (account *Account) Lookup() error {
 
 // Load loads an account from the database
 func (account *Account) Load() error {
-	account.MasterDB.View(func(tx *bolt.Tx) error {
+	err := account.MasterDB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
-		bucket := tx.Bucket([]byte("account"))
+		bucket := tx.Bucket([]byte("accounts"))
+		if bucket == nil {
+			err := errors.New("account bucket does not exist")
+			account.Logger.Error(err)
+			return err
+		}
 		cursor := bucket.Cursor()
 		key, value := cursor.Seek(account.ID.Bytes())
 		if key == nil {
@@ -208,8 +216,16 @@ func (account *Account) Load() error {
 			return err
 		}
 
-		// need to decrypt value
-		decryptedData, err := crypto.Open(account.ActiveUser.PassphraseKey, value)
+		// account data is encrypted with the account key and not the user key
+		account.Logger.Debug("account key [", account.ActiveUser.AccountKey, "] passphrase key [", account.ActiveUser.PassphraseKey, "]")
+		accountKey, err := crypto.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
+		if err != nil {
+			account.Logger.Error("Error opening account key - ", err)
+			return err
+		}
+
+		// decrypt value
+		decryptedData, err := crypto.Open(accountKey, value)
 		if err != nil {
 			account.Logger.Error("Error decrypting account data - ", err)
 			return err
@@ -222,5 +238,5 @@ func (account *Account) Load() error {
 		}
 		return nil
 	})
-	return nil
+	return err
 }

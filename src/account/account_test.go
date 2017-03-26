@@ -29,7 +29,7 @@ func TestAccount(t *testing.T) {
 		t.Error("Expected account name to be test_account")
 	}
 
-	err = account.OpenAccountDb()
+	err = account.OpenAccountDb("./")
 	if err != nil {
 		t.Error("Expected to open account db - ", err)
 	}

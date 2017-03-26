@@ -27,12 +27,13 @@ func (rpc *Server) AccountState(ctx context.Context, request *pb.TokenRequest) (
 			response.Exists = true
 		}
 	}
+	rpc.Logger.Debug("rpc - account state is signed in [", response.SignedIn, "] locked [", response.Locked, "] exists [", response.Exists, "]")
 	return response, nil
 }
 
 // CreateAccount is the GRPC method to create a new account
 func (rpc *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.IdResponse, error) {
-	rpc.Logger.Debug("rpc - creating account")
+	rpc.Logger.Debug("rpc - creating account [", request.Name, "]")
 	// create account object
 	newAccount := account.NewAccount(rpc.DB, rpc.Logger, request.Name)
 
@@ -201,6 +202,10 @@ func (rpc *Server) LockAccount(ctx context.Context, request *pb.IdRequest) (*pb.
 		return nil, errors.New("no active user")
 	}
 	crypto.Zero(rpc.Account.ActiveUser.PassphraseKey)
+	if rpc.Account.DB == nil {
+		rpc.Logger.Debug("rpc - lock account error - no account db")
+		return nil, errors.New("no account db")
+	}
 	rpc.Account.DB.Close()
 	rpc.Account.DB = nil
 	response := &pb.StatusResponse{}

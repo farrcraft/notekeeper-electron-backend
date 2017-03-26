@@ -49,6 +49,10 @@ func NewUIState(db *bolt.DB, logger *logrus.Logger) *UIState {
 
 // Create creates a default UI state if none exists yet
 func (state *UIState) Create() error {
+	if state.DB == nil {
+		state.Logger.Debug("ui state create - missing db")
+		return errors.New("ui state create - no db available")
+	}
 	err := state.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("ui_state"))
 		if bucket == nil {

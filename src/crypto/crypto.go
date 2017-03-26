@@ -105,6 +105,13 @@ func DeriveKey(passphrase []byte, salt []byte) (*[KeySize]byte, error) {
 	return key, err
 }
 
+// EmbedSalt takes a key and salt and embeds the salt into the key
+func EmbedSalt(key *[KeySize]byte, salt []byte) []byte {
+	out := key[0:len(key)]
+	out = append(salt, out...)
+	return out
+}
+
 // DeriveKeyAndSalt takes a passphrase and derives a key and salt from it
 func DeriveKeyAndSalt(passphrase []byte) (*[KeySize]byte, []byte, error) {
 	salt, err := RandBytes(SaltSize)

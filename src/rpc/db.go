@@ -22,6 +22,7 @@ func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbReq
 	rpc.Logger.Debug("rpc - opening master db")
 	// need to close any existing db
 	if rpc.DB != nil {
+		rpc.Logger.Debug("rpc - closing master db for reopen")
 		rpc.DB.Close()
 		rpc.DB = nil
 	}
@@ -46,6 +47,7 @@ func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbReq
 	if err != nil {
 		response.Status = codes.StatusError
 		response.Code = int32(codes.ErrorCreateUIState)
+		rpc.Logger.Debug("rpc - open master db - default state error")
 		return response, nil
 	}
 	response.Status = codes.StatusOK

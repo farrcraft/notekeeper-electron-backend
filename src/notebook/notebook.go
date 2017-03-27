@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"../codes"
 	"../crypto"
 	"../note"
 	"../tag"
@@ -48,43 +49,57 @@ func NewNotebook(db *bolt.DB, logger *logrus.Logger) *Notebook {
 // Save saves a notebook to the database
 // Account.ActiveUser.PassphraseKey
 func (notebook *Notebook) Save(passphraseKey []byte) error {
-	notebook.DB.Update(func(tx *bolt.Tx) error {
+	err := notebook.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notebooks"))
 		if err != nil {
-			notebook.Logger.Error("Error creating notebook bucket - ", err)
-			return err
+			notebook.Logger.Debug("Error creating notebook bucket - ", err)
+			code := codes.New(codes.ErrorNotebookBucket)
+			return code
 		}
 
 		// serialize notebook data
 		data, err := json.Marshal(notebook)
 		if err != nil {
-			notebook.Logger.Error("Error marshaling notebook - ", err)
-			return err
+			notebook.Logger.Debug("Error marshaling notebook - ", err)
+			code := codes.New(codes.ErrorNotebookMarshal)
+			return code
 		}
 
 		// retrieve the encryption key
 		decryptedKey, err := crypto.Open(passphraseKey, notebook.EncryptedKey)
 		if err != nil {
-			notebook.Logger.Error("Error retrieving notebook key - ", err)
-			return err
+			notebook.Logger.Debug("Error retrieving notebook key - ", err)
+			code := codes.New(codes.ErrorNotebookKey)
+			return code
 		}
 
 		// encrypt the data
 		encryptedData, err := crypto.Seal(decryptedKey, data)
 		if err != nil {
-			notebook.Logger.Error("Error encrypting notebook data - ", err)
-			return err
+			notebook.Logger.Debug("Error encrypting notebook data - ", err)
+			code := codes.New(codes.ErrorNotebookDecrypt)
+			return code
 		}
 
 		// finally, save it
 		err = bucket.Put(notebook.ID.Bytes(), encryptedData)
 		if err != nil {
-			notebook.Logger.Error("Error saving notebook - ", err)
-			return err
+			notebook.Logger.Debug("Error writing notebook - ", err)
+			code := codes.New(codes.ErrorNotebookWrite)
+			return code
 		}
 		return nil
 	})
+
+	if err != nil {
+		if codes.IsInternalError(err) {
+			return err
+		}
+		notebook.Logger.Debug("Error saving notebook - err")
+		code := codes.New(codes.ErrorNotebookSave)
+		return code
+	}
 
 	return nil
 }

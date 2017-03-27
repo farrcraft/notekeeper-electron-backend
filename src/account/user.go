@@ -3,9 +3,9 @@ package account
 import (
 	"crypto/subtle"
 	"encoding/json"
-	"errors"
 	"time"
 
+	"../codes"
 	"../crypto"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
@@ -56,7 +56,7 @@ func NewUser(db *bolt.DB, logger *logrus.Logger, email string) *User {
 func (user *User) Lookup() error {
 	originalID := user.ID
 	user.ID = uuid.Nil
-	user.DB.View(func(tx *bolt.Tx) error {
+	err := user.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("user_map"))
 		cursor := bucket.Cursor()
@@ -64,13 +64,12 @@ func (user *User) Lookup() error {
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
 			// extract the salt from the existing encrypted email
 			salt, encryptedEmail := crypto.ExtractSalt(key)
-			user.Logger.Debug("original key [", key, "] extracted user salt [", salt, "] encrypted value [", encryptedEmail, "] email [", user.Profile.Email, "]")
 			// create a new key using the extracted salt and the unencrypted email we're searching for
 			checkEmail, err := crypto.DeriveKey([]byte(user.Profile.Email), salt[:])
-			user.Logger.Debug("derived key [", checkEmail, "]")
 			if err != nil {
-				user.Logger.Error("Error deriving user map key - ", err)
-				return err
+				user.Logger.Debug("Error deriving user map key - ", err)
+				code := codes.New(codes.ErrorUserMapDerive)
+				return code
 			}
 			// the new key should match the existing key if we have the right email and salt
 			if subtle.ConstantTimeCompare(encryptedEmail[:], checkEmail[:]) == 1 {
@@ -78,17 +77,25 @@ func (user *User) Lookup() error {
 				// the salt stored in the email key is also the primary user passphrase key salt
 				user.Salt = salt[:]
 				if err != nil {
-					user.Logger.Error("Error converting email map uuid - ", err)
-					return err
+					user.Logger.Debug("Error converting email map uuid - ", err)
+					code := codes.New(codes.ErrorUserMapConvert)
+					return code
 				}
 				return nil
 			}
 		}
 		return nil
 	})
+	if err != nil {
+		if codes.IsInternalError(err) {
+			return err
+		}
+		// [FIXME] - handle unknown error
+	}
 	if user.ID == uuid.Nil {
 		user.ID = originalID
-		return errors.New("no user found")
+		code := codes.New(codes.ErrorUserLookup)
+		return code
 	}
 	return nil
 }
@@ -101,35 +108,43 @@ func (user *User) Load(passphrase string) error {
 		cursor := bucket.Cursor()
 		key, value := cursor.Seek(user.ID.Bytes())
 		if key == nil {
-			err := errors.New("Error loading user")
-			user.Logger.Error(err)
-			return err
+			user.Logger.Debug("Error loading user")
+			code := codes.New(codes.ErrorUserLoad)
+			return code
 		}
 
 		// salt will have already been provided from a previous Lookup() operation
 		passphraseKey, err := crypto.DeriveKey([]byte(passphrase), user.Salt)
 		if err != nil {
-			user.Logger.Error("Error deriving key from passphrase - ", err)
-			return err
+			user.Logger.Debug("Error deriving key from passphrase - ", err)
+			code := codes.New(codes.ErrorUserKeyDerive)
+			return code
 		}
-		user.Logger.Debug("user passphrase [", passphrase, "] derived key [", passphraseKey, "]")
 		// need to decrypt value
 		decryptedData, err := crypto.Open(passphraseKey[:], value)
 		if err != nil {
 			// this error condition is most likely caused by an incorrect passphrase
-			user.Logger.Error("Error decrypting user data - ", err)
-			return err
+			user.Logger.Debug("Error decrypting user data - ", err)
+			code := codes.New(codes.ErrorUserDecrypt)
+			return code
 		}
 
 		err = json.Unmarshal(decryptedData, user)
 		if err != nil {
-			user.Logger.Error("Error decoding user json - ", err)
-			return err
+			user.Logger.Debug("Error decoding user json - ", err)
+			code := codes.New(codes.ErrorUserDecode)
+			return code
 		}
 		user.PassphraseKey = passphraseKey[:]
 		return nil
 	})
-	return err
+	if err != nil {
+		if codes.IsInternalError(err) {
+			return err
+		}
+		// [FIXME] handle unknown error
+	}
+	return nil
 }
 
 // Save saves the user to the database
@@ -137,31 +152,38 @@ func (user *User) Save() error {
 	err := user.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("users"))
 		if err != nil {
-			user.Logger.Error("Error creating users bucket - ", err)
-			return err
+			user.Logger.Debug("Error creating users bucket - ", err)
+			code := codes.New(codes.ErrorUserBucketCreate)
+			return code
 		}
 		data, err := json.Marshal(user)
 		if err != nil {
-			user.Logger.Error("Error marshaling user - ", err)
-			return err
+			user.Logger.Debug("Error marshaling user - ", err)
+			code := codes.New(codes.ErrorUserMarshal)
+			return code
 		}
-		user.Logger.Debug("sealing user data with passphrase key [", user.PassphraseKey, "]")
 		encryptedData, err := crypto.Seal(user.PassphraseKey, data)
 		if err != nil {
-			user.Logger.Error("Error encrypting user content - ", err)
-			return err
+			user.Logger.Debug("Error encrypting user content - ", err)
+			code := codes.New(codes.ErrorUserEncrypt)
+			return code
 		}
 
 		err = bucket.Put(user.ID.Bytes(), encryptedData)
 		if err != nil {
-			user.Logger.Error("Error saving user - ", err)
-			return err
+			user.Logger.Debug("Error writing user - ", err)
+			code := codes.New(codes.ErrorUserWrite)
+			return code
 		}
 		return nil
 	})
 	if err != nil {
-		user.Logger.Error("Error saving user - ", err)
-		return err
+		if codes.IsInternalError(err) {
+			return err
+		}
+		user.Logger.Debug("Error saving user - ", err)
+		code := codes.New(codes.ErrorUserSave)
+		return code
 	}
 	// Since users are keyed by only an unencrypted id in the db
 	// we also need to store a mapping between a key derived from the email address and the id
@@ -169,27 +191,34 @@ func (user *User) Save() error {
 	err = user.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("user_map"))
 		if err != nil {
-			user.Logger.Error("Error creating user_map bucket - ", err)
-			return err
+			user.Logger.Debug("Error creating user_map bucket - ", err)
+			code := codes.New(codes.ErrorUserMapBucket)
+			return code
 		}
 		encryptedEmail, err := crypto.DeriveKey([]byte(user.Profile.Email), user.Salt)
 		if err != nil {
-			user.Logger.Error("Error creating user map key - ", err)
-			return err
+			user.Logger.Debug("Error creating user map key - ", err)
+			code := codes.New(codes.ErrorUserMapKey)
+			return code
 		}
 		saltedKey := crypto.EmbedSalt(encryptedEmail, user.Salt)
 		err = bucket.Put(saltedKey, user.ID.Bytes())
 		if err != nil {
-			user.Logger.Error("Error saving user map - ", err)
-			return err
+			user.Logger.Debug("Error saving user map - ", err)
+			code := codes.New(codes.ErrorUserMapWrite)
+			return code
 		}
 		return nil
 	})
 	if err != nil {
-		user.Logger.Error("Error mapping user - ", err)
-		return err
+		if codes.IsInternalError(err) {
+			return err
+		}
+		user.Logger.Debug("Error mapping user - ", err)
+		code := codes.New(codes.ErrorUserMapSave)
+		return code
 	}
-	return err
+	return nil
 }
 
 // CreateKeys creates the account and user key from a passphrase
@@ -197,12 +226,14 @@ func (user *User) CreateKeys(passphrase []byte) error {
 	// generate account-level encryption key
 	accountKey, err := crypto.GenerateKey()
 	if err != nil {
+		// [FIXME] - internal error?
 		return err
 	}
 	// derive key from passphrase
 	var key = new([crypto.KeySize]byte)
 	key, user.Salt, err = crypto.DeriveKeyAndSalt(passphrase)
 	if err != nil {
+		// [FIXME] - internal error?
 		return err
 	}
 	// slicedKey := key[:]
@@ -210,6 +241,7 @@ func (user *User) CreateKeys(passphrase []byte) error {
 	user.PassphraseKey = key[:]
 	user.AccountKey, err = crypto.Seal(user.PassphraseKey, accountKey[:])
 	if err != nil {
+		// [FIXME] - internal error?
 		return err
 	}
 	return nil

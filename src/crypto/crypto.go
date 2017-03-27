@@ -26,6 +26,7 @@ const (
 	ScryptKeySize = 32
 )
 
+// [FIXME] - remove these
 var (
 	// ErrEncrypt is the default error for encryption failures
 	ErrEncrypt = errors.New("encryption failed")

@@ -9,15 +9,15 @@ import (
 
 // UIState returns the the UI state as saved by the master DB
 func (rpc *Server) UIState(ctx context.Context, request *pb.TokenRequest) (*pb.UIStateResponse, error) {
-	rpc.Logger.Debug("rpc - getting ui state")
 	state := uistate.NewUIState(rpc.DB, rpc.Logger)
 	err := state.Load()
 	response := &pb.UIStateResponse{
 		Status: &pb.StatusResponse{},
 	}
 	if err != nil {
-		response.Status.Status = codes.StatusError
-		response.Status.Code = int32(codes.ErrorLoadUIState)
+		code := codes.ToInternalError(err)
+		response.Status.Status = code.Error()
+		response.Status.Code = int32(code.Code)
 		return response, nil
 	}
 	response.Status.Status = codes.StatusOK
@@ -38,7 +38,6 @@ func (rpc *Server) UIState(ctx context.Context, request *pb.TokenRequest) (*pb.U
 
 // SaveUIState saves the current UI state to the master DB
 func (rpc *Server) SaveUIState(ctx context.Context, request *pb.SaveUIStateRequest) (*pb.StatusResponse, error) {
-	rpc.Logger.Debug("rpc - saving ui state")
 	state := uistate.NewUIState(rpc.DB, rpc.Logger)
 	state.WindowWidth = request.WindowWidth
 	state.WindowHeight = request.WindowHeight
@@ -55,8 +54,9 @@ func (rpc *Server) SaveUIState(ctx context.Context, request *pb.SaveUIStateReque
 	err := state.Save()
 	response := &pb.StatusResponse{}
 	if err != nil {
-		response.Status = codes.StatusError
-		response.Code = int32(codes.ErrorSaveUIState)
+		code := codes.ToInternalError(err)
+		response.Status = code.Error()
+		response.Code = int32(code.Code)
 		return response, nil
 	}
 	response.Status = codes.StatusOK

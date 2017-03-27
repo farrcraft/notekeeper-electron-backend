@@ -2,8 +2,8 @@ package uistate
 
 import (
 	"encoding/json"
-	"errors"
 
+	"../codes"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 )
@@ -51,57 +51,73 @@ func NewUIState(db *bolt.DB, logger *logrus.Logger) *UIState {
 func (state *UIState) Create() error {
 	if state.DB == nil {
 		state.Logger.Debug("ui state create - missing db")
-		return errors.New("ui state create - no db available")
+		code := codes.New(codes.ErrorUIStateMissingDb)
+		return code
 	}
 	err := state.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("ui_state"))
 		if bucket == nil {
 			bucket, err := tx.CreateBucket([]byte("ui_state"))
 			if err != nil {
-				state.Logger.Error("Error creating ui_state bucket - ", err)
-				return err
+				state.Logger.Debug("Error creating ui_state bucket - ", err)
+				code := codes.New(codes.ErrorUIStateCreateBucket)
+				return code
 			}
 			data, err := json.Marshal(state)
 			if err != nil {
-				state.Logger.Error("Error marshaling default UI State - ", err)
-				return err
+				state.Logger.Debug("Error marshaling default UI State - ", err)
+				code := codes.New(codes.ErrorDefaultUIStateMarshal)
+				return code
 			}
 
 			err = bucket.Put([]byte("ui_state"), data)
 			if err != nil {
-				state.Logger.Error("Error saving default UI State - ", err)
-				return err
+				state.Logger.Debug("Error writing default UI State - ", err)
+				code := codes.New(codes.ErrorDefaultUIStateWrite)
+				return code
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		state.Logger.Error(err)
-		return err
+		if codes.IsInternalError(err) {
+			return err
+		}
+		state.Logger.Debug("error saving default ui state - ", err)
+		code := codes.New(codes.ErrorDefaultUIStateSave)
+		return code
 	}
 	return nil
 }
 
 // Load loads the UI's saved state from the database
 func (state *UIState) Load() error {
-	state.DB.View(func(tx *bolt.Tx) error {
+	err := state.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("ui_state"))
 		cursor := bucket.Cursor()
 		key, value := cursor.Seek([]byte("ui_state"))
 		if key == nil {
-			err := errors.New("Error loading UI State")
-			state.Logger.Error(err)
-			return err
+			state.Logger.Debug("Error loading UI State")
+			code := codes.New(codes.ErrorLoadUIState)
+			return code
 		}
 
 		err := json.Unmarshal(value, state)
 		if err != nil {
-			state.Logger.Error("Error decoding UI State json - ", err)
-			return err
+			state.Logger.Debug("Error decoding UI State json - ", err)
+			code := codes.New(codes.ErrorUIStateDecode)
+			return code
 		}
 		return nil
 	})
+	if err != nil {
+		if codes.IsInternalError(err) {
+			return err
+		}
+		// [FIXME] - handle unknown error
+	}
+
 	return nil
 }
 
@@ -110,27 +126,34 @@ func (state *UIState) Save() error {
 	err := state.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("ui_state"))
 		if err != nil {
-			state.Logger.Error("Error creating UI State Bucket - ", err)
-			return err
+			state.Logger.Debug("Error creating UI State Bucket - ", err)
+			code := codes.New(codes.ErrorUIStateBucket)
+			return code
 		}
 
 		data, err := json.Marshal(state)
 		if err != nil {
-			state.Logger.Error("Error marshaling UI State - ", err)
-			return err
+			state.Logger.Debug("Error marshaling UI State - ", err)
+			code := codes.New(codes.ErrorUIStatemarshal)
+			return code
 		}
 
 		err = bucket.Put([]byte("ui_state"), data)
 		if err != nil {
-			state.Logger.Error("Error saving UI State - ", err)
-			return err
+			state.Logger.Debug("Error writing UI State - ", err)
+			code := codes.New(codes.ErrorUIStateWrite)
+			return code
 		}
 
 		return nil
 	})
 	if err != nil {
-		state.Logger.Error("Error saving UI State - ", err)
-		return err
+		if codes.IsInternalError(err) {
+			return err
+		}
+		state.Logger.Debug("Error saving UI State - ", err)
+		code := codes.New(codes.ErrorUIStateSave)
+		return code
 	}
 	return nil
 }

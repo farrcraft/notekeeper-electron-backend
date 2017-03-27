@@ -14,3 +14,6 @@ created.  *Generic Errors*:
 
 * **MAY** be passed up to the client application.
 * **SHOULD** be logged to the `ERROR` logger at the RPC boundary.
+
+
+RPC boundary **SHOULD NOT** create its own internal errors.

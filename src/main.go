@@ -11,7 +11,7 @@ func runCli(c *cli.Context) {
 	svcConfig := &service.Config{
 		Name:        "NoteKeeper.io",
 		DisplayName: "NoteKeeper.io",
-		Description: "This is the NoteKeeper.io backend service.",
+		Description: "This is the NoteKeeper.io service.",
 	}
 
 	backend := NewBackend()
@@ -32,8 +32,8 @@ func runCli(c *cli.Context) {
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "notekeeper-backend"
-	app.Usage = "NoteKeeper.io Backend"
+	app.Name = "notekeeper"
+	app.Usage = "NoteKeeper.io"
 	app.Action = runCli
 	app.Run(os.Args)
 }

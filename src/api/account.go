@@ -43,37 +43,35 @@ func CreateAccount(db *bolt.DB, logger *logrus.Logger, dataPath string, name str
 }
 
 // UnlockAccount unlocks an account
-func UnlockAccount(acc *account.Account, dataPath string, passphrase string) error {
-	// [FIXME] - how to handle these error cases?
-	if acc == nil {
+func UnlockAccount(acct *account.Account, dataPath string, passphrase string) error {
+	if acct == nil {
 		code := codes.New(codes.ErrorUnlockActiveAccount)
 		return code
 	}
 
-	if acc.ActiveUser == nil {
+	if acct.ActiveUser == nil {
 		code := codes.New(codes.ErrorUnlockActiveUser)
 		return code
 	}
 
 	// generate the derived key from the input passphrase and the stored salt
-	key, err := crypto.DeriveKey([]byte(passphrase), acc.ActiveUser.Salt)
+	key, err := crypto.DeriveKey([]byte(passphrase), acct.ActiveUser.Salt)
 	if err != nil {
 		return err
 	}
 
 	// encode the salt into the resulting key and store it in memory
-	acc.ActiveUser.PassphraseKey = append(acc.ActiveUser.Salt, key[:]...)
-	crypto.Zero(key[:])
+	acct.ActiveUser.PassphraseKey = key[:]
 
 	// since we never stored the original derived key
 	// the only way we know if the key is valid is to try using it to open something
-	_, err = crypto.Open(acc.ActiveUser.PassphraseKey, acc.ActiveUser.AccountKey)
+	_, err = crypto.Open(acct.ActiveUser.PassphraseKey, acct.ActiveUser.AccountKey)
 	if err != nil {
-		crypto.Zero(acc.ActiveUser.PassphraseKey)
+		crypto.Zero(acct.ActiveUser.PassphraseKey)
 		return err
 	}
 
-	err = acc.OpenAccountDb(dataPath)
+	err = acct.OpenAccountDb(dataPath)
 	if err != nil {
 		return err
 	}

@@ -40,6 +40,7 @@ func (rpc *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountR
 
 	response := &pb.IdResponse{
 		Id:     newAccount.ID.String(),
+		Code:   int32(codes.ErrorOK),
 		Status: codes.StatusOK,
 	}
 
@@ -55,6 +56,7 @@ func (rpc *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountR
 // UnlockAccount is the GRPC method to unlock the current account
 func (rpc *Server) UnlockAccount(ctx context.Context, request *pb.UnlockAccountRequest) (*pb.StatusResponse, error) {
 	response := &pb.StatusResponse{
+		Code:   int32(codes.ErrorOK),
 		Status: codes.StatusOK,
 	}
 
@@ -77,6 +79,7 @@ func (rpc *Server) SigninAccount(ctx context.Context, request *pb.SigninAccountR
 
 	// user should be signed in & account in an unlocked state at this point
 	response := &pb.IdResponse{
+		Code:   int32(codes.ErrorOK),
 		Status: codes.StatusOK,
 	}
 
@@ -92,6 +95,7 @@ func (rpc *Server) SigninAccount(ctx context.Context, request *pb.SigninAccountR
 // SignoutAccount is the GRPC method to sign out from the active account
 func (rpc *Server) SignoutAccount(ctx context.Context, request *pb.IdRequest) (*pb.StatusResponse, error) {
 	response := &pb.StatusResponse{
+		Code:   int32(codes.ErrorOK),
 		Status: codes.StatusOK,
 	}
 	err := api.SignoutAccount(rpc.Account)
@@ -108,6 +112,7 @@ func (rpc *Server) SignoutAccount(ctx context.Context, request *pb.IdRequest) (*
 // LockAccount is the GRPC method to lock the active account
 func (rpc *Server) LockAccount(ctx context.Context, request *pb.IdRequest) (*pb.StatusResponse, error) {
 	response := &pb.StatusResponse{
+		Code:   int32(codes.ErrorOK),
 		Status: codes.StatusOK,
 	}
 	err := api.LockAccount(rpc.Account)

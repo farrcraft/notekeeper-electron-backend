@@ -3,6 +3,7 @@ package rpc
 import (
 	"golang.org/x/net/context"
 
+	"../codes"
 	"../notebook"
 	pb "../proto"
 )
@@ -15,7 +16,8 @@ func (rpc *Server) CreateNotebook(ctx context.Context, request *pb.CreateNoteboo
 		return nil, err
 	}
 	response := &pb.IdResponse{
-		Status: "OK",
+		Code:   int32(codes.ErrorOK),
+		Status: codes.StatusOK,
 		Id:     notebook.ID.String(),
 	}
 	return response, nil

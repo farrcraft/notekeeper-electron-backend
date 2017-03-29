@@ -30,7 +30,10 @@ func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbReq
 	fileName := filepath.Join(rpc.DataPath, MasterDbFile)
 	rpc.Logger.Info("Opening master db file [", fileName, "]")
 	var err error
-	response := &pb.StatusResponse{}
+	response := &pb.StatusResponse{
+		Code:   int32(codes.ErrorOK),
+		Status: codes.StatusOK,
+	}
 	rpc.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		response.Status = codes.StatusError

@@ -12,7 +12,10 @@ func (rpc *Server) UIState(ctx context.Context, request *pb.TokenRequest) (*pb.U
 	state := uistate.NewUIState(rpc.DB, rpc.Logger)
 	err := state.Load()
 	response := &pb.UIStateResponse{
-		Status: &pb.StatusResponse{},
+		Status: &pb.StatusResponse{
+			Code:   int32(codes.ErrorOK),
+			Status: codes.StatusOK,
+		},
 	}
 	if err != nil {
 		code := codes.ToInternalError(err)
@@ -52,7 +55,10 @@ func (rpc *Server) SaveUIState(ctx context.Context, request *pb.SaveUIStateReque
 	state.DisplayYPosition = request.DisplayYPosition
 
 	err := state.Save()
-	response := &pb.StatusResponse{}
+	response := &pb.StatusResponse{
+		Code:   int32(codes.ErrorOK),
+		Status: codes.StatusOK,
+	}
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Status = code.Error()

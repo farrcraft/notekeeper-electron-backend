@@ -21,7 +21,8 @@ const (
 
 // These are the error codes that can be passed to the front end
 const (
-	ErrorUnknown ErrorCode = iota + 1
+	ErrorOK ErrorCode = iota + 1
+	ErrorUnknown
 	ErrorInternalEscape
 
 	ErrorMasterDbOpen

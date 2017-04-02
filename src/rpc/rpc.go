@@ -1,22 +1,11 @@
 package rpc
 
 import (
-	"encoding/pem"
-	"math/big"
 	"net"
-	"os"
-	"path/filepath"
-	"time"
-
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"crypto/x509/pkix"
 
 	"crypto/tls"
 
 	"../account"
-	"../appdir"
 	pb "../proto"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
@@ -43,62 +32,6 @@ func NewServer(logger *logrus.Logger) *Server {
 	return server
 }
 
-func (rpc *Server) createCertificate() bool {
-	notBefore := time.Now()
-	notAfter := notBefore.Add(365 * 24 * time.Hour)
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		rpc.Logger.Debug("Error creating serial number - ", err)
-		return false
-	}
-	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		rpc.Logger.Debug("Error generating private key - ", err)
-		return false
-	}
-	template := x509.Certificate{
-		SerialNumber: serialNumber,
-		Subject: pkix.Name{
-			Organization: []string{"NoteKeeper.io"},
-		},
-		NotBefore: notBefore,
-		NotAfter:  notAfter,
-		IsCA:      true,
-		KeyUsage:  x509.KeyUsageCertSign,
-	}
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &privKey.PublicKey, privKey)
-	keyPemBlock := pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privKey),
-	}
-	if err != nil {
-		rpc.Logger.Debug("Error creating certificate - ", err)
-		return false
-	}
-	certPemBlock := pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: derBytes,
-	}
-
-	certPath := filepath.Join(appdir.AppDataPath(), "certificate")
-	certOut, err := os.Create(certPath)
-	if err != nil {
-		rpc.Logger.Debug("Error creating certificate file - ", err)
-		return false
-	}
-	pem.Encode(certOut, &certPemBlock)
-	certOut.Close()
-
-	rpc.Certificate, err = tls.X509KeyPair(pem.EncodeToMemory(&certPemBlock), pem.EncodeToMemory(&keyPemBlock))
-	if err != nil {
-		rpc.Logger.Debug("Error converting certificate - ", err)
-		return false
-	}
-
-	return true
-}
-
 // Start starts an RPCServer
 func (rpc *Server) Start(port string) bool {
 	listener, err := net.Listen("tcp", port)
@@ -118,10 +51,25 @@ func (rpc *Server) Start(port string) bool {
 		return false
 	}
 	creds := credentials.NewServerTLSFromCert(&rpc.Certificate)
-	if err != nil {
-		rpc.Logger.Debug("Credentials error - ", err)
-		return false
-	}
+	/*
+		if err != nil {
+			rpc.Logger.Debug("Credentials error - ", err)
+			return false
+		}
+	*/
+	/*
+		tlsConfig := &tls.Config{
+			Rand:         rand.Reader,
+			Certificates: []tls.Certificate{rpc.Certificate},
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			},
+		}
+		creds := credentials.NewTLS(tlsConfig)
+	*/
 	/*
 		creds, err := credentials.NewServerTLSFromFile(*certFile, *keyFile)
 		if err != nil {

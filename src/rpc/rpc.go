@@ -1,62 +1,141 @@
 package rpc
 
 import (
+	"encoding/json"
+	"log"
 	"net"
+	"net/http"
 
 	"crypto/tls"
 
 	"../account"
-	pb "../proto"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/grpclog"
-	"google.golang.org/grpc/reflection"
 )
 
-// Server is a gRPC server instance
+// Message represents an RPC message
+type Message struct {
+	Method  string      `json:"method"`
+	Payload interface{} `json:"payload"`
+}
+
+// Response is an RPC response
+type Response struct {
+	Status  string      `json:"status"`
+	Code    int         `json:"code"`
+	Payload interface{} `json:"payload"`
+}
+
+// Handler is an RPC message handler
+type Handler func(*Server, *Message) (*Response, error)
+
+// Server is a RPC server instance
 type Server struct {
 	Logger      *logrus.Logger
 	DB          *bolt.DB // This is the master application DB
 	DataPath    string
 	Account     *account.Account
 	Certificate tls.Certificate
+	Handlers    map[string]Handler
 }
 
 // NewServer creates a new RPCServer instance
 func NewServer(logger *logrus.Logger) *Server {
 	server := &Server{
-		Logger: logger,
+		Logger:   logger,
+		Handlers: make(map[string]Handler, 0),
 	}
+	server.RegisterHandlers()
 	return server
+}
+
+// RegisterHandlers registers all of the RPC handlers
+func (rpc *Server) RegisterHandlers() {
+	rpc.Handlers["MasterDb::open"] = OpenMasterDb
+
+	rpc.Handlers["Account::create"] = CreateAccount
+	rpc.Handlers["Account::unlock"] = UnlockAccount
+	rpc.Handlers["Account::signin"] = SigninAccount
+	rpc.Handlers["Account::signout"] = SignoutAccount
+	rpc.Handlers["Account::lock"] = LockAccount
+
+	rpc.Handlers["AccountState::get"] = GetAccountState
+
+	rpc.Handlers["UIState::load"] = LoadUIState
+	rpc.Handlers["UIState::save"] = SaveUIState
+
+}
+
+// ServeHTTP handles HTTP requests
+func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	if req.Method != "POST" {
+		rpc.Logger.Debug("Unexpected request method - ", req.Method)
+		return
+	}
+
+	// check req.URL to make sure it matches "/rpc"
+	if req.URL.Path[1:] != "rpc" {
+		rpc.Logger.Debug("Unexpected request path - ", req.URL.Path)
+		return
+	}
+
+	message := &Message{}
+	decoder := json.NewDecoder(req.Body)
+	err := decoder.Decode(message)
+	if err != nil {
+		rpc.Logger.Debug("Error unmarshaling request - ", err)
+		return
+	}
+
+	foundHandler := false
+	for method, handler := range rpc.Handlers {
+		if method == message.Method {
+			foundHandler = true
+			handlerResponse, err := handler(rpc, message)
+			if err != nil {
+				return
+			}
+			encoder := json.NewEncoder(resp)
+			err = encoder.Encode(handlerResponse)
+			if err != nil {
+				rpc.Logger.Debug("Error marshaling handler response - ", err)
+				return
+			}
+			break
+		}
+	}
+
+	if !foundHandler {
+		rpc.Logger.Debug("Could not find handler for method - ", message.Method)
+		return
+	}
 }
 
 // Start starts an RPCServer
 func (rpc *Server) Start(port string) bool {
-	listener, err := net.Listen("tcp", port)
-	if err != nil {
-		rpc.Logger.Debug("Listen error - ", err)
-		return false
-	}
-
-	// make sure gRPC logging goes to our logger and not the default stderr
-	grpclog.SetLogger(rpc.Logger)
-
-	// [FIXME] - need to make this use TLS
-	// can we just generate a certificate on the fly to use here?
-	var opts []grpc.ServerOption
 	ok := rpc.createCertificate()
 	if !ok {
 		return false
 	}
-	creds := credentials.NewServerTLSFromCert(&rpc.Certificate)
-	/*
-		if err != nil {
-			rpc.Logger.Debug("Credentials error - ", err)
-			return false
-		}
-	*/
+
+	conn, err := net.Listen("tcp", port)
+	if err != nil {
+		rpc.Logger.Debug("Listen error - ", err)
+		return false
+	}
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{rpc.Certificate},
+	}
+	tlsListener := tls.NewListener(conn, tlsConfig)
+	writer := rpc.Logger.Writer()
+	defer writer.Close()
+	server := &http.Server{
+		Addr:     port,
+		Handler:  rpc,
+		ErrorLog: log.New(writer, "", 0),
+	}
+	rpc.Logger.Debug("RPC listening on port [", port, "]")
+	server.Serve(tlsListener)
 	/*
 		tlsConfig := &tls.Config{
 			Rand:         rand.Reader,
@@ -68,29 +147,7 @@ func (rpc *Server) Start(port string) bool {
 				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 			},
 		}
-		creds := credentials.NewTLS(tlsConfig)
 	*/
-	/*
-		creds, err := credentials.NewServerTLSFromFile(*certFile, *keyFile)
-		if err != nil {
-			backend.Logger.Error("Credentials error - ", err)
-			os.Exit(1)
-		}
-	*/
-	opts = []grpc.ServerOption{grpc.Creds(creds)}
-	server := grpc.NewServer(opts...)
-
-	pb.RegisterBackendServer(server, rpc)
-
-	reflection.Register(server)
-
-	rpc.Logger.Debug("RPC listening on port [", port, "]")
-	err = server.Serve(listener)
-	if err != nil {
-		rpc.Logger.Error("Server error - ", err)
-		return false
-	}
-
 	return true
 }
 

@@ -12,17 +12,17 @@ import (
 // The UI state includes only the most generic persistent UI settings
 // !!!!The stored representation **IS NOT ENCRYPTED**!!!
 type UIState struct {
-	WindowWidth      int32          `json:"window_width"`
-	WindowHeight     int32          `json:"window_height"`
-	WindowXPosition  int32          `json:"window_x_position"`
-	WindowYPosition  int32          `json:"window_y_position"`
-	WindowMaximized  bool           `json:"window_maximized"`
-	WindowMinimized  bool           `json:"window_minimized"`
-	WindowFullscreen bool           `json:"window_fullscreen"`
-	DisplayWidth     int32          `json:"display_width"`
-	DisplayHeight    int32          `json:"display_height"`
-	DisplayXPosition int32          `json:"display_x_position"`
-	DisplayYPosition int32          `json:"display_y_position"`
+	WindowWidth      int32          `json:"window_width" mapstructure:"window_width"`
+	WindowHeight     int32          `json:"window_height" mapstructure:"window_height"`
+	WindowXPosition  int32          `json:"window_x_position" mapstructure:"window_x_position"`
+	WindowYPosition  int32          `json:"window_y_position" mapstructure:"window_y_position"`
+	WindowMaximized  bool           `json:"window_maximized" mapstructure:"window_maximized"`
+	WindowMinimized  bool           `json:"window_minimized" mapstructure:"window_minimized"`
+	WindowFullscreen bool           `json:"window_fullscreen" mapstructure:"window_fullscreen"`
+	DisplayWidth     int32          `json:"display_width" mapstructure:"display_width"`
+	DisplayHeight    int32          `json:"display_height" mapstructure:"display_height"`
+	DisplayXPosition int32          `json:"display_x_position" mapstructure:"display_x_position"`
+	DisplayYPosition int32          `json:"display_y_position" mapstructure:"display_y_position"`
 	DB               *bolt.DB       `json:"-"`
 	Logger           *logrus.Logger `json:"-"`
 }

@@ -26,6 +26,13 @@ const (
 	ErrorInternalEscape
 
 	ErrorMasterDbOpen
+
+	ErrorMasterDbOpenDecode
+	ErrorUnlockAccountDecode
+	ErrorCreateAccountDecode
+	ErrorSigninAccountDecode
+	ErrorSaveUIStateDecode
+
 	ErrorUnlockActiveAccount
 	ErrorUnlockActiveUser
 
@@ -151,6 +158,23 @@ func messageFromCode(code ErrorCode) string {
 	case ErrorMasterDbOpen:
 		msg = "error opening master db"
 		break
+
+	case ErrorMasterDbOpenDecode:
+		msg = "error decoding payload for open master db request"
+		break
+	case ErrorCreateAccountDecode:
+		msg = "error decoding payload for create account request"
+		break
+	case ErrorUnlockAccountDecode:
+		msg = "error decoding payload for unlock account request"
+		break
+	case ErrorSigninAccountDecode:
+		msg = "error decoding payload for signin account request"
+		break
+	case ErrorSaveUIStateDecode:
+		msg = "error decoding payload for signin account request"
+		break
+
 	case ErrorUnlockActiveAccount:
 		msg = "error no active account to unlock"
 		break

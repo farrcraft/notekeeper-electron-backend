@@ -5,11 +5,9 @@ import (
 	"time"
 
 	"../codes"
-	pb "../proto"
 	"../uistate"
 	"github.com/boltdb/bolt"
-	"golang.org/x/net/context"
-	//	"google.golang.org/grpc/credentials"
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -17,27 +15,41 @@ const (
 	MasterDbFile = "notekeeper.db"
 )
 
+type requestOpenMasterDb struct {
+	Path string `mapstructure:"path"`
+}
+
 // OpenMasterDb opens the master database in the requested directory
-func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbRequest) (*pb.StatusResponse, error) {
+func OpenMasterDb(rpc *Server, message *Message) (*Response, error) {
+	response := &Response{
+		Code:   int(codes.ErrorOK),
+		Status: codes.StatusOK,
+	}
+
 	// need to close any existing db
 	if rpc.DB != nil {
 		rpc.DB.Close()
 		rpc.DB = nil
 	}
+
+	var request requestOpenMasterDb
+	err := mapstructure.Decode(message.Payload, &request)
+	if err != nil {
+		rpc.Logger.Debug("Error decoding open master db request payload - ", err)
+		response.Code = int(codes.ErrorMasterDbOpenDecode)
+		response.Status = codes.StatusError
+		return response, nil
+	}
+
 	rpc.DataPath = filepath.Clean(request.Path)
 	// This is the master index db
 	// There are additional databases where actual notebook data is stored (one DB file per account)
 	fileName := filepath.Join(rpc.DataPath, MasterDbFile)
 	rpc.Logger.Info("Opening master db file [", fileName, "]")
-	var err error
-	response := &pb.StatusResponse{
-		Code:   int32(codes.ErrorOK),
-		Status: codes.StatusOK,
-	}
 	rpc.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		response.Status = codes.StatusError
-		response.Code = int32(codes.ErrorMasterDbOpen)
+		response.Code = int(codes.ErrorMasterDbOpen)
 		return response, nil
 	}
 
@@ -46,7 +58,7 @@ func (rpc *Server) OpenMasterDb(ctx context.Context, request *pb.OpenMasterDbReq
 	err = state.Create()
 	if err != nil {
 		response.Status = codes.StatusError
-		response.Code = int32(codes.ErrorCreateUIState)
+		response.Code = int(codes.ErrorCreateUIState)
 		return response, nil
 	}
 	response.Status = codes.StatusOK

@@ -4,122 +4,183 @@ import (
 	"../account"
 	"../api"
 	"../codes"
-	pb "../proto"
-	"golang.org/x/net/context"
+	"github.com/mitchellh/mapstructure"
 )
 
-// AccountState returns the accessible state of the account
-func (rpc *Server) AccountState(ctx context.Context, request *pb.TokenRequest) (*pb.AccountStateResponse, error) {
-	response := &pb.AccountStateResponse{
+type responseAccountState struct {
+	SignedIn bool `json:"signed_in"`
+	Locked   bool `json:"locked"`
+	Exists   bool `json:"exists"`
+}
+
+// GetAccountState returns the accessible state of the account
+func GetAccountState(rpc *Server, message *Message) (*Response, error) {
+	response := &Response{
+		Code:   int(codes.ErrorOK),
+		Status: codes.StatusOK,
+	}
+	payload := &responseAccountState{
 		SignedIn: false,
 		Locked:   true,
 		Exists:   false,
 	}
 	if rpc.Account != nil {
-		response.SignedIn = true
-		response.Locked = rpc.Account.IsLocked()
-		response.Exists = true
+		payload.SignedIn = true
+		payload.Locked = rpc.Account.IsLocked()
+		payload.Exists = true
 	} else {
 		count := account.MapCount(rpc.DB)
 		if count > 0 {
-			response.Exists = true
+			payload.Exists = true
 		}
 	}
+	response.Payload = payload
 	return response, nil
 }
 
-// CreateAccount is the GRPC method to create a new account
-func (rpc *Server) CreateAccount(ctx context.Context, request *pb.CreateAccountRequest) (*pb.IdResponse, error) {
+type requestCreateAccount struct {
+	Name       string `mapstructure:"name"`
+	Email      string `mapstructure:"email"`
+	Passphrase string `mapstructure:"passphrase"`
+}
+
+type responseCreateAccount struct {
+	ID string `json:"id"`
+}
+
+// CreateAccount is the RPC method to create a new account
+func CreateAccount(rpc *Server, message *Message) (*Response, error) {
+	response := &Response{
+		Code:   int(codes.ErrorOK),
+		Status: codes.StatusOK,
+	}
+
+	var request requestCreateAccount
+	err := mapstructure.Decode(message.Payload, &request)
+	if err != nil {
+		rpc.Logger.Debug("Error decoding create account request payload - ", err)
+		response.Code = int(codes.ErrorCreateAccountDecode)
+		response.Status = codes.StatusError
+		return response, nil
+	}
+
 	// create the account
 	newAccount, err := api.CreateAccount(rpc.DB, rpc.Logger, rpc.DataPath, request.Name, request.Email, request.Passphrase)
+	if err != nil {
+		code := codes.ToInternalError(err)
+		response.Status = code.Error()
+		response.Code = int(code.Code)
+		return response, nil
+	}
 
 	// make this the active account
 	if err == nil {
 		rpc.Account = newAccount
 	}
 
-	response := &pb.IdResponse{
-		Id:     newAccount.ID.String(),
-		Code:   int32(codes.ErrorOK),
-		Status: codes.StatusOK,
-	}
-
-	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Status = code.Error()
-		response.Code = int32(code.Code)
+	response.Payload = &responseCreateAccount{
+		ID: newAccount.ID.String(),
 	}
 
 	return response, nil
 }
 
-// UnlockAccount is the GRPC method to unlock the current account
-func (rpc *Server) UnlockAccount(ctx context.Context, request *pb.UnlockAccountRequest) (*pb.StatusResponse, error) {
-	response := &pb.StatusResponse{
-		Code:   int32(codes.ErrorOK),
+type requestUnlockAccount struct {
+	Passphrase string `mapstructure:"passphrase"`
+}
+
+// UnlockAccount is the RPC method to unlock the current account
+func UnlockAccount(rpc *Server, message *Message) (*Response, error) {
+	response := &Response{
+		Code:   int(codes.ErrorOK),
 		Status: codes.StatusOK,
 	}
 
-	err := api.UnlockAccount(rpc.Account, rpc.DataPath, request.Passphrase)
+	var request requestUnlockAccount
+	err := mapstructure.Decode(message.Payload, &request)
+	if err != nil {
+		rpc.Logger.Debug("Error decoding unlock account request payload - ", err)
+		response.Code = int(codes.ErrorUnlockAccountDecode)
+		response.Status = codes.StatusError
+		return response, nil
+	}
+
+	err = api.UnlockAccount(rpc.Account, rpc.DataPath, request.Passphrase)
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Status = code.Error()
-		response.Code = int32(code.Code)
+		response.Code = int(code.Code)
 	}
 
 	return response, nil
 }
 
-// SigninAccount is the GRPC method to sign in to an existing account
-func (rpc *Server) SigninAccount(ctx context.Context, request *pb.SigninAccountRequest) (*pb.IdResponse, error) {
+type requestSigninAccount struct {
+	Name       string `mapstructure:"name"`
+	Email      string `mapstructure:"email"`
+	Passphrase string `mapstructure:"passphrase"`
+}
+
+// SigninAccount is the RPC method to sign in to an existing account
+func SigninAccount(rpc *Server, message *Message) (*Response, error) {
+	response := &Response{
+		Code:   int(codes.ErrorOK),
+		Status: codes.StatusOK,
+	}
+
+	var request requestSigninAccount
+	err := mapstructure.Decode(message.Payload, &request)
+	if err != nil {
+		rpc.Logger.Debug("Error decoding signin account request payload - ", err)
+		response.Code = int(codes.ErrorSigninAccountDecode)
+		response.Status = codes.StatusError
+		return response, nil
+	}
+
 	newAccount, err := api.SigninAccount(rpc.DB, rpc.Logger, rpc.DataPath, request.Name, request.Email, request.Passphrase)
 	if err == nil {
 		rpc.Account = newAccount
 	}
-
-	// user should be signed in & account in an unlocked state at this point
-	response := &pb.IdResponse{
-		Code:   int32(codes.ErrorOK),
-		Status: codes.StatusOK,
-	}
-
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Status = code.Error()
-		response.Code = int32(code.Code)
+		response.Code = int(code.Code)
 	}
 
 	return response, nil
 }
 
-// SignoutAccount is the GRPC method to sign out from the active account
-func (rpc *Server) SignoutAccount(ctx context.Context, request *pb.IdRequest) (*pb.StatusResponse, error) {
-	response := &pb.StatusResponse{
-		Code:   int32(codes.ErrorOK),
+// SignoutAccount is the RPC method to sign out from the active account
+func SignoutAccount(rpc *Server, message *Message) (*Response, error) {
+	response := &Response{
+		Code:   int(codes.ErrorOK),
 		Status: codes.StatusOK,
 	}
+
 	err := api.SignoutAccount(rpc.Account)
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Status = code.Error()
-		response.Code = int32(code.Code)
+		response.Code = int(code.Code)
 	}
 	rpc.Account = nil
 
 	return response, nil
 }
 
-// LockAccount is the GRPC method to lock the active account
-func (rpc *Server) LockAccount(ctx context.Context, request *pb.IdRequest) (*pb.StatusResponse, error) {
-	response := &pb.StatusResponse{
-		Code:   int32(codes.ErrorOK),
+// LockAccount is the RPC method to lock the active account
+func LockAccount(rpc *Server, message *Message) (*Response, error) {
+	response := &Response{
+		Code:   int(codes.ErrorOK),
 		Status: codes.StatusOK,
 	}
+
 	err := api.LockAccount(rpc.Account)
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Status = code.Error()
-		response.Code = int32(code.Code)
+		response.Code = int(code.Code)
 	}
+
 	return response, nil
 }

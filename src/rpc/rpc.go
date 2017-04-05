@@ -6,24 +6,30 @@ import (
 	"net"
 	"net/http"
 
+	"crypto/rand"
 	"crypto/tls"
 
 	"../account"
 	"github.com/Sirupsen/logrus"
+	"github.com/agl/ed25519"
 	"github.com/boltdb/bolt"
 )
 
 // Message represents an RPC message
 type Message struct {
-	Method  string      `json:"method"`
-	Payload interface{} `json:"payload"`
+	Method    string      `json:"method"`
+	Signature string      `json:"signature"`
+	Sequence  int32       `json:"sequence"`
+	Payload   interface{} `json:"payload"`
 }
 
 // Response is an RPC response
 type Response struct {
-	Status  string      `json:"status"`
-	Code    int         `json:"code"`
-	Payload interface{} `json:"payload"`
+	Status    string      `json:"status"`
+	Code      int         `json:"code"`
+	Signature string      `json:"signature"`
+	Sequence  int32       `json:"sequence"`
+	Payload   interface{} `json:"payload"`
 }
 
 // Handler is an RPC message handler
@@ -31,19 +37,26 @@ type Handler func(*Server, *Message) (*Response, error)
 
 // Server is a RPC server instance
 type Server struct {
-	Logger      *logrus.Logger
-	DB          *bolt.DB // This is the master application DB
-	DataPath    string
-	Account     *account.Account
-	Certificate tls.Certificate
-	Handlers    map[string]Handler
+	Logger          *logrus.Logger
+	DB              *bolt.DB // This is the master application DB
+	DataPath        string
+	Account         *account.Account
+	Certificate     tls.Certificate
+	Handlers        map[string]Handler
+	RecvCounter     int32
+	SendCounter     int32
+	SignPublicKey   *[ed25519.PublicKeySize]byte
+	SignPrivateKey  *[ed25519.PrivateKeySize]byte // Key used for signing responses
+	VerifyPublicKey *[ed25519.PublicKeySize]byte  // Key used for verifying requests
 }
 
 // NewServer creates a new RPCServer instance
 func NewServer(logger *logrus.Logger) *Server {
 	server := &Server{
-		Logger:   logger,
-		Handlers: make(map[string]Handler, 0),
+		Logger:      logger,
+		Handlers:    make(map[string]Handler, 0),
+		RecvCounter: 0,
+		SendCounter: 0,
 	}
 	server.RegisterHandlers()
 	return server
@@ -51,6 +64,7 @@ func NewServer(logger *logrus.Logger) *Server {
 
 // RegisterHandlers registers all of the RPC handlers
 func (rpc *Server) RegisterHandlers() {
+	rpc.Handlers["KeyExchange"] = KeyExchange
 	rpc.Handlers["MasterDb::open"] = OpenMasterDb
 
 	rpc.Handlers["Account::create"] = CreateAccount
@@ -63,7 +77,6 @@ func (rpc *Server) RegisterHandlers() {
 
 	rpc.Handlers["UIState::load"] = LoadUIState
 	rpc.Handlers["UIState::save"] = SaveUIState
-
 }
 
 // ServeHTTP handles HTTP requests
@@ -87,6 +100,12 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	rpc.RecvCounter++
+	if message.Sequence != rpc.RecvCounter {
+		rpc.Logger.Debug("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", message.Sequence, "]")
+		return
+	}
+
 	foundHandler := false
 	for method, handler := range rpc.Handlers {
 		if method == message.Method {
@@ -95,6 +114,12 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				return
 			}
+
+			ok := rpc.SignResponse(handlerResponse)
+			if !ok {
+				return
+			}
+
 			encoder := json.NewEncoder(resp)
 			err = encoder.Encode(handlerResponse)
 			if err != nil {
@@ -111,10 +136,17 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Start starts an RPCServer
+// Start an RPC Server
 func (rpc *Server) Start(port string) bool {
 	ok := rpc.createCertificate()
 	if !ok {
+		return false
+	}
+
+	var err error
+	rpc.SignPublicKey, rpc.SignPrivateKey, err = ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		rpc.Logger.Debug("Error generating signing keys - ", err)
 		return false
 	}
 

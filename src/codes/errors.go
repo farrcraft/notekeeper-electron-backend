@@ -32,6 +32,7 @@ const (
 	ErrorCreateAccountDecode
 	ErrorSigninAccountDecode
 	ErrorSaveUIStateDecode
+	ErrorKeyExchangeDecode
 
 	ErrorUnlockActiveAccount
 	ErrorUnlockActiveUser
@@ -173,6 +174,9 @@ func messageFromCode(code ErrorCode) string {
 		break
 	case ErrorSaveUIStateDecode:
 		msg = "error decoding payload for signin account request"
+		break
+	case ErrorKeyExchangeDecode:
+		msg = "error decoding payload for key exchange request"
 		break
 
 	case ErrorUnlockActiveAccount:

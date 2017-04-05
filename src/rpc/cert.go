@@ -68,9 +68,7 @@ func (rpc *Server) createCertificate() bool {
 		return false
 	}
 
-	//privKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	privKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-	//privKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	privKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	if err != nil {
 		rpc.Logger.Debug("Error generating private key - ", err)
 		return false

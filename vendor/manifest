@@ -44,6 +44,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/agl/ed25519",
+			"repository": "https://github.com/agl/ed25519",
+			"vcs": "git",
+			"revision": "5312a61534124124185d41f09206b9fef1d88403",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/boltdb/bolt",
 			"repository": "https://github.com/boltdb/bolt",
 			"vcs": "git",

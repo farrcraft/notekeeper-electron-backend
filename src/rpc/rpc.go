@@ -93,6 +93,11 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	message := &Message{}
+	/*
+		This is a short circuit for debugging raw input:
+		body, _ := ioutil.ReadAll(req.Body)
+		rpc.Logger.Debug(string(body))
+	*/
 	decoder := json.NewDecoder(req.Body)
 	err := decoder.Decode(message)
 	if err != nil {
@@ -100,10 +105,14 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rpc.RecvCounter++
-	if message.Sequence != rpc.RecvCounter {
-		rpc.Logger.Debug("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", message.Sequence, "]")
-		return
+	// if this is a key exchange request, ignore the sequence
+	// the internal sequence counters will be reset during the exchange process anyway
+	if message.Method != "KeyExchange" {
+		rpc.RecvCounter++
+		if message.Sequence != rpc.RecvCounter {
+			rpc.Logger.Debug("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", message.Sequence, "]")
+			return
+		}
 	}
 
 	foundHandler := false

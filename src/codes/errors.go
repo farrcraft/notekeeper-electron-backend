@@ -33,6 +33,7 @@ const (
 	ErrorSigninAccountDecode
 	ErrorSaveUIStateDecode
 	ErrorKeyExchangeDecode
+	ErrorVerifyRequestSignature
 
 	ErrorUnlockActiveAccount
 	ErrorUnlockActiveUser
@@ -177,6 +178,10 @@ func messageFromCode(code ErrorCode) string {
 		break
 	case ErrorKeyExchangeDecode:
 		msg = "error decoding payload for key exchange request"
+		break
+
+	case ErrorVerifyRequestSignature:
+		msg = "error verifying request signature"
 		break
 
 	case ErrorUnlockActiveAccount:

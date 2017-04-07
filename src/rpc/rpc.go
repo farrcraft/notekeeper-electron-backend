@@ -17,17 +17,18 @@ import (
 
 // Message represents an RPC message
 type Message struct {
-	Method    string      `json:"method"`
-	Signature string      `json:"signature"`
-	Sequence  int32       `json:"sequence"`
-	Payload   interface{} `json:"payload"`
+	Method     string          `json:"method"`
+	Signature  map[string]byte `json:"signature"`
+	Sequence   int32           `json:"sequence"`
+	RawPayload string          `json:"payload"`
+	Payload    interface{}     `json:"-"`
 }
 
 // Response is an RPC response
 type Response struct {
 	Status    string      `json:"status"`
 	Code      int         `json:"code"`
-	Signature string      `json:"signature"`
+	Signature []byte      `json:"signature"`
 	Sequence  int32       `json:"sequence"`
 	Payload   interface{} `json:"payload"`
 }
@@ -93,17 +94,27 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	message := &Message{}
+
 	/*
-		This is a short circuit for debugging raw input:
+		// This is a short circuit for debugging raw input:
 		body, _ := ioutil.ReadAll(req.Body)
 		rpc.Logger.Debug(string(body))
 	*/
+
 	decoder := json.NewDecoder(req.Body)
 	err := decoder.Decode(message)
 	if err != nil {
 		rpc.Logger.Debug("Error unmarshaling request - ", err)
 		return
 	}
+
+	/*
+		data, err := base64.StdEncoding.DecodeString(message.RawPayload)
+		if err != nil {
+			rpc.Logger.Debug("Error decoding raw payload - ", err)
+			return
+		}
+	*/
 
 	// if this is a key exchange request, ignore the sequence
 	// the internal sequence counters will be reset during the exchange process anyway

@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net"
@@ -11,34 +10,17 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 
+	"strconv"
+
 	"../account"
 	"github.com/Sirupsen/logrus"
 	"github.com/agl/ed25519"
 	"github.com/boltdb/bolt"
+	"github.com/golang/protobuf/proto"
 )
 
-// [FIXME] - message & response structs are deprecated
-
-// Message represents an RPC message
-type Message struct {
-	Method     string          `json:"method"`
-	Signature  map[string]byte `json:"signature"`
-	Sequence   int32           `json:"sequence"`
-	RawPayload string          `json:"payload"`
-	Payload    interface{}     `json:"-"`
-}
-
-// Response is an RPC response
-type Response struct {
-	Status    string      `json:"status"`
-	Code      int         `json:"code"`
-	Signature []byte      `json:"signature"`
-	Sequence  int32       `json:"sequence"`
-	Payload   interface{} `json:"payload"`
-}
-
 // Handler is an RPC message handler
-type Handler func(*Server, []byte) ([]byte, error)
+type Handler func(*Server, []byte) (proto.Message, error)
 
 // Server is a RPC server instance
 type Server struct {
@@ -70,104 +52,158 @@ func NewServer(logger *logrus.Logger) *Server {
 // RegisterHandlers registers all of the RPC handlers
 func (rpc *Server) RegisterHandlers() {
 	rpc.Handlers["KeyExchange"] = KeyExchange
-	/*
-		rpc.Handlers["MasterDb::open"] = OpenMasterDb
 
-		rpc.Handlers["Account::create"] = CreateAccount
-		rpc.Handlers["Account::unlock"] = UnlockAccount
-		rpc.Handlers["Account::signin"] = SigninAccount
-		rpc.Handlers["Account::signout"] = SignoutAccount
-		rpc.Handlers["Account::lock"] = LockAccount
+	rpc.Handlers["MasterDb::open"] = OpenMasterDb
 
-		rpc.Handlers["AccountState::get"] = GetAccountState
+	rpc.Handlers["Account::create"] = CreateAccount
+	rpc.Handlers["Account::unlock"] = UnlockAccount
+	rpc.Handlers["Account::signin"] = SigninAccount
+	rpc.Handlers["Account::signout"] = SignoutAccount
+	rpc.Handlers["Account::lock"] = LockAccount
 
-		rpc.Handlers["UIState::load"] = LoadUIState
-		rpc.Handlers["UIState::save"] = SaveUIState
-	*/
+	rpc.Handlers["AccountState::get"] = GetAccountState
+
+	rpc.Handlers["UIState::load"] = LoadUIState
+	rpc.Handlers["UIState::save"] = SaveUIState
+}
+
+// RequestHeader contains the custom headers from a request
+type RequestHeader struct {
+	Signature []byte
+	Method    string
+	Sequence  int32
+}
+
+// VerifyHeaders checks that a request contains the correct headers &
+// extracts their values into a working structure
+func (rpc *Server) VerifyHeaders(req *http.Request) *RequestHeader {
+	header := &RequestHeader{}
+
+	header.Method = req.Header.Get("NoteKeeper-Request-Method")
+	if header.Method == "" {
+		rpc.Logger.Debug("Missing request method")
+		return nil
+	}
+
+	// base64 encoded signature of the request body
+	signature := req.Header.Get("NoteKeeper-Message-Signature")
+	if signature == "" {
+		rpc.Logger.Debug("Missing request signature")
+		return nil
+	}
+	var err error
+	header.Signature, err = base64.StdEncoding.DecodeString(signature)
+	if err != nil {
+		rpc.Logger.Debug("Error decoding request signature - ", err)
+		return nil
+	}
+
+	seq := req.Header.Get("NoteKeeper-Message-Sequence")
+	if seq == "" {
+		rpc.Logger.Debug("Missing request sequence")
+		return nil
+	}
+	parsedSeq, err := strconv.ParseInt(seq, 10, 32)
+	if err != nil {
+		rpc.Logger.Debug("Error decoding request sequence - ", err)
+		return nil
+	}
+	header.Sequence = int32(parsedSeq)
+
+	rpc.RecvCounter++
+	if header.Method != "KeyExchange" && header.Sequence != rpc.RecvCounter {
+		rpc.Logger.Debug("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", header.Sequence, "]")
+		return nil
+	}
+
+	return header
 }
 
 // ServeHTTP handles HTTP requests
 func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	// we only accept POST requests
 	if req.Method != "POST" {
 		rpc.Logger.Debug("Unexpected request method - ", req.Method)
 		return
 	}
 
-	// check req.URL to make sure it matches "/rpc"
-	if req.URL.Path[1:] != "rpc" {
+	// we accept only one URL path of "/rpc"
+	if req.URL.Path != "/rpc" {
 		rpc.Logger.Debug("Unexpected request path - ", req.URL.Path)
 		return
 	}
 
-	// This is a short circuit for debugging raw input:
+	header := rpc.VerifyHeaders(req)
+	if header == nil {
+		return
+	}
+
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		rpc.Logger.Debug("Error reading request body - ", err)
 		return
 	}
 
-	requestMethod := req.Header.Get("NoteKeeper-Request-Method")
-	// base64 encoded signature of the request body
-	signatureHeader := req.Header.Get("NoteKeeper-Request-Signature")
-	//err = proto.Unmarshal(body, &myClient)
-
-	signature, err := base64.StdEncoding.DecodeString(signatureHeader)
-	if err != nil {
-		rpc.Logger.Debug("Error decoding signature - ", err)
+	handler := rpc.FindHandler(header.Method)
+	if handler == nil {
+		rpc.Logger.Debug("Could not find handler for method - ", header.Method)
 		return
 	}
 
-	// [FIXME] - we can do signature verification against the body here
-
-	/* Have to wait until message has been unmarshaled before we can check the sequence is OK
-
-	// if this is a key exchange request, ignore the sequence
-	// the internal sequence counters will be reset during the exchange process anyway
-	if method != "KeyExchange" {
-		rpc.RecvCounter++
-		if message.Sequence != rpc.RecvCounter {
-			rpc.Logger.Debug("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", message.Sequence, "]")
+	// key exchange requests contain the key needed to do verification
+	// so we need to defer until after the request has been handled
+	if header.Method != "KeyExchange" {
+		ok := rpc.VerifyRequest(body, header.Signature)
+		if !ok {
+			rpc.Logger.Debug("Message Verification failed")
 			return
 		}
 	}
-	*/
 
-	foundHandler := false
-	for method, handler := range rpc.Handlers {
-		if method == requestMethod {
-			foundHandler = true
-			handlerResponse, err := handler(rpc, body)
-			if err != nil {
-				return
-			}
+	handlerResponse, err := handler(rpc, body)
+	if err != nil {
+		return
+	}
 
-			if method == "KeyExchange" {
-				ok := rpc.VerifyRequest(body, signature)
-				if !ok {
-					rpc.Logger.Debug("Message Verification failed")
-					return
-				}
-			}
-			/*
-				ok := rpc.SignResponse(handlerResponse)
-				if !ok {
-					return
-				}
-			*/
-			encoder := json.NewEncoder(resp)
-			err = encoder.Encode(handlerResponse)
-			if err != nil {
-				rpc.Logger.Debug("Error marshaling handler response - ", err)
-				return
-			}
-			break
+	if header.Method == "KeyExchange" {
+		ok := rpc.VerifyRequest(body, header.Signature)
+		if !ok {
+			rpc.Logger.Debug("Message Verification failed")
+			return
 		}
 	}
 
-	if !foundHandler {
-		rpc.Logger.Debug("Could not find handler for method - ", requestMethod)
+	responseData, err := proto.Marshal(handlerResponse)
+	if err != nil {
+		rpc.Logger.Debug("Error marshaling response - ", err)
 		return
 	}
+	encodedData := base64.StdEncoding.EncodeToString(responseData)
+
+	// set response headers
+	responseSignature := rpc.CreateSignature(responseData)
+	resp.Header().Set("NoteKeeper-Message-Signature", responseSignature)
+
+	rpc.SendCounter++
+	resp.Header().Set("NoteKeeper-Message-Sequence", strconv.FormatInt(int64(rpc.SendCounter), 10))
+	// repackage request method header so client doesn't need to keep track of it
+	resp.Header().Set("NoteKeeper-Request-Method", header.Method)
+
+	// send response
+	_, err = resp.Write([]byte(encodedData))
+	if err != nil {
+		rpc.Logger.Debug("Error writing response - ", err)
+	}
+}
+
+// FindHandler matches a method name with a handler
+func (rpc *Server) FindHandler(requestMethod string) Handler {
+	for method, handler := range rpc.Handlers {
+		if method == requestMethod {
+			return handler
+		}
+	}
+	return nil
 }
 
 // Start an RPC Server

@@ -21,8 +21,6 @@ message RequestHeader {
 message ResponseHeader {
 	string status = 1;
 	int32 code = 2;
-	bytes signature = 3;
-	int32 sequence = 4;
 }
 
 // A key exchange client request
@@ -37,32 +35,28 @@ message KeyExchangeResponse {
 	bytes publicKey = 2;
 }
 
-// All below message types are legacy types to be replaced
-
-message StatusResponse {
-	string status = 1;
-	int32 code = 2;
+message EmptyRequest {
+	RequestHeader header = 1;
 }
 
-// a generic RPC request message
-message TokenRequest {
-	string token = 1;
+message EmptyResponse {
+	ResponseHeader header = 1;
 }
 
 // a generic RPC request message containing a common UUID string
 message IdRequest {
-	string id = 1;
+	RequestHeader header = 1;
+	string id = 2;
 }
 
-// a generic RPC response message containing a common UUID string and status
+// a generic RPC response message containing a common UUID string
 message IdResponse {
-	string id = 1;
-	string status = 2;
-	int32 code = 3;
+	ResponseHeader header = 1;
+	string id = 2;
 }
 
-message UIStateResponse {
-	StatusResponse status = 1;
+message LoadUIStateResponse {
+	ResponseHeader header = 1;
 	int32 windowWidth = 2;
 	int32 windowHeight = 3;
 	int32 windowXPosition = 4;
@@ -77,7 +71,7 @@ message UIStateResponse {
 }
 
 message SaveUIStateRequest {
-	StatusResponse status = 1;
+	RequestHeader header = 1;
 	int32 windowWidth = 2;
 	int32 windowHeight = 3;
 	int32 windowXPosition = 4;
@@ -92,34 +86,40 @@ message SaveUIStateRequest {
 }
 
 message AccountStateResponse {
-	bool signedIn = 1;
-	bool locked = 2;
-	bool exists = 3;
+	ResponseHeader header = 1;
+	bool signedIn = 2;
+	bool locked = 3;
+	bool exists = 4;
 }
 
 message OpenMasterDbRequest {
-	string path = 1; // user data directory path
+	RequestHeader header = 1;
+	string path = 2; // user data directory path
 }
 
 message CreateAccountRequest {
-	string name = 1; // account name
-	string email = 2; // user email
-	string passphrase = 3; // user password
+	RequestHeader header = 1;
+	string name = 2; // account name
+	string email = 3; // user email
+	string passphrase = 4; // user password
 }
 
 message UnlockAccountRequest {
-	string id = 1;
-	string passphrase = 2;
-}
-
-message SigninAccountRequest {
-	string name = 1;
-	string email = 2;
+	RequestHeader header = 1;
+	string id = 2;
 	string passphrase = 3;
 }
 
+message SigninAccountRequest {
+	RequestHeader header = 1;
+	string name = 2;
+	string email = 3;
+	string passphrase = 4;
+}
+
 message CreateNotebookRequest {
-	string name = 1;
-	string user_id = 2;
-	string shelf_id = 3;
+	RequestHeader header = 1;
+	string name = 2;
+	string user_id = 3;
+	string shelf_id = 4;
 }

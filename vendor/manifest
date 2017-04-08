@@ -100,14 +100,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/mitchellh/mapstructure",
-			"repository": "https://github.com/mitchellh/mapstructure",
-			"vcs": "git",
-			"revision": "53818660ed4955e899c0bcafa97299a388bd7c8e",
-			"branch": "master",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/satori/go.uuid",
 			"repository": "https://github.com/satori/go.uuid",
 			"vcs": "git",
@@ -270,14 +262,6 @@
 			"repository": "https://github.com/golang/appengine",
 			"vcs": "git",
 			"revision": "08a149cfaee099e6ce4be01c0113a78c85ee1dee",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "google.golang.org/grpc",
-			"repository": "https://github.com/grpc/grpc-go",
-			"vcs": "git",
-			"revision": "9d682f9293b408c42d17c587d0e2a31237ac3f10",
 			"branch": "master",
 			"notests": true
 		},

@@ -13,11 +13,11 @@ It has these top-level messages:
 	ResponseHeader
 	KeyExchangeRequest
 	KeyExchangeResponse
-	StatusResponse
-	TokenRequest
+	EmptyRequest
+	EmptyResponse
 	IdRequest
 	IdResponse
-	UIStateResponse
+	LoadUIStateResponse
 	SaveUIStateRequest
 	AccountStateResponse
 	OpenMasterDbRequest
@@ -78,10 +78,8 @@ func (m *RequestHeader) GetSequence() int32 {
 
 // All responses will include this embedded message type
 type ResponseHeader struct {
-	Status    string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Code      int32  `protobuf:"varint,2,opt,name=code" json:"code,omitempty"`
-	Signature []byte `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
-	Sequence  int32  `protobuf:"varint,4,opt,name=sequence" json:"sequence,omitempty"`
+	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
+	Code   int32  `protobuf:"varint,2,opt,name=code" json:"code,omitempty"`
 }
 
 func (m *ResponseHeader) Reset()                    { *m = ResponseHeader{} }
@@ -99,20 +97,6 @@ func (m *ResponseHeader) GetStatus() string {
 func (m *ResponseHeader) GetCode() int32 {
 	if m != nil {
 		return m.Code
-	}
-	return 0
-}
-
-func (m *ResponseHeader) GetSignature() []byte {
-	if m != nil {
-		return m.Signature
-	}
-	return nil
-}
-
-func (m *ResponseHeader) GetSequence() int32 {
-	if m != nil {
-		return m.Sequence
 	}
 	return 0
 }
@@ -167,56 +151,55 @@ func (m *KeyExchangeResponse) GetPublicKey() []byte {
 	return nil
 }
 
-type StatusResponse struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Code   int32  `protobuf:"varint,2,opt,name=code" json:"code,omitempty"`
+type EmptyRequest struct {
+	Header *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
 }
 
-func (m *StatusResponse) Reset()                    { *m = StatusResponse{} }
-func (m *StatusResponse) String() string            { return proto.CompactTextString(m) }
-func (*StatusResponse) ProtoMessage()               {}
-func (*StatusResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (m *EmptyRequest) Reset()                    { *m = EmptyRequest{} }
+func (m *EmptyRequest) String() string            { return proto.CompactTextString(m) }
+func (*EmptyRequest) ProtoMessage()               {}
+func (*EmptyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
-func (m *StatusResponse) GetStatus() string {
+func (m *EmptyRequest) GetHeader() *RequestHeader {
 	if m != nil {
-		return m.Status
+		return m.Header
 	}
-	return ""
+	return nil
 }
 
-func (m *StatusResponse) GetCode() int32 {
+type EmptyResponse struct {
+	Header *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+}
+
+func (m *EmptyResponse) Reset()                    { *m = EmptyResponse{} }
+func (m *EmptyResponse) String() string            { return proto.CompactTextString(m) }
+func (*EmptyResponse) ProtoMessage()               {}
+func (*EmptyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *EmptyResponse) GetHeader() *ResponseHeader {
 	if m != nil {
-		return m.Code
+		return m.Header
 	}
-	return 0
-}
-
-// a generic RPC request message
-type TokenRequest struct {
-	Token string `protobuf:"bytes,1,opt,name=token" json:"token,omitempty"`
-}
-
-func (m *TokenRequest) Reset()                    { *m = TokenRequest{} }
-func (m *TokenRequest) String() string            { return proto.CompactTextString(m) }
-func (*TokenRequest) ProtoMessage()               {}
-func (*TokenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
-
-func (m *TokenRequest) GetToken() string {
-	if m != nil {
-		return m.Token
-	}
-	return ""
+	return nil
 }
 
 // a generic RPC request message containing a common UUID string
 type IdRequest struct {
-	Id string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Header *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Id     string         `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
 }
 
 func (m *IdRequest) Reset()                    { *m = IdRequest{} }
 func (m *IdRequest) String() string            { return proto.CompactTextString(m) }
 func (*IdRequest) ProtoMessage()               {}
 func (*IdRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *IdRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
 
 func (m *IdRequest) GetId() string {
 	if m != nil {
@@ -225,17 +208,23 @@ func (m *IdRequest) GetId() string {
 	return ""
 }
 
-// a generic RPC response message containing a common UUID string and status
+// a generic RPC response message containing a common UUID string
 type IdResponse struct {
-	Id     string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Status string `protobuf:"bytes,2,opt,name=status" json:"status,omitempty"`
-	Code   int32  `protobuf:"varint,3,opt,name=code" json:"code,omitempty"`
+	Header *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Id     string          `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
 }
 
 func (m *IdResponse) Reset()                    { *m = IdResponse{} }
 func (m *IdResponse) String() string            { return proto.CompactTextString(m) }
 func (*IdResponse) ProtoMessage()               {}
 func (*IdResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+func (m *IdResponse) GetHeader() *ResponseHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
 
 func (m *IdResponse) GetId() string {
 	if m != nil {
@@ -244,22 +233,8 @@ func (m *IdResponse) GetId() string {
 	return ""
 }
 
-func (m *IdResponse) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *IdResponse) GetCode() int32 {
-	if m != nil {
-		return m.Code
-	}
-	return 0
-}
-
-type UIStateResponse struct {
-	Status           *StatusResponse `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
+type LoadUIStateResponse struct {
+	Header           *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
 	WindowWidth      int32           `protobuf:"varint,2,opt,name=windowWidth" json:"windowWidth,omitempty"`
 	WindowHeight     int32           `protobuf:"varint,3,opt,name=windowHeight" json:"windowHeight,omitempty"`
 	WindowXPosition  int32           `protobuf:"varint,4,opt,name=windowXPosition" json:"windowXPosition,omitempty"`
@@ -273,89 +248,89 @@ type UIStateResponse struct {
 	DisplayYPosition int32           `protobuf:"varint,12,opt,name=displayYPosition" json:"displayYPosition,omitempty"`
 }
 
-func (m *UIStateResponse) Reset()                    { *m = UIStateResponse{} }
-func (m *UIStateResponse) String() string            { return proto.CompactTextString(m) }
-func (*UIStateResponse) ProtoMessage()               {}
-func (*UIStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (m *LoadUIStateResponse) Reset()                    { *m = LoadUIStateResponse{} }
+func (m *LoadUIStateResponse) String() string            { return proto.CompactTextString(m) }
+func (*LoadUIStateResponse) ProtoMessage()               {}
+func (*LoadUIStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
 
-func (m *UIStateResponse) GetStatus() *StatusResponse {
+func (m *LoadUIStateResponse) GetHeader() *ResponseHeader {
 	if m != nil {
-		return m.Status
+		return m.Header
 	}
 	return nil
 }
 
-func (m *UIStateResponse) GetWindowWidth() int32 {
+func (m *LoadUIStateResponse) GetWindowWidth() int32 {
 	if m != nil {
 		return m.WindowWidth
 	}
 	return 0
 }
 
-func (m *UIStateResponse) GetWindowHeight() int32 {
+func (m *LoadUIStateResponse) GetWindowHeight() int32 {
 	if m != nil {
 		return m.WindowHeight
 	}
 	return 0
 }
 
-func (m *UIStateResponse) GetWindowXPosition() int32 {
+func (m *LoadUIStateResponse) GetWindowXPosition() int32 {
 	if m != nil {
 		return m.WindowXPosition
 	}
 	return 0
 }
 
-func (m *UIStateResponse) GetWindowYPosition() int32 {
+func (m *LoadUIStateResponse) GetWindowYPosition() int32 {
 	if m != nil {
 		return m.WindowYPosition
 	}
 	return 0
 }
 
-func (m *UIStateResponse) GetWindowMaximized() bool {
+func (m *LoadUIStateResponse) GetWindowMaximized() bool {
 	if m != nil {
 		return m.WindowMaximized
 	}
 	return false
 }
 
-func (m *UIStateResponse) GetWindowMinimized() bool {
+func (m *LoadUIStateResponse) GetWindowMinimized() bool {
 	if m != nil {
 		return m.WindowMinimized
 	}
 	return false
 }
 
-func (m *UIStateResponse) GetWindowFullscreen() bool {
+func (m *LoadUIStateResponse) GetWindowFullscreen() bool {
 	if m != nil {
 		return m.WindowFullscreen
 	}
 	return false
 }
 
-func (m *UIStateResponse) GetDisplayWidth() int32 {
+func (m *LoadUIStateResponse) GetDisplayWidth() int32 {
 	if m != nil {
 		return m.DisplayWidth
 	}
 	return 0
 }
 
-func (m *UIStateResponse) GetDisplayHeight() int32 {
+func (m *LoadUIStateResponse) GetDisplayHeight() int32 {
 	if m != nil {
 		return m.DisplayHeight
 	}
 	return 0
 }
 
-func (m *UIStateResponse) GetDisplayXPosition() int32 {
+func (m *LoadUIStateResponse) GetDisplayXPosition() int32 {
 	if m != nil {
 		return m.DisplayXPosition
 	}
 	return 0
 }
 
-func (m *UIStateResponse) GetDisplayYPosition() int32 {
+func (m *LoadUIStateResponse) GetDisplayYPosition() int32 {
 	if m != nil {
 		return m.DisplayYPosition
 	}
@@ -363,18 +338,18 @@ func (m *UIStateResponse) GetDisplayYPosition() int32 {
 }
 
 type SaveUIStateRequest struct {
-	Status           *StatusResponse `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	WindowWidth      int32           `protobuf:"varint,2,opt,name=windowWidth" json:"windowWidth,omitempty"`
-	WindowHeight     int32           `protobuf:"varint,3,opt,name=windowHeight" json:"windowHeight,omitempty"`
-	WindowXPosition  int32           `protobuf:"varint,4,opt,name=windowXPosition" json:"windowXPosition,omitempty"`
-	WindowYPosition  int32           `protobuf:"varint,5,opt,name=windowYPosition" json:"windowYPosition,omitempty"`
-	WindowMaximized  bool            `protobuf:"varint,6,opt,name=windowMaximized" json:"windowMaximized,omitempty"`
-	WindowMinimized  bool            `protobuf:"varint,7,opt,name=windowMinimized" json:"windowMinimized,omitempty"`
-	WindowFullscreen bool            `protobuf:"varint,8,opt,name=windowFullscreen" json:"windowFullscreen,omitempty"`
-	DisplayWidth     int32           `protobuf:"varint,9,opt,name=displayWidth" json:"displayWidth,omitempty"`
-	DisplayHeight    int32           `protobuf:"varint,10,opt,name=displayHeight" json:"displayHeight,omitempty"`
-	DisplayXPosition int32           `protobuf:"varint,11,opt,name=displayXPosition" json:"displayXPosition,omitempty"`
-	DisplayYPosition int32           `protobuf:"varint,12,opt,name=displayYPosition" json:"displayYPosition,omitempty"`
+	Header           *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	WindowWidth      int32          `protobuf:"varint,2,opt,name=windowWidth" json:"windowWidth,omitempty"`
+	WindowHeight     int32          `protobuf:"varint,3,opt,name=windowHeight" json:"windowHeight,omitempty"`
+	WindowXPosition  int32          `protobuf:"varint,4,opt,name=windowXPosition" json:"windowXPosition,omitempty"`
+	WindowYPosition  int32          `protobuf:"varint,5,opt,name=windowYPosition" json:"windowYPosition,omitempty"`
+	WindowMaximized  bool           `protobuf:"varint,6,opt,name=windowMaximized" json:"windowMaximized,omitempty"`
+	WindowMinimized  bool           `protobuf:"varint,7,opt,name=windowMinimized" json:"windowMinimized,omitempty"`
+	WindowFullscreen bool           `protobuf:"varint,8,opt,name=windowFullscreen" json:"windowFullscreen,omitempty"`
+	DisplayWidth     int32          `protobuf:"varint,9,opt,name=displayWidth" json:"displayWidth,omitempty"`
+	DisplayHeight    int32          `protobuf:"varint,10,opt,name=displayHeight" json:"displayHeight,omitempty"`
+	DisplayXPosition int32          `protobuf:"varint,11,opt,name=displayXPosition" json:"displayXPosition,omitempty"`
+	DisplayYPosition int32          `protobuf:"varint,12,opt,name=displayYPosition" json:"displayYPosition,omitempty"`
 }
 
 func (m *SaveUIStateRequest) Reset()                    { *m = SaveUIStateRequest{} }
@@ -382,9 +357,9 @@ func (m *SaveUIStateRequest) String() string            { return proto.CompactTe
 func (*SaveUIStateRequest) ProtoMessage()               {}
 func (*SaveUIStateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
-func (m *SaveUIStateRequest) GetStatus() *StatusResponse {
+func (m *SaveUIStateRequest) GetHeader() *RequestHeader {
 	if m != nil {
-		return m.Status
+		return m.Header
 	}
 	return nil
 }
@@ -467,15 +442,23 @@ func (m *SaveUIStateRequest) GetDisplayYPosition() int32 {
 }
 
 type AccountStateResponse struct {
-	SignedIn bool `protobuf:"varint,1,opt,name=signedIn" json:"signedIn,omitempty"`
-	Locked   bool `protobuf:"varint,2,opt,name=locked" json:"locked,omitempty"`
-	Exists   bool `protobuf:"varint,3,opt,name=exists" json:"exists,omitempty"`
+	Header   *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	SignedIn bool            `protobuf:"varint,2,opt,name=signedIn" json:"signedIn,omitempty"`
+	Locked   bool            `protobuf:"varint,3,opt,name=locked" json:"locked,omitempty"`
+	Exists   bool            `protobuf:"varint,4,opt,name=exists" json:"exists,omitempty"`
 }
 
 func (m *AccountStateResponse) Reset()                    { *m = AccountStateResponse{} }
 func (m *AccountStateResponse) String() string            { return proto.CompactTextString(m) }
 func (*AccountStateResponse) ProtoMessage()               {}
 func (*AccountStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+
+func (m *AccountStateResponse) GetHeader() *ResponseHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
 
 func (m *AccountStateResponse) GetSignedIn() bool {
 	if m != nil {
@@ -499,13 +482,21 @@ func (m *AccountStateResponse) GetExists() bool {
 }
 
 type OpenMasterDbRequest struct {
-	Path string `protobuf:"bytes,1,opt,name=path" json:"path,omitempty"`
+	Header *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Path   string         `protobuf:"bytes,2,opt,name=path" json:"path,omitempty"`
 }
 
 func (m *OpenMasterDbRequest) Reset()                    { *m = OpenMasterDbRequest{} }
 func (m *OpenMasterDbRequest) String() string            { return proto.CompactTextString(m) }
 func (*OpenMasterDbRequest) ProtoMessage()               {}
 func (*OpenMasterDbRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+
+func (m *OpenMasterDbRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
 
 func (m *OpenMasterDbRequest) GetPath() string {
 	if m != nil {
@@ -515,15 +506,23 @@ func (m *OpenMasterDbRequest) GetPath() string {
 }
 
 type CreateAccountRequest struct {
-	Name       string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Email      string `protobuf:"bytes,2,opt,name=email" json:"email,omitempty"`
-	Passphrase string `protobuf:"bytes,3,opt,name=passphrase" json:"passphrase,omitempty"`
+	Header     *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Name       string         `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Email      string         `protobuf:"bytes,3,opt,name=email" json:"email,omitempty"`
+	Passphrase string         `protobuf:"bytes,4,opt,name=passphrase" json:"passphrase,omitempty"`
 }
 
 func (m *CreateAccountRequest) Reset()                    { *m = CreateAccountRequest{} }
 func (m *CreateAccountRequest) String() string            { return proto.CompactTextString(m) }
 func (*CreateAccountRequest) ProtoMessage()               {}
 func (*CreateAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+
+func (m *CreateAccountRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
 
 func (m *CreateAccountRequest) GetName() string {
 	if m != nil {
@@ -547,14 +546,22 @@ func (m *CreateAccountRequest) GetPassphrase() string {
 }
 
 type UnlockAccountRequest struct {
-	Id         string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Passphrase string `protobuf:"bytes,2,opt,name=passphrase" json:"passphrase,omitempty"`
+	Header     *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Id         string         `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
+	Passphrase string         `protobuf:"bytes,3,opt,name=passphrase" json:"passphrase,omitempty"`
 }
 
 func (m *UnlockAccountRequest) Reset()                    { *m = UnlockAccountRequest{} }
 func (m *UnlockAccountRequest) String() string            { return proto.CompactTextString(m) }
 func (*UnlockAccountRequest) ProtoMessage()               {}
 func (*UnlockAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
+
+func (m *UnlockAccountRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
 
 func (m *UnlockAccountRequest) GetId() string {
 	if m != nil {
@@ -571,15 +578,23 @@ func (m *UnlockAccountRequest) GetPassphrase() string {
 }
 
 type SigninAccountRequest struct {
-	Name       string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Email      string `protobuf:"bytes,2,opt,name=email" json:"email,omitempty"`
-	Passphrase string `protobuf:"bytes,3,opt,name=passphrase" json:"passphrase,omitempty"`
+	Header     *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Name       string         `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Email      string         `protobuf:"bytes,3,opt,name=email" json:"email,omitempty"`
+	Passphrase string         `protobuf:"bytes,4,opt,name=passphrase" json:"passphrase,omitempty"`
 }
 
 func (m *SigninAccountRequest) Reset()                    { *m = SigninAccountRequest{} }
 func (m *SigninAccountRequest) String() string            { return proto.CompactTextString(m) }
 func (*SigninAccountRequest) ProtoMessage()               {}
 func (*SigninAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
+
+func (m *SigninAccountRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
 
 func (m *SigninAccountRequest) GetName() string {
 	if m != nil {
@@ -603,15 +618,23 @@ func (m *SigninAccountRequest) GetPassphrase() string {
 }
 
 type CreateNotebookRequest struct {
-	Name    string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	UserId  string `protobuf:"bytes,2,opt,name=user_id,json=userId" json:"user_id,omitempty"`
-	ShelfId string `protobuf:"bytes,3,opt,name=shelf_id,json=shelfId" json:"shelf_id,omitempty"`
+	Header  *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Name    string         `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	UserId  string         `protobuf:"bytes,3,opt,name=user_id,json=userId" json:"user_id,omitempty"`
+	ShelfId string         `protobuf:"bytes,4,opt,name=shelf_id,json=shelfId" json:"shelf_id,omitempty"`
 }
 
 func (m *CreateNotebookRequest) Reset()                    { *m = CreateNotebookRequest{} }
 func (m *CreateNotebookRequest) String() string            { return proto.CompactTextString(m) }
 func (*CreateNotebookRequest) ProtoMessage()               {}
 func (*CreateNotebookRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
+
+func (m *CreateNotebookRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
 
 func (m *CreateNotebookRequest) GetName() string {
 	if m != nil {
@@ -639,11 +662,11 @@ func init() {
 	proto.RegisterType((*ResponseHeader)(nil), "notekeeper.ResponseHeader")
 	proto.RegisterType((*KeyExchangeRequest)(nil), "notekeeper.KeyExchangeRequest")
 	proto.RegisterType((*KeyExchangeResponse)(nil), "notekeeper.KeyExchangeResponse")
-	proto.RegisterType((*StatusResponse)(nil), "notekeeper.StatusResponse")
-	proto.RegisterType((*TokenRequest)(nil), "notekeeper.TokenRequest")
+	proto.RegisterType((*EmptyRequest)(nil), "notekeeper.EmptyRequest")
+	proto.RegisterType((*EmptyResponse)(nil), "notekeeper.EmptyResponse")
 	proto.RegisterType((*IdRequest)(nil), "notekeeper.IdRequest")
 	proto.RegisterType((*IdResponse)(nil), "notekeeper.IdResponse")
-	proto.RegisterType((*UIStateResponse)(nil), "notekeeper.UIStateResponse")
+	proto.RegisterType((*LoadUIStateResponse)(nil), "notekeeper.LoadUIStateResponse")
 	proto.RegisterType((*SaveUIStateRequest)(nil), "notekeeper.SaveUIStateRequest")
 	proto.RegisterType((*AccountStateResponse)(nil), "notekeeper.AccountStateResponse")
 	proto.RegisterType((*OpenMasterDbRequest)(nil), "notekeeper.OpenMasterDbRequest")
@@ -656,47 +679,47 @@ func init() {
 func init() { proto.RegisterFile("rpc.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 667 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0xcf, 0x6f, 0xd3, 0x4c,
-	0x10, 0x55, 0xd2, 0x24, 0x4d, 0xa6, 0x69, 0xfb, 0x69, 0x9b, 0xef, 0xfb, 0xd2, 0x82, 0x50, 0x64,
-	0xf5, 0x10, 0x38, 0x54, 0xa2, 0x5c, 0xb9, 0x20, 0xa0, 0x6a, 0x54, 0x15, 0x90, 0x4b, 0x05, 0x3d,
-	0xb5, 0x1b, 0xef, 0x10, 0xaf, 0xe2, 0xec, 0x1a, 0xef, 0xba, 0x3f, 0xb8, 0x21, 0xf1, 0x87, 0xa3,
-	0xf5, 0xae, 0x1d, 0xdb, 0x41, 0x15, 0x1c, 0x38, 0xc1, 0x6d, 0xdf, 0xdb, 0x97, 0x7d, 0x33, 0xcf,
-	0xa3, 0x51, 0xa0, 0x97, 0xc4, 0xc1, 0x41, 0x9c, 0x48, 0x2d, 0x09, 0x08, 0xa9, 0x71, 0x8e, 0x18,
-	0x63, 0xe2, 0x51, 0xd8, 0xf4, 0xf1, 0x73, 0x8a, 0x4a, 0x1f, 0x23, 0x65, 0x98, 0x90, 0xff, 0xa0,
-	0xb3, 0x40, 0x1d, 0x4a, 0x36, 0x6c, 0x8c, 0x1a, 0xe3, 0x9e, 0xef, 0x10, 0x79, 0x08, 0x3d, 0xc5,
-	0x67, 0x82, 0xea, 0x34, 0xc1, 0x61, 0x73, 0xd4, 0x18, 0xf7, 0xfd, 0x25, 0x41, 0xf6, 0xa0, 0xab,
-	0xcc, 0x33, 0x22, 0xc0, 0xe1, 0xda, 0xa8, 0x31, 0x6e, 0xfb, 0x05, 0xf6, 0xae, 0x61, 0xcb, 0x47,
-	0x15, 0x4b, 0xa1, 0x70, 0xe9, 0xa1, 0x34, 0xd5, 0xa9, 0xca, 0x3d, 0x2c, 0x22, 0x04, 0x5a, 0x81,
-	0x64, 0xf6, 0xf9, 0xb6, 0x9f, 0x9d, 0xab, 0xbe, 0x6b, 0xf7, 0xf9, 0xb6, 0x6a, 0xbe, 0x08, 0xe4,
-	0x04, 0xef, 0x5e, 0xdf, 0x06, 0x21, 0x15, 0x33, 0x74, 0x5d, 0x92, 0xa7, 0xd0, 0x09, 0xb3, 0x2a,
-	0x32, 0xef, 0x8d, 0xc3, 0xdd, 0x83, 0x65, 0x1a, 0x07, 0x95, 0x28, 0x7c, 0x27, 0x34, 0x25, 0xc4,
-	0xe9, 0x34, 0xe2, 0xc1, 0x09, 0xde, 0xe5, 0xad, 0x17, 0x84, 0x37, 0x83, 0x9d, 0x8a, 0x8d, 0xed,
-	0x94, 0x1c, 0xd6, 0x7c, 0xf6, 0xaa, 0x3e, 0xe5, 0x3c, 0x7e, 0xd2, 0xe8, 0x39, 0x6c, 0x9d, 0x65,
-	0x39, 0x15, 0x1e, 0xbf, 0x90, 0xa3, 0xb7, 0x0f, 0xfd, 0xf7, 0x72, 0x8e, 0x22, 0xcf, 0x61, 0x00,
-	0x6d, 0x6d, 0xb0, 0xfb, 0xa9, 0x05, 0xde, 0x03, 0xe8, 0x4d, 0x58, 0x2e, 0xd9, 0x82, 0x26, 0xcf,
-	0xc7, 0xa0, 0xc9, 0x99, 0x77, 0x0c, 0x60, 0x2e, 0x9d, 0x79, 0xed, 0xb6, 0x54, 0x4c, 0xf3, 0x87,
-	0xc5, 0xac, 0x95, 0x8a, 0xf9, 0xda, 0x82, 0xed, 0xf3, 0x89, 0xe9, 0xa6, 0x12, 0x58, 0xa9, 0x99,
-	0x5a, 0x60, 0xd5, 0xc6, 0x8b, 0xb7, 0x47, 0xb0, 0x71, 0xc3, 0x05, 0x93, 0x37, 0x1f, 0x38, 0xd3,
-	0xa1, 0xeb, 0xb7, 0x4c, 0x11, 0x0f, 0xfa, 0x16, 0x1e, 0x23, 0x9f, 0x85, 0xda, 0x55, 0x51, 0xe1,
-	0xc8, 0x18, 0xb6, 0x2d, 0xfe, 0xf8, 0x4e, 0x2a, 0xae, 0xb9, 0x14, 0x6e, 0x96, 0xea, 0xf4, 0x52,
-	0x79, 0x51, 0x28, 0xdb, 0x65, 0xe5, 0xc5, 0xaa, 0xf2, 0x94, 0xde, 0xf2, 0x05, 0xff, 0x82, 0x6c,
-	0xd8, 0x19, 0x35, 0xc6, 0x5d, 0xbf, 0x4e, 0x97, 0x94, 0x5c, 0x38, 0xe5, 0x7a, 0x45, 0x99, 0xd3,
-	0xe4, 0x09, 0xfc, 0x63, 0xa9, 0xa3, 0x34, 0x8a, 0x54, 0x90, 0x20, 0x8a, 0x61, 0x37, 0x93, 0xae,
-	0xf0, 0xa6, 0x6f, 0xc6, 0x55, 0x1c, 0xd1, 0x3b, 0x1b, 0x4d, 0xcf, 0xf6, 0x5d, 0xe6, 0xc8, 0x3e,
-	0x6c, 0x3a, 0xec, 0xc2, 0x81, 0x4c, 0x54, 0x25, 0x8d, 0xab, 0x23, 0x96, 0xf1, 0x6c, 0x64, 0xc2,
-	0x15, 0xbe, 0xa4, 0x5d, 0x06, 0xd4, 0xaf, 0x68, 0x0b, 0xde, 0xfb, 0xd6, 0x02, 0x72, 0x46, 0xaf,
-	0xb1, 0x98, 0x03, 0x3b, 0x74, 0x7f, 0xc7, 0xe0, 0xcf, 0x1a, 0x83, 0x29, 0x0c, 0x5e, 0x04, 0x81,
-	0x4c, 0x85, 0xae, 0xae, 0x03, 0xb3, 0xd9, 0xf9, 0x4c, 0x20, 0x9b, 0xd8, 0x15, 0xd5, 0xf5, 0x0b,
-	0x6c, 0x56, 0x4d, 0x24, 0x83, 0x39, 0xb2, 0xec, 0x53, 0x77, 0x7d, 0x87, 0x0c, 0x8f, 0xb7, 0x5c,
-	0x69, 0x95, 0x7d, 0xdf, 0xae, 0xef, 0x90, 0xf7, 0x18, 0x76, 0xde, 0xc6, 0x28, 0x4e, 0xa9, 0xd2,
-	0x98, 0xbc, 0x9a, 0xe6, 0xa3, 0x46, 0xa0, 0x15, 0x53, 0x1d, 0xba, 0x1d, 0x96, 0x9d, 0xbd, 0x2b,
-	0x18, 0xbc, 0x4c, 0x90, 0x6a, 0x74, 0x45, 0x95, 0xb4, 0x82, 0x2e, 0x30, 0xd7, 0x9a, 0xb3, 0x59,
-	0xa1, 0xb8, 0xa0, 0x3c, 0x72, 0x0b, 0xcf, 0x02, 0xf2, 0x08, 0x20, 0xa6, 0x4a, 0xc5, 0x61, 0x42,
-	0x95, 0xdd, 0x7a, 0x3d, 0xbf, 0xc4, 0x78, 0x47, 0x30, 0x38, 0x17, 0xa6, 0xe0, 0x9a, 0x43, 0x7d,
-	0x9f, 0x56, 0xdf, 0x69, 0xae, 0xbc, 0x73, 0x05, 0x83, 0x33, 0x3e, 0x13, 0x5c, 0xfc, 0xb6, 0x4a,
-	0x2f, 0xe1, 0x5f, 0x9b, 0xc5, 0x1b, 0xa9, 0x71, 0x2a, 0xe5, 0xfc, 0x3e, 0x8b, 0xff, 0x61, 0x3d,
-	0x55, 0x98, 0x5c, 0x72, 0x96, 0xef, 0x7f, 0x03, 0x27, 0x8c, 0xec, 0x42, 0x57, 0x85, 0x18, 0x7d,
-	0x32, 0x37, 0xd6, 0x63, 0x3d, 0xc3, 0x13, 0x36, 0xed, 0x64, 0xff, 0x47, 0x9e, 0x7d, 0x0f, 0x00,
-	0x00, 0xff, 0xff, 0x70, 0x45, 0x9b, 0x93, 0x9c, 0x08, 0x00, 0x00,
+	// 657 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0xc1, 0x6a, 0xdb, 0x4a,
+	0x14, 0x45, 0x89, 0xed, 0x58, 0x37, 0x4e, 0xde, 0x63, 0xe2, 0xf7, 0x9e, 0x13, 0x1e, 0xc5, 0x88,
+	0x2e, 0x4c, 0x17, 0x81, 0xa6, 0xdb, 0x6e, 0x42, 0x9a, 0x12, 0x93, 0x26, 0x0d, 0x13, 0x42, 0x1b,
+	0x28, 0x94, 0xb1, 0xe6, 0xd6, 0x1a, 0x22, 0xcf, 0xa8, 0x9a, 0x51, 0x13, 0x77, 0x5b, 0xfa, 0x03,
+	0x2d, 0xf4, 0x7b, 0x8b, 0x46, 0x63, 0x5b, 0xb2, 0x37, 0x25, 0xea, 0xa2, 0x85, 0xee, 0xe6, 0x1c,
+	0x1f, 0xee, 0xbd, 0xe7, 0xce, 0x41, 0x63, 0xf0, 0xd3, 0x24, 0xdc, 0x4f, 0x52, 0x65, 0x14, 0x01,
+	0xa9, 0x0c, 0xde, 0x20, 0x26, 0x98, 0x06, 0x0c, 0xb6, 0x28, 0xbe, 0xcf, 0x50, 0x9b, 0x13, 0x64,
+	0x1c, 0x53, 0xf2, 0x2f, 0xb4, 0x26, 0x68, 0x22, 0xc5, 0x7b, 0x5e, 0xdf, 0x1b, 0xf8, 0xd4, 0x21,
+	0xf2, 0x3f, 0xf8, 0x5a, 0x8c, 0x25, 0x33, 0x59, 0x8a, 0xbd, 0xb5, 0xbe, 0x37, 0xe8, 0xd0, 0x05,
+	0x41, 0xf6, 0xa0, 0xad, 0xf3, 0x32, 0x32, 0xc4, 0xde, 0x7a, 0xdf, 0x1b, 0x34, 0xe9, 0x1c, 0x07,
+	0x4f, 0x61, 0x9b, 0xa2, 0x4e, 0x94, 0xd4, 0xb8, 0xe8, 0xa1, 0x0d, 0x33, 0x99, 0x9e, 0xf5, 0x28,
+	0x10, 0x21, 0xd0, 0x08, 0x15, 0x2f, 0xca, 0x37, 0xa9, 0x3d, 0x07, 0x08, 0xe4, 0x14, 0xa7, 0xc7,
+	0x77, 0x61, 0xc4, 0xe4, 0x18, 0xdd, 0xac, 0xe4, 0x31, 0xb4, 0x22, 0x5b, 0xcb, 0x56, 0xd8, 0x3c,
+	0xd8, 0xdd, 0x5f, 0x78, 0xda, 0xaf, 0x18, 0xa2, 0x4e, 0x98, 0x1b, 0x48, 0xb2, 0x51, 0x2c, 0xc2,
+	0x53, 0x9c, 0xce, 0x0c, 0xcc, 0x89, 0x60, 0x0c, 0x3b, 0x95, 0x36, 0xc5, 0xbc, 0xe4, 0x60, 0xa9,
+	0xcf, 0x5e, 0xb5, 0x4f, 0xd9, 0xd5, 0x0f, 0x36, 0x3a, 0x84, 0xce, 0xf1, 0x24, 0x31, 0xd3, 0xfb,
+	0x3b, 0x09, 0x8e, 0x60, 0xcb, 0x95, 0xb8, 0xff, 0x94, 0xc1, 0x39, 0xf8, 0x43, 0x5e, 0x63, 0x9d,
+	0xdb, 0xb0, 0x26, 0xb8, 0xb5, 0xe7, 0xd3, 0x35, 0xc1, 0x83, 0x0b, 0x80, 0xbc, 0x5e, 0x8d, 0xbd,
+	0x2d, 0x57, 0xfc, 0xdc, 0x80, 0x9d, 0x17, 0x8a, 0xf1, 0xab, 0xe1, 0xa5, 0x61, 0xa6, 0xde, 0x9d,
+	0xf4, 0x61, 0xf3, 0x56, 0x48, 0xae, 0x6e, 0x5f, 0x09, 0x6e, 0x22, 0x17, 0xb0, 0x32, 0x45, 0x02,
+	0xe8, 0x14, 0xf0, 0x04, 0xc5, 0x38, 0x32, 0x2e, 0xc5, 0x15, 0x8e, 0x0c, 0xe0, 0xaf, 0x02, 0xbf,
+	0xbe, 0x50, 0x5a, 0x18, 0xa1, 0x64, 0xaf, 0x61, 0x65, 0xcb, 0xf4, 0x42, 0x79, 0x3d, 0x57, 0x36,
+	0xcb, 0xca, 0xeb, 0x55, 0xe5, 0x19, 0xbb, 0x13, 0x13, 0xf1, 0x11, 0x79, 0xaf, 0xd5, 0xf7, 0x06,
+	0x6d, 0xba, 0x4c, 0x97, 0x94, 0x42, 0x3a, 0xe5, 0x46, 0x45, 0x39, 0xa3, 0xc9, 0x23, 0xf8, 0xbb,
+	0xa0, 0x9e, 0x67, 0x71, 0xac, 0xc3, 0x14, 0x51, 0xf6, 0xda, 0x56, 0xba, 0xc2, 0xe7, 0xbe, 0xb9,
+	0xd0, 0x49, 0xcc, 0xa6, 0xc5, 0x6a, 0xfc, 0xc2, 0x77, 0x99, 0x23, 0x0f, 0x61, 0xcb, 0x61, 0xb7,
+	0x1c, 0xb0, 0xa2, 0x2a, 0x99, 0x77, 0x75, 0xc4, 0x62, 0x3d, 0x9b, 0x56, 0xb8, 0xc2, 0x97, 0xb4,
+	0x8b, 0x05, 0x75, 0x2a, 0xda, 0x39, 0x1f, 0x7c, 0x6a, 0x00, 0xb9, 0x64, 0x1f, 0x70, 0x9e, 0x83,
+	0x7b, 0x67, 0xf6, 0x4f, 0x0a, 0x7e, 0xdf, 0x14, 0x7c, 0xf3, 0xa0, 0x7b, 0x18, 0x86, 0x2a, 0x93,
+	0xa6, 0xfe, 0xe7, 0x20, 0x7f, 0xae, 0xc4, 0x58, 0x22, 0x1f, 0x4a, 0x9b, 0x82, 0x36, 0x9d, 0xe3,
+	0xfc, 0x71, 0x8a, 0x55, 0x78, 0x83, 0xdc, 0x5e, 0x7e, 0x9b, 0x3a, 0x94, 0xf3, 0x78, 0x27, 0xb4,
+	0xd1, 0xf6, 0xb6, 0xdb, 0xd4, 0xa1, 0xe0, 0x0d, 0xec, 0xbc, 0x4c, 0x50, 0x9e, 0x31, 0x6d, 0x30,
+	0x7d, 0x36, 0xaa, 0x11, 0x4f, 0x02, 0x8d, 0x84, 0xb9, 0x5c, 0xfa, 0xd4, 0x9e, 0x83, 0xaf, 0x1e,
+	0x74, 0x8f, 0x52, 0x64, 0x06, 0x9d, 0xf9, 0x7a, 0xf5, 0x25, 0x9b, 0xe0, 0xac, 0x7e, 0x7e, 0x26,
+	0x5d, 0x68, 0xe2, 0x84, 0x89, 0xd8, 0x9a, 0xf5, 0x69, 0x01, 0xc8, 0x03, 0x80, 0x84, 0x69, 0x9d,
+	0x44, 0x29, 0xd3, 0x68, 0xfd, 0xfa, 0xb4, 0xc4, 0x04, 0x53, 0xe8, 0x5e, 0xc9, 0x7c, 0x2f, 0xf5,
+	0x87, 0x5a, 0xfa, 0xea, 0x2f, 0xb5, 0x5e, 0x5f, 0x69, 0x9d, 0x2f, 0xe4, 0x52, 0x8c, 0xa5, 0x90,
+	0xbf, 0xd2, 0x42, 0xbe, 0x78, 0xf0, 0x4f, 0x71, 0x4d, 0xe7, 0xca, 0xe0, 0x48, 0xa9, 0x9b, 0x9f,
+	0x3c, 0xd6, 0x7f, 0xb0, 0x91, 0x69, 0x4c, 0xdf, 0x0a, 0xee, 0x06, 0x6b, 0xe5, 0x70, 0xc8, 0xc9,
+	0x2e, 0xb4, 0x75, 0x84, 0xf1, 0xbb, 0xfc, 0x97, 0x62, 0xae, 0x0d, 0x8b, 0x87, 0x7c, 0xd4, 0xb2,
+	0x7f, 0xf7, 0x9e, 0x7c, 0x0f, 0x00, 0x00, 0xff, 0xff, 0x9a, 0x5a, 0x63, 0x9c, 0xfb, 0x09, 0x00,
+	0x00,
 }

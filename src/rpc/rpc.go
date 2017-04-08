@@ -1,7 +1,9 @@
 package rpc
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -14,6 +16,8 @@ import (
 	"github.com/agl/ed25519"
 	"github.com/boltdb/bolt"
 )
+
+// [FIXME] - message & response structs are deprecated
 
 // Message represents an RPC message
 type Message struct {
@@ -34,7 +38,7 @@ type Response struct {
 }
 
 // Handler is an RPC message handler
-type Handler func(*Server, *Message) (*Response, error)
+type Handler func(*Server, []byte) ([]byte, error)
 
 // Server is a RPC server instance
 type Server struct {
@@ -66,18 +70,20 @@ func NewServer(logger *logrus.Logger) *Server {
 // RegisterHandlers registers all of the RPC handlers
 func (rpc *Server) RegisterHandlers() {
 	rpc.Handlers["KeyExchange"] = KeyExchange
-	rpc.Handlers["MasterDb::open"] = OpenMasterDb
+	/*
+		rpc.Handlers["MasterDb::open"] = OpenMasterDb
 
-	rpc.Handlers["Account::create"] = CreateAccount
-	rpc.Handlers["Account::unlock"] = UnlockAccount
-	rpc.Handlers["Account::signin"] = SigninAccount
-	rpc.Handlers["Account::signout"] = SignoutAccount
-	rpc.Handlers["Account::lock"] = LockAccount
+		rpc.Handlers["Account::create"] = CreateAccount
+		rpc.Handlers["Account::unlock"] = UnlockAccount
+		rpc.Handlers["Account::signin"] = SigninAccount
+		rpc.Handlers["Account::signout"] = SignoutAccount
+		rpc.Handlers["Account::lock"] = LockAccount
 
-	rpc.Handlers["AccountState::get"] = GetAccountState
+		rpc.Handlers["AccountState::get"] = GetAccountState
 
-	rpc.Handlers["UIState::load"] = LoadUIState
-	rpc.Handlers["UIState::save"] = SaveUIState
+		rpc.Handlers["UIState::load"] = LoadUIState
+		rpc.Handlers["UIState::save"] = SaveUIState
+	*/
 }
 
 // ServeHTTP handles HTTP requests
@@ -93,53 +99,61 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	message := &Message{}
-
-	/*
-		// This is a short circuit for debugging raw input:
-		body, _ := ioutil.ReadAll(req.Body)
-		rpc.Logger.Debug(string(body))
-	*/
-
-	decoder := json.NewDecoder(req.Body)
-	err := decoder.Decode(message)
+	// This is a short circuit for debugging raw input:
+	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		rpc.Logger.Debug("Error unmarshaling request - ", err)
+		rpc.Logger.Debug("Error reading request body - ", err)
 		return
 	}
 
-	/*
-		data, err := base64.StdEncoding.DecodeString(message.RawPayload)
-		if err != nil {
-			rpc.Logger.Debug("Error decoding raw payload - ", err)
-			return
-		}
-	*/
+	requestMethod := req.Header.Get("NoteKeeper-Request-Method")
+	// base64 encoded signature of the request body
+	signatureHeader := req.Header.Get("NoteKeeper-Request-Signature")
+	//err = proto.Unmarshal(body, &myClient)
+
+	signature, err := base64.StdEncoding.DecodeString(signatureHeader)
+	if err != nil {
+		rpc.Logger.Debug("Error decoding signature - ", err)
+		return
+	}
+
+	// [FIXME] - we can do signature verification against the body here
+
+	/* Have to wait until message has been unmarshaled before we can check the sequence is OK
 
 	// if this is a key exchange request, ignore the sequence
 	// the internal sequence counters will be reset during the exchange process anyway
-	if message.Method != "KeyExchange" {
+	if method != "KeyExchange" {
 		rpc.RecvCounter++
 		if message.Sequence != rpc.RecvCounter {
 			rpc.Logger.Debug("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", message.Sequence, "]")
 			return
 		}
 	}
+	*/
 
 	foundHandler := false
 	for method, handler := range rpc.Handlers {
-		if method == message.Method {
+		if method == requestMethod {
 			foundHandler = true
-			handlerResponse, err := handler(rpc, message)
+			handlerResponse, err := handler(rpc, body)
 			if err != nil {
 				return
 			}
 
-			ok := rpc.SignResponse(handlerResponse)
-			if !ok {
-				return
+			if method == "KeyExchange" {
+				ok := rpc.VerifyRequest(body, signature)
+				if !ok {
+					rpc.Logger.Debug("Message Verification failed")
+					return
+				}
 			}
-
+			/*
+				ok := rpc.SignResponse(handlerResponse)
+				if !ok {
+					return
+				}
+			*/
 			encoder := json.NewEncoder(resp)
 			err = encoder.Encode(handlerResponse)
 			if err != nil {
@@ -151,7 +165,7 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	if !foundHandler {
-		rpc.Logger.Debug("Could not find handler for method - ", message.Method)
+		rpc.Logger.Debug("Could not find handler for method - ", requestMethod)
 		return
 	}
 }

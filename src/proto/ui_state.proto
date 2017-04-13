@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package notekeeper;
+
+import "common.proto";
+
+message LoadUIStateResponse {
+	ResponseHeader header = 1;
+	int32 windowWidth = 2;
+	int32 windowHeight = 3;
+	int32 windowXPosition = 4;
+	int32 windowYPosition = 5;
+	bool windowMaximized = 6;
+	bool windowMinimized = 7;
+	bool windowFullscreen = 8;
+	int32 displayWidth = 9;
+	int32 displayHeight = 10;
+	int32 displayXPosition = 11;
+	int32 displayYPosition = 12;
+}
+
+message SaveUIStateRequest {
+	RequestHeader header = 1;
+	int32 windowWidth = 2;
+	int32 windowHeight = 3;
+	int32 windowXPosition = 4;
+	int32 windowYPosition = 5;
+	bool windowMaximized = 6;
+	bool windowMinimized = 7;
+	bool windowFullscreen = 8;
+	int32 displayWidth = 9;
+	int32 displayHeight = 10;
+	int32 displayXPosition = 11;
+	int32 displayYPosition = 12;
+}

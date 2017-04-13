@@ -21,7 +21,7 @@ proto-gen:
 # rebuild the proto definitions
 # export PATH=$PATH:/cygdrive/c/code/go/bin 
 proto:
-	cd src/proto; PATH=$$PATH:/cygdrive/c/code/go/bin protoc -I . rpc.proto --go_out=.
+	cd src/proto; PATH=$$PATH:/cygdrive/c/code/go/bin protoc -I . *.proto --go_out=.
 
 proto-copy:
 	cp src/proto/*.proto ../notekeeper-electron-frontend/app/proto/

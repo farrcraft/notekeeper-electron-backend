@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package notekeeper;
+
+import "common.proto";
+
+
+// A key exchange client request
+message KeyExchangeRequest {
+	RequestHeader header = 1;
+	bytes publicKey = 2;
+}
+
+// A key exchange server response
+message KeyExchangeResponse {
+	ResponseHeader header = 1;
+	bytes publicKey = 2;
+}

@@ -2,30 +2,6 @@
 // source: rpc.proto
 // DO NOT EDIT!
 
-/*
-Package notekeeper is a generated protocol buffer package.
-
-It is generated from these files:
-	rpc.proto
-
-It has these top-level messages:
-	RequestHeader
-	ResponseHeader
-	KeyExchangeRequest
-	KeyExchangeResponse
-	EmptyRequest
-	EmptyResponse
-	IdRequest
-	IdResponse
-	LoadUIStateResponse
-	SaveUIStateRequest
-	AccountStateResponse
-	OpenMasterDbRequest
-	CreateAccountRequest
-	UnlockAccountRequest
-	SigninAccountRequest
-	CreateNotebookRequest
-*/
 package notekeeper
 
 import proto "github.com/golang/protobuf/proto"
@@ -37,119 +13,9 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+// Ignoring public import of RequestHeader from common.proto
 
-// All requests will include this embedded message type
-type RequestHeader struct {
-	Method    string `protobuf:"bytes,1,opt,name=method" json:"method,omitempty"`
-	Signature []byte `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`
-	Sequence  int32  `protobuf:"varint,3,opt,name=sequence" json:"sequence,omitempty"`
-}
-
-func (m *RequestHeader) Reset()                    { *m = RequestHeader{} }
-func (m *RequestHeader) String() string            { return proto.CompactTextString(m) }
-func (*RequestHeader) ProtoMessage()               {}
-func (*RequestHeader) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
-
-func (m *RequestHeader) GetMethod() string {
-	if m != nil {
-		return m.Method
-	}
-	return ""
-}
-
-func (m *RequestHeader) GetSignature() []byte {
-	if m != nil {
-		return m.Signature
-	}
-	return nil
-}
-
-func (m *RequestHeader) GetSequence() int32 {
-	if m != nil {
-		return m.Sequence
-	}
-	return 0
-}
-
-// All responses will include this embedded message type
-type ResponseHeader struct {
-	Status string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Code   int32  `protobuf:"varint,2,opt,name=code" json:"code,omitempty"`
-}
-
-func (m *ResponseHeader) Reset()                    { *m = ResponseHeader{} }
-func (m *ResponseHeader) String() string            { return proto.CompactTextString(m) }
-func (*ResponseHeader) ProtoMessage()               {}
-func (*ResponseHeader) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
-
-func (m *ResponseHeader) GetStatus() string {
-	if m != nil {
-		return m.Status
-	}
-	return ""
-}
-
-func (m *ResponseHeader) GetCode() int32 {
-	if m != nil {
-		return m.Code
-	}
-	return 0
-}
-
-// A key exchange client request
-type KeyExchangeRequest struct {
-	Header    *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	PublicKey []byte         `protobuf:"bytes,2,opt,name=publicKey,proto3" json:"publicKey,omitempty"`
-}
-
-func (m *KeyExchangeRequest) Reset()                    { *m = KeyExchangeRequest{} }
-func (m *KeyExchangeRequest) String() string            { return proto.CompactTextString(m) }
-func (*KeyExchangeRequest) ProtoMessage()               {}
-func (*KeyExchangeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-func (m *KeyExchangeRequest) GetHeader() *RequestHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *KeyExchangeRequest) GetPublicKey() []byte {
-	if m != nil {
-		return m.PublicKey
-	}
-	return nil
-}
-
-// A key exchange server response
-type KeyExchangeResponse struct {
-	Header    *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	PublicKey []byte          `protobuf:"bytes,2,opt,name=publicKey,proto3" json:"publicKey,omitempty"`
-}
-
-func (m *KeyExchangeResponse) Reset()                    { *m = KeyExchangeResponse{} }
-func (m *KeyExchangeResponse) String() string            { return proto.CompactTextString(m) }
-func (*KeyExchangeResponse) ProtoMessage()               {}
-func (*KeyExchangeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
-func (m *KeyExchangeResponse) GetHeader() *ResponseHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *KeyExchangeResponse) GetPublicKey() []byte {
-	if m != nil {
-		return m.PublicKey
-	}
-	return nil
-}
+// Ignoring public import of ResponseHeader from common.proto
 
 type EmptyRequest struct {
 	Header *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
@@ -158,7 +24,7 @@ type EmptyRequest struct {
 func (m *EmptyRequest) Reset()                    { *m = EmptyRequest{} }
 func (m *EmptyRequest) String() string            { return proto.CompactTextString(m) }
 func (*EmptyRequest) ProtoMessage()               {}
-func (*EmptyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*EmptyRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
 
 func (m *EmptyRequest) GetHeader() *RequestHeader {
 	if m != nil {
@@ -174,7 +40,7 @@ type EmptyResponse struct {
 func (m *EmptyResponse) Reset()                    { *m = EmptyResponse{} }
 func (m *EmptyResponse) String() string            { return proto.CompactTextString(m) }
 func (*EmptyResponse) ProtoMessage()               {}
-func (*EmptyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*EmptyResponse) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{1} }
 
 func (m *EmptyResponse) GetHeader() *ResponseHeader {
 	if m != nil {
@@ -192,7 +58,7 @@ type IdRequest struct {
 func (m *IdRequest) Reset()                    { *m = IdRequest{} }
 func (m *IdRequest) String() string            { return proto.CompactTextString(m) }
 func (*IdRequest) ProtoMessage()               {}
-func (*IdRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (*IdRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{2} }
 
 func (m *IdRequest) GetHeader() *RequestHeader {
 	if m != nil {
@@ -217,7 +83,7 @@ type IdResponse struct {
 func (m *IdResponse) Reset()                    { *m = IdResponse{} }
 func (m *IdResponse) String() string            { return proto.CompactTextString(m) }
 func (*IdResponse) ProtoMessage()               {}
-func (*IdResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*IdResponse) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{3} }
 
 func (m *IdResponse) GetHeader() *ResponseHeader {
 	if m != nil {
@@ -233,493 +99,26 @@ func (m *IdResponse) GetId() string {
 	return ""
 }
 
-type LoadUIStateResponse struct {
-	Header           *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	WindowWidth      int32           `protobuf:"varint,2,opt,name=windowWidth" json:"windowWidth,omitempty"`
-	WindowHeight     int32           `protobuf:"varint,3,opt,name=windowHeight" json:"windowHeight,omitempty"`
-	WindowXPosition  int32           `protobuf:"varint,4,opt,name=windowXPosition" json:"windowXPosition,omitempty"`
-	WindowYPosition  int32           `protobuf:"varint,5,opt,name=windowYPosition" json:"windowYPosition,omitempty"`
-	WindowMaximized  bool            `protobuf:"varint,6,opt,name=windowMaximized" json:"windowMaximized,omitempty"`
-	WindowMinimized  bool            `protobuf:"varint,7,opt,name=windowMinimized" json:"windowMinimized,omitempty"`
-	WindowFullscreen bool            `protobuf:"varint,8,opt,name=windowFullscreen" json:"windowFullscreen,omitempty"`
-	DisplayWidth     int32           `protobuf:"varint,9,opt,name=displayWidth" json:"displayWidth,omitempty"`
-	DisplayHeight    int32           `protobuf:"varint,10,opt,name=displayHeight" json:"displayHeight,omitempty"`
-	DisplayXPosition int32           `protobuf:"varint,11,opt,name=displayXPosition" json:"displayXPosition,omitempty"`
-	DisplayYPosition int32           `protobuf:"varint,12,opt,name=displayYPosition" json:"displayYPosition,omitempty"`
-}
-
-func (m *LoadUIStateResponse) Reset()                    { *m = LoadUIStateResponse{} }
-func (m *LoadUIStateResponse) String() string            { return proto.CompactTextString(m) }
-func (*LoadUIStateResponse) ProtoMessage()               {}
-func (*LoadUIStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
-
-func (m *LoadUIStateResponse) GetHeader() *ResponseHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *LoadUIStateResponse) GetWindowWidth() int32 {
-	if m != nil {
-		return m.WindowWidth
-	}
-	return 0
-}
-
-func (m *LoadUIStateResponse) GetWindowHeight() int32 {
-	if m != nil {
-		return m.WindowHeight
-	}
-	return 0
-}
-
-func (m *LoadUIStateResponse) GetWindowXPosition() int32 {
-	if m != nil {
-		return m.WindowXPosition
-	}
-	return 0
-}
-
-func (m *LoadUIStateResponse) GetWindowYPosition() int32 {
-	if m != nil {
-		return m.WindowYPosition
-	}
-	return 0
-}
-
-func (m *LoadUIStateResponse) GetWindowMaximized() bool {
-	if m != nil {
-		return m.WindowMaximized
-	}
-	return false
-}
-
-func (m *LoadUIStateResponse) GetWindowMinimized() bool {
-	if m != nil {
-		return m.WindowMinimized
-	}
-	return false
-}
-
-func (m *LoadUIStateResponse) GetWindowFullscreen() bool {
-	if m != nil {
-		return m.WindowFullscreen
-	}
-	return false
-}
-
-func (m *LoadUIStateResponse) GetDisplayWidth() int32 {
-	if m != nil {
-		return m.DisplayWidth
-	}
-	return 0
-}
-
-func (m *LoadUIStateResponse) GetDisplayHeight() int32 {
-	if m != nil {
-		return m.DisplayHeight
-	}
-	return 0
-}
-
-func (m *LoadUIStateResponse) GetDisplayXPosition() int32 {
-	if m != nil {
-		return m.DisplayXPosition
-	}
-	return 0
-}
-
-func (m *LoadUIStateResponse) GetDisplayYPosition() int32 {
-	if m != nil {
-		return m.DisplayYPosition
-	}
-	return 0
-}
-
-type SaveUIStateRequest struct {
-	Header           *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	WindowWidth      int32          `protobuf:"varint,2,opt,name=windowWidth" json:"windowWidth,omitempty"`
-	WindowHeight     int32          `protobuf:"varint,3,opt,name=windowHeight" json:"windowHeight,omitempty"`
-	WindowXPosition  int32          `protobuf:"varint,4,opt,name=windowXPosition" json:"windowXPosition,omitempty"`
-	WindowYPosition  int32          `protobuf:"varint,5,opt,name=windowYPosition" json:"windowYPosition,omitempty"`
-	WindowMaximized  bool           `protobuf:"varint,6,opt,name=windowMaximized" json:"windowMaximized,omitempty"`
-	WindowMinimized  bool           `protobuf:"varint,7,opt,name=windowMinimized" json:"windowMinimized,omitempty"`
-	WindowFullscreen bool           `protobuf:"varint,8,opt,name=windowFullscreen" json:"windowFullscreen,omitempty"`
-	DisplayWidth     int32          `protobuf:"varint,9,opt,name=displayWidth" json:"displayWidth,omitempty"`
-	DisplayHeight    int32          `protobuf:"varint,10,opt,name=displayHeight" json:"displayHeight,omitempty"`
-	DisplayXPosition int32          `protobuf:"varint,11,opt,name=displayXPosition" json:"displayXPosition,omitempty"`
-	DisplayYPosition int32          `protobuf:"varint,12,opt,name=displayYPosition" json:"displayYPosition,omitempty"`
-}
-
-func (m *SaveUIStateRequest) Reset()                    { *m = SaveUIStateRequest{} }
-func (m *SaveUIStateRequest) String() string            { return proto.CompactTextString(m) }
-func (*SaveUIStateRequest) ProtoMessage()               {}
-func (*SaveUIStateRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
-
-func (m *SaveUIStateRequest) GetHeader() *RequestHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *SaveUIStateRequest) GetWindowWidth() int32 {
-	if m != nil {
-		return m.WindowWidth
-	}
-	return 0
-}
-
-func (m *SaveUIStateRequest) GetWindowHeight() int32 {
-	if m != nil {
-		return m.WindowHeight
-	}
-	return 0
-}
-
-func (m *SaveUIStateRequest) GetWindowXPosition() int32 {
-	if m != nil {
-		return m.WindowXPosition
-	}
-	return 0
-}
-
-func (m *SaveUIStateRequest) GetWindowYPosition() int32 {
-	if m != nil {
-		return m.WindowYPosition
-	}
-	return 0
-}
-
-func (m *SaveUIStateRequest) GetWindowMaximized() bool {
-	if m != nil {
-		return m.WindowMaximized
-	}
-	return false
-}
-
-func (m *SaveUIStateRequest) GetWindowMinimized() bool {
-	if m != nil {
-		return m.WindowMinimized
-	}
-	return false
-}
-
-func (m *SaveUIStateRequest) GetWindowFullscreen() bool {
-	if m != nil {
-		return m.WindowFullscreen
-	}
-	return false
-}
-
-func (m *SaveUIStateRequest) GetDisplayWidth() int32 {
-	if m != nil {
-		return m.DisplayWidth
-	}
-	return 0
-}
-
-func (m *SaveUIStateRequest) GetDisplayHeight() int32 {
-	if m != nil {
-		return m.DisplayHeight
-	}
-	return 0
-}
-
-func (m *SaveUIStateRequest) GetDisplayXPosition() int32 {
-	if m != nil {
-		return m.DisplayXPosition
-	}
-	return 0
-}
-
-func (m *SaveUIStateRequest) GetDisplayYPosition() int32 {
-	if m != nil {
-		return m.DisplayYPosition
-	}
-	return 0
-}
-
-type AccountStateResponse struct {
-	Header   *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	SignedIn bool            `protobuf:"varint,2,opt,name=signedIn" json:"signedIn,omitempty"`
-	Locked   bool            `protobuf:"varint,3,opt,name=locked" json:"locked,omitempty"`
-	Exists   bool            `protobuf:"varint,4,opt,name=exists" json:"exists,omitempty"`
-}
-
-func (m *AccountStateResponse) Reset()                    { *m = AccountStateResponse{} }
-func (m *AccountStateResponse) String() string            { return proto.CompactTextString(m) }
-func (*AccountStateResponse) ProtoMessage()               {}
-func (*AccountStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
-
-func (m *AccountStateResponse) GetHeader() *ResponseHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *AccountStateResponse) GetSignedIn() bool {
-	if m != nil {
-		return m.SignedIn
-	}
-	return false
-}
-
-func (m *AccountStateResponse) GetLocked() bool {
-	if m != nil {
-		return m.Locked
-	}
-	return false
-}
-
-func (m *AccountStateResponse) GetExists() bool {
-	if m != nil {
-		return m.Exists
-	}
-	return false
-}
-
-type OpenMasterDbRequest struct {
-	Header *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	Path   string         `protobuf:"bytes,2,opt,name=path" json:"path,omitempty"`
-}
-
-func (m *OpenMasterDbRequest) Reset()                    { *m = OpenMasterDbRequest{} }
-func (m *OpenMasterDbRequest) String() string            { return proto.CompactTextString(m) }
-func (*OpenMasterDbRequest) ProtoMessage()               {}
-func (*OpenMasterDbRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
-
-func (m *OpenMasterDbRequest) GetHeader() *RequestHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *OpenMasterDbRequest) GetPath() string {
-	if m != nil {
-		return m.Path
-	}
-	return ""
-}
-
-type CreateAccountRequest struct {
-	Header     *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	Name       string         `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Email      string         `protobuf:"bytes,3,opt,name=email" json:"email,omitempty"`
-	Passphrase string         `protobuf:"bytes,4,opt,name=passphrase" json:"passphrase,omitempty"`
-}
-
-func (m *CreateAccountRequest) Reset()                    { *m = CreateAccountRequest{} }
-func (m *CreateAccountRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateAccountRequest) ProtoMessage()               {}
-func (*CreateAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
-
-func (m *CreateAccountRequest) GetHeader() *RequestHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *CreateAccountRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *CreateAccountRequest) GetEmail() string {
-	if m != nil {
-		return m.Email
-	}
-	return ""
-}
-
-func (m *CreateAccountRequest) GetPassphrase() string {
-	if m != nil {
-		return m.Passphrase
-	}
-	return ""
-}
-
-type UnlockAccountRequest struct {
-	Header     *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	Id         string         `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
-	Passphrase string         `protobuf:"bytes,3,opt,name=passphrase" json:"passphrase,omitempty"`
-}
-
-func (m *UnlockAccountRequest) Reset()                    { *m = UnlockAccountRequest{} }
-func (m *UnlockAccountRequest) String() string            { return proto.CompactTextString(m) }
-func (*UnlockAccountRequest) ProtoMessage()               {}
-func (*UnlockAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
-
-func (m *UnlockAccountRequest) GetHeader() *RequestHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *UnlockAccountRequest) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *UnlockAccountRequest) GetPassphrase() string {
-	if m != nil {
-		return m.Passphrase
-	}
-	return ""
-}
-
-type SigninAccountRequest struct {
-	Header     *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	Name       string         `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Email      string         `protobuf:"bytes,3,opt,name=email" json:"email,omitempty"`
-	Passphrase string         `protobuf:"bytes,4,opt,name=passphrase" json:"passphrase,omitempty"`
-}
-
-func (m *SigninAccountRequest) Reset()                    { *m = SigninAccountRequest{} }
-func (m *SigninAccountRequest) String() string            { return proto.CompactTextString(m) }
-func (*SigninAccountRequest) ProtoMessage()               {}
-func (*SigninAccountRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
-
-func (m *SigninAccountRequest) GetHeader() *RequestHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *SigninAccountRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *SigninAccountRequest) GetEmail() string {
-	if m != nil {
-		return m.Email
-	}
-	return ""
-}
-
-func (m *SigninAccountRequest) GetPassphrase() string {
-	if m != nil {
-		return m.Passphrase
-	}
-	return ""
-}
-
-type CreateNotebookRequest struct {
-	Header  *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
-	Name    string         `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	UserId  string         `protobuf:"bytes,3,opt,name=user_id,json=userId" json:"user_id,omitempty"`
-	ShelfId string         `protobuf:"bytes,4,opt,name=shelf_id,json=shelfId" json:"shelf_id,omitempty"`
-}
-
-func (m *CreateNotebookRequest) Reset()                    { *m = CreateNotebookRequest{} }
-func (m *CreateNotebookRequest) String() string            { return proto.CompactTextString(m) }
-func (*CreateNotebookRequest) ProtoMessage()               {}
-func (*CreateNotebookRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
-
-func (m *CreateNotebookRequest) GetHeader() *RequestHeader {
-	if m != nil {
-		return m.Header
-	}
-	return nil
-}
-
-func (m *CreateNotebookRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *CreateNotebookRequest) GetUserId() string {
-	if m != nil {
-		return m.UserId
-	}
-	return ""
-}
-
-func (m *CreateNotebookRequest) GetShelfId() string {
-	if m != nil {
-		return m.ShelfId
-	}
-	return ""
-}
-
 func init() {
-	proto.RegisterType((*RequestHeader)(nil), "notekeeper.RequestHeader")
-	proto.RegisterType((*ResponseHeader)(nil), "notekeeper.ResponseHeader")
-	proto.RegisterType((*KeyExchangeRequest)(nil), "notekeeper.KeyExchangeRequest")
-	proto.RegisterType((*KeyExchangeResponse)(nil), "notekeeper.KeyExchangeResponse")
 	proto.RegisterType((*EmptyRequest)(nil), "notekeeper.EmptyRequest")
 	proto.RegisterType((*EmptyResponse)(nil), "notekeeper.EmptyResponse")
 	proto.RegisterType((*IdRequest)(nil), "notekeeper.IdRequest")
 	proto.RegisterType((*IdResponse)(nil), "notekeeper.IdResponse")
-	proto.RegisterType((*LoadUIStateResponse)(nil), "notekeeper.LoadUIStateResponse")
-	proto.RegisterType((*SaveUIStateRequest)(nil), "notekeeper.SaveUIStateRequest")
-	proto.RegisterType((*AccountStateResponse)(nil), "notekeeper.AccountStateResponse")
-	proto.RegisterType((*OpenMasterDbRequest)(nil), "notekeeper.OpenMasterDbRequest")
-	proto.RegisterType((*CreateAccountRequest)(nil), "notekeeper.CreateAccountRequest")
-	proto.RegisterType((*UnlockAccountRequest)(nil), "notekeeper.UnlockAccountRequest")
-	proto.RegisterType((*SigninAccountRequest)(nil), "notekeeper.SigninAccountRequest")
-	proto.RegisterType((*CreateNotebookRequest)(nil), "notekeeper.CreateNotebookRequest")
 }
 
-func init() { proto.RegisterFile("rpc.proto", fileDescriptor0) }
+func init() { proto.RegisterFile("rpc.proto", fileDescriptor6) }
 
-var fileDescriptor0 = []byte{
-	// 657 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0xc1, 0x6a, 0xdb, 0x4a,
-	0x14, 0x45, 0x89, 0xed, 0x58, 0x37, 0x4e, 0xde, 0x63, 0xe2, 0xf7, 0x9e, 0x13, 0x1e, 0xc5, 0x88,
-	0x2e, 0x4c, 0x17, 0x81, 0xa6, 0xdb, 0x6e, 0x42, 0x9a, 0x12, 0x93, 0x26, 0x0d, 0x13, 0x42, 0x1b,
-	0x28, 0x94, 0xb1, 0xe6, 0xd6, 0x1a, 0x22, 0xcf, 0xa8, 0x9a, 0x51, 0x13, 0x77, 0x5b, 0xfa, 0x03,
-	0x2d, 0xf4, 0x7b, 0x8b, 0x46, 0x63, 0x5b, 0xb2, 0x37, 0x25, 0xea, 0xa2, 0x85, 0xee, 0xe6, 0x1c,
-	0x1f, 0xee, 0xbd, 0xe7, 0xce, 0x41, 0x63, 0xf0, 0xd3, 0x24, 0xdc, 0x4f, 0x52, 0x65, 0x14, 0x01,
-	0xa9, 0x0c, 0xde, 0x20, 0x26, 0x98, 0x06, 0x0c, 0xb6, 0x28, 0xbe, 0xcf, 0x50, 0x9b, 0x13, 0x64,
-	0x1c, 0x53, 0xf2, 0x2f, 0xb4, 0x26, 0x68, 0x22, 0xc5, 0x7b, 0x5e, 0xdf, 0x1b, 0xf8, 0xd4, 0x21,
-	0xf2, 0x3f, 0xf8, 0x5a, 0x8c, 0x25, 0x33, 0x59, 0x8a, 0xbd, 0xb5, 0xbe, 0x37, 0xe8, 0xd0, 0x05,
-	0x41, 0xf6, 0xa0, 0xad, 0xf3, 0x32, 0x32, 0xc4, 0xde, 0x7a, 0xdf, 0x1b, 0x34, 0xe9, 0x1c, 0x07,
-	0x4f, 0x61, 0x9b, 0xa2, 0x4e, 0x94, 0xd4, 0xb8, 0xe8, 0xa1, 0x0d, 0x33, 0x99, 0x9e, 0xf5, 0x28,
-	0x10, 0x21, 0xd0, 0x08, 0x15, 0x2f, 0xca, 0x37, 0xa9, 0x3d, 0x07, 0x08, 0xe4, 0x14, 0xa7, 0xc7,
-	0x77, 0x61, 0xc4, 0xe4, 0x18, 0xdd, 0xac, 0xe4, 0x31, 0xb4, 0x22, 0x5b, 0xcb, 0x56, 0xd8, 0x3c,
-	0xd8, 0xdd, 0x5f, 0x78, 0xda, 0xaf, 0x18, 0xa2, 0x4e, 0x98, 0x1b, 0x48, 0xb2, 0x51, 0x2c, 0xc2,
-	0x53, 0x9c, 0xce, 0x0c, 0xcc, 0x89, 0x60, 0x0c, 0x3b, 0x95, 0x36, 0xc5, 0xbc, 0xe4, 0x60, 0xa9,
-	0xcf, 0x5e, 0xb5, 0x4f, 0xd9, 0xd5, 0x0f, 0x36, 0x3a, 0x84, 0xce, 0xf1, 0x24, 0x31, 0xd3, 0xfb,
-	0x3b, 0x09, 0x8e, 0x60, 0xcb, 0x95, 0xb8, 0xff, 0x94, 0xc1, 0x39, 0xf8, 0x43, 0x5e, 0x63, 0x9d,
-	0xdb, 0xb0, 0x26, 0xb8, 0xb5, 0xe7, 0xd3, 0x35, 0xc1, 0x83, 0x0b, 0x80, 0xbc, 0x5e, 0x8d, 0xbd,
-	0x2d, 0x57, 0xfc, 0xdc, 0x80, 0x9d, 0x17, 0x8a, 0xf1, 0xab, 0xe1, 0xa5, 0x61, 0xa6, 0xde, 0x9d,
-	0xf4, 0x61, 0xf3, 0x56, 0x48, 0xae, 0x6e, 0x5f, 0x09, 0x6e, 0x22, 0x17, 0xb0, 0x32, 0x45, 0x02,
-	0xe8, 0x14, 0xf0, 0x04, 0xc5, 0x38, 0x32, 0x2e, 0xc5, 0x15, 0x8e, 0x0c, 0xe0, 0xaf, 0x02, 0xbf,
-	0xbe, 0x50, 0x5a, 0x18, 0xa1, 0x64, 0xaf, 0x61, 0x65, 0xcb, 0xf4, 0x42, 0x79, 0x3d, 0x57, 0x36,
-	0xcb, 0xca, 0xeb, 0x55, 0xe5, 0x19, 0xbb, 0x13, 0x13, 0xf1, 0x11, 0x79, 0xaf, 0xd5, 0xf7, 0x06,
-	0x6d, 0xba, 0x4c, 0x97, 0x94, 0x42, 0x3a, 0xe5, 0x46, 0x45, 0x39, 0xa3, 0xc9, 0x23, 0xf8, 0xbb,
-	0xa0, 0x9e, 0x67, 0x71, 0xac, 0xc3, 0x14, 0x51, 0xf6, 0xda, 0x56, 0xba, 0xc2, 0xe7, 0xbe, 0xb9,
-	0xd0, 0x49, 0xcc, 0xa6, 0xc5, 0x6a, 0xfc, 0xc2, 0x77, 0x99, 0x23, 0x0f, 0x61, 0xcb, 0x61, 0xb7,
-	0x1c, 0xb0, 0xa2, 0x2a, 0x99, 0x77, 0x75, 0xc4, 0x62, 0x3d, 0x9b, 0x56, 0xb8, 0xc2, 0x97, 0xb4,
-	0x8b, 0x05, 0x75, 0x2a, 0xda, 0x39, 0x1f, 0x7c, 0x6a, 0x00, 0xb9, 0x64, 0x1f, 0x70, 0x9e, 0x83,
-	0x7b, 0x67, 0xf6, 0x4f, 0x0a, 0x7e, 0xdf, 0x14, 0x7c, 0xf3, 0xa0, 0x7b, 0x18, 0x86, 0x2a, 0x93,
-	0xa6, 0xfe, 0xe7, 0x20, 0x7f, 0xae, 0xc4, 0x58, 0x22, 0x1f, 0x4a, 0x9b, 0x82, 0x36, 0x9d, 0xe3,
-	0xfc, 0x71, 0x8a, 0x55, 0x78, 0x83, 0xdc, 0x5e, 0x7e, 0x9b, 0x3a, 0x94, 0xf3, 0x78, 0x27, 0xb4,
-	0xd1, 0xf6, 0xb6, 0xdb, 0xd4, 0xa1, 0xe0, 0x0d, 0xec, 0xbc, 0x4c, 0x50, 0x9e, 0x31, 0x6d, 0x30,
-	0x7d, 0x36, 0xaa, 0x11, 0x4f, 0x02, 0x8d, 0x84, 0xb9, 0x5c, 0xfa, 0xd4, 0x9e, 0x83, 0xaf, 0x1e,
-	0x74, 0x8f, 0x52, 0x64, 0x06, 0x9d, 0xf9, 0x7a, 0xf5, 0x25, 0x9b, 0xe0, 0xac, 0x7e, 0x7e, 0x26,
-	0x5d, 0x68, 0xe2, 0x84, 0x89, 0xd8, 0x9a, 0xf5, 0x69, 0x01, 0xc8, 0x03, 0x80, 0x84, 0x69, 0x9d,
-	0x44, 0x29, 0xd3, 0x68, 0xfd, 0xfa, 0xb4, 0xc4, 0x04, 0x53, 0xe8, 0x5e, 0xc9, 0x7c, 0x2f, 0xf5,
-	0x87, 0x5a, 0xfa, 0xea, 0x2f, 0xb5, 0x5e, 0x5f, 0x69, 0x9d, 0x2f, 0xe4, 0x52, 0x8c, 0xa5, 0x90,
-	0xbf, 0xd2, 0x42, 0xbe, 0x78, 0xf0, 0x4f, 0x71, 0x4d, 0xe7, 0xca, 0xe0, 0x48, 0xa9, 0x9b, 0x9f,
-	0x3c, 0xd6, 0x7f, 0xb0, 0x91, 0x69, 0x4c, 0xdf, 0x0a, 0xee, 0x06, 0x6b, 0xe5, 0x70, 0xc8, 0xc9,
-	0x2e, 0xb4, 0x75, 0x84, 0xf1, 0xbb, 0xfc, 0x97, 0x62, 0xae, 0x0d, 0x8b, 0x87, 0x7c, 0xd4, 0xb2,
-	0x7f, 0xf7, 0x9e, 0x7c, 0x0f, 0x00, 0x00, 0xff, 0xff, 0x9a, 0x5a, 0x63, 0x9c, 0xfb, 0x09, 0x00,
-	0x00,
+var fileDescriptor6 = []byte{
+	// 169 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2c, 0x2a, 0x48, 0xd6,
+	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xca, 0xcb, 0x2f, 0x49, 0xcd, 0x4e, 0x4d, 0x2d, 0x48,
+	0x2d, 0x92, 0xe2, 0x49, 0xce, 0xcf, 0xcd, 0xcd, 0xcf, 0x83, 0xc8, 0x28, 0x39, 0x72, 0xf1, 0xb8,
+	0xe6, 0x16, 0x94, 0x54, 0x06, 0xa5, 0x16, 0x96, 0xa6, 0x16, 0x97, 0x08, 0x19, 0x72, 0xb1, 0x65,
+	0xa4, 0x26, 0xa6, 0xa4, 0x16, 0x49, 0x30, 0x2a, 0x30, 0x6a, 0x70, 0x1b, 0x49, 0xea, 0x21, 0xb4,
+	0xea, 0x41, 0x15, 0x79, 0x80, 0x15, 0x04, 0x41, 0x15, 0x2a, 0x39, 0x73, 0xf1, 0x42, 0x8d, 0x28,
+	0x2e, 0xc8, 0xcf, 0x2b, 0x4e, 0x15, 0x32, 0x42, 0x33, 0x43, 0x0a, 0xd5, 0x0c, 0x88, 0x2a, 0x34,
+	0x43, 0xfc, 0xb8, 0x38, 0x3d, 0x53, 0xc8, 0x77, 0x84, 0x10, 0x1f, 0x17, 0x53, 0x66, 0x8a, 0x04,
+	0x93, 0x02, 0xa3, 0x06, 0x67, 0x10, 0x53, 0x66, 0x8a, 0x52, 0x00, 0x17, 0x17, 0xc8, 0x3c, 0xf2,
+	0x5d, 0x84, 0x6e, 0x62, 0x00, 0x43, 0x12, 0x1b, 0x38, 0xc8, 0x8c, 0x01, 0x01, 0x00, 0x00, 0xff,
+	0xff, 0xf1, 0xe4, 0xae, 0xca, 0x59, 0x01, 0x00, 0x00,
 }

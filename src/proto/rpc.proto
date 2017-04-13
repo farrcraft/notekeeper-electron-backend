@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package notekeeper;
 
+import public "common.proto";
+
 // N.B. - In the go bindings, case of the generated methods matches these proto definitions
 // However, in the JS bindings, method names start lowercase (so it's, e.g. "openMasterDb" instead of "OpenMasterDb")
 // If you try to invoke the latter, the client will just hang indefinitely.
@@ -9,31 +11,6 @@ package notekeeper;
 // The entire fieldname is lowercase except for the first character in the method name.
 // E.g., if the message field is named "windowWidth", the getter/setter pair is "getWindowwidth"/"setWindowwidth".
 // Trying to call, e.g. "getWindowWidth" will cause the client to hang as with incorrect service method names.
-
-// All requests will include this embedded message type
-message RequestHeader {
-	string method = 1;
-	bytes signature = 2;
-	int32 sequence = 3;
-}
-
-// All responses will include this embedded message type
-message ResponseHeader {
-	string status = 1;
-	int32 code = 2;
-}
-
-// A key exchange client request
-message KeyExchangeRequest {
-	RequestHeader header = 1;
-	bytes publicKey = 2;
-}
-
-// A key exchange server response
-message KeyExchangeResponse {
-	ResponseHeader header = 1;
-	bytes publicKey = 2;
-}
 
 message EmptyRequest {
 	RequestHeader header = 1;
@@ -53,73 +30,4 @@ message IdRequest {
 message IdResponse {
 	ResponseHeader header = 1;
 	string id = 2;
-}
-
-message LoadUIStateResponse {
-	ResponseHeader header = 1;
-	int32 windowWidth = 2;
-	int32 windowHeight = 3;
-	int32 windowXPosition = 4;
-	int32 windowYPosition = 5;
-	bool windowMaximized = 6;
-	bool windowMinimized = 7;
-	bool windowFullscreen = 8;
-	int32 displayWidth = 9;
-	int32 displayHeight = 10;
-	int32 displayXPosition = 11;
-	int32 displayYPosition = 12;
-}
-
-message SaveUIStateRequest {
-	RequestHeader header = 1;
-	int32 windowWidth = 2;
-	int32 windowHeight = 3;
-	int32 windowXPosition = 4;
-	int32 windowYPosition = 5;
-	bool windowMaximized = 6;
-	bool windowMinimized = 7;
-	bool windowFullscreen = 8;
-	int32 displayWidth = 9;
-	int32 displayHeight = 10;
-	int32 displayXPosition = 11;
-	int32 displayYPosition = 12;
-}
-
-message AccountStateResponse {
-	ResponseHeader header = 1;
-	bool signedIn = 2;
-	bool locked = 3;
-	bool exists = 4;
-}
-
-message OpenMasterDbRequest {
-	RequestHeader header = 1;
-	string path = 2; // user data directory path
-}
-
-message CreateAccountRequest {
-	RequestHeader header = 1;
-	string name = 2; // account name
-	string email = 3; // user email
-	string passphrase = 4; // user password
-}
-
-message UnlockAccountRequest {
-	RequestHeader header = 1;
-	string id = 2;
-	string passphrase = 3;
-}
-
-message SigninAccountRequest {
-	RequestHeader header = 1;
-	string name = 2;
-	string email = 3;
-	string passphrase = 4;
-}
-
-message CreateNotebookRequest {
-	RequestHeader header = 1;
-	string name = 2;
-	string user_id = 3;
-	string shelf_id = 4;
 }

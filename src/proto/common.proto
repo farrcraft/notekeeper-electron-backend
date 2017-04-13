@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package notekeeper;
+
+// All requests will include this embedded message type
+message RequestHeader {
+	string method = 1;
+	bytes signature = 2;
+	int32 sequence = 3;
+}
+
+// All responses will include this embedded message type
+message ResponseHeader {
+	string status = 1;
+	int32 code = 2;
+}

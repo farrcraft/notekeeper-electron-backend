@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package notekeeper;
+
+import "common.proto";
+
+message AccountStateResponse {
+	ResponseHeader header = 1;
+	bool signedIn = 2;
+	bool locked = 3;
+	bool exists = 4;
+}
+
+message CreateAccountRequest {
+	RequestHeader header = 1;
+	string name = 2; // account name
+	string email = 3; // user email
+	string passphrase = 4; // user password
+}
+
+message UnlockAccountRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string passphrase = 3;
+}
+
+message SigninAccountRequest {
+	RequestHeader header = 1;
+	string name = 2;
+	string email = 3;
+	string passphrase = 4;
+}

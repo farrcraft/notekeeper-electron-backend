@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package notekeeper;
+
+import "common.proto";
+
+message OpenMasterDbRequest {
+	RequestHeader header = 1;
+	string path = 2; // user data directory path
+}

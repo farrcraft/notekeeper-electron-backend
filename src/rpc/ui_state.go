@@ -42,7 +42,7 @@ func LoadUIState(rpc *Server, message []byte) (proto.Message, error) {
 
 // SaveUIState saves the current UI state to the master DB
 func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
-	response := &messages.LoadUIStateResponse{
+	response := &messages.EmptyResponse{
 		Header: &messages.ResponseHeader{
 			Code:   int32(codes.ErrorOK),
 			Status: codes.StatusOK,

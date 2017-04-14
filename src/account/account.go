@@ -9,6 +9,8 @@ import (
 
 	"../codes"
 	"../crypto"
+	"../shelf"
+	"../user"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
@@ -16,17 +18,17 @@ import (
 
 // Account is the database holding one or more users and their collection of notes
 type Account struct {
-	ID         uuid.UUID      `json:"id"`
-	Name       string         `json:"name"`
-	Users      []*UserProfile `json:"users"`
-	ActiveUser *User          `json:"-"`           // ActiveUser is the currently active user of the account
-	MasterDB   *bolt.DB       `json:"-"`           // MasterDB is the application-wide master database
-	DB         *bolt.DB       `json:"-"`           // DB is the account-local database
-	LicenseKey string         `json:"license_key"` // LicenseKey is the token which determines the available application features
-	Shelves    []*Shelf       `json:"-"`
-	Created    time.Time      `json:"created"`
-	Updated    time.Time      `json:"updated"`
-	Logger     *logrus.Logger `json:"-"`
+	ID         uuid.UUID       `json:"id"`
+	Name       string          `json:"name"`
+	Users      []*user.Profile `json:"users"`
+	ActiveUser *user.User      `json:"-"`           // ActiveUser is the currently active user of the account
+	MasterDB   *bolt.DB        `json:"-"`           // MasterDB is the application-wide master database
+	DB         *bolt.DB        `json:"-"`           // DB is the account-local database
+	LicenseKey string          `json:"license_key"` // LicenseKey is the token which determines the available application features
+	Shelves    []*shelf.Shelf  `json:"-"`
+	Created    time.Time       `json:"created"`
+	Updated    time.Time       `json:"updated"`
+	Logger     *logrus.Logger  `json:"-"`
 }
 
 // MapCount returns the number of records in the account_map table
@@ -73,8 +75,8 @@ func (account *Account) OpenAccountDb(dataPath string) error {
 	return nil
 }
 
-// NewAccount creates a new Account object
-func NewAccount(db *bolt.DB, logger *logrus.Logger, name string) *Account {
+// New creates a new Account object
+func New(db *bolt.DB, logger *logrus.Logger, name string) *Account {
 	now := time.Now()
 	account := &Account{
 		ID:       uuid.NewV4(),

@@ -1,9 +1,9 @@
-package main
+package list
 
-import(
+import (
 	"testing"
 )
 
 func TestList(t *testing.T) {
-	
+
 }

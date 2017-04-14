@@ -1,9 +1,9 @@
-package main
+package collection
 
-import(
+import (
 	"testing"
 )
 
 func TestCollection(t *testing.T) {
-	
+
 }

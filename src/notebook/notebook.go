@@ -23,6 +23,7 @@ type Notebook struct {
 	Default      bool           `json:"default"`        // Default indicates whether this is the default notebook
 	EncryptedKey []byte         `json:"encryption_key"` // EncryptedKey is the encrypted version of the notebook's encryption key
 	Notes        []*note.Note   `json:"-"`              // Notes is the set of notes that belong to this notebook
+	NoteCount    int            `json:"note_count"`     // NoteCount keeps track of the number of notes in the notebook
 	Tags         []*tag.Tag     `json:"tags"`           // Tags is the set of tags assigned to this notebook
 	Created      time.Time      `json:"created"`        // Created is the time when the notebook was created
 	Updated      time.Time      `json:"updated"`        // Updated is the time when the notebook was last updated
@@ -35,13 +36,14 @@ type Notebook struct {
 func NewNotebook(db *bolt.DB, logger *logrus.Logger) *Notebook {
 	now := time.Now()
 	notebook := &Notebook{
-		ID:      uuid.NewV4(),
-		Created: now,
-		Updated: now,
-		Default: false,
-		Locked:  false,
-		DB:      db,
-		Logger:  logger,
+		ID:        uuid.NewV4(),
+		Created:   now,
+		Updated:   now,
+		NoteCount: 0,
+		Default:   false,
+		Locked:    false,
+		DB:        db,
+		Logger:    logger,
 	}
 	return notebook
 }

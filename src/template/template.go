@@ -1,10 +1,10 @@
-package main
+package template
 
 import (
 	"time"
 
-	"./tag"
-	"./title"
+	"../tag"
+	"../title"
 	uuid "github.com/satori/go.uuid"
 )
 

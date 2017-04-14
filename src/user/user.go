@@ -1,4 +1,4 @@
-package account
+package user
 
 import (
 	"crypto/subtle"
@@ -7,13 +7,14 @@ import (
 
 	"../codes"
 	"../crypto"
+	"../shelf"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
 )
 
-// UserProfile contains the minimal user information that is visible to all users of an account
-type UserProfile struct {
+// Profile contains the minimal user information that is visible to all users of an account
+type Profile struct {
 	Email     string `json:"email"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -21,26 +22,27 @@ type UserProfile struct {
 
 // User is a single user in an account
 type User struct {
-	ID            uuid.UUID      `json:"id"`          // ID is the unique identifier of the user
-	Profile       *UserProfile   `json:"profile"`     // Profile is the user information that is visible to all users in an account
-	Active        bool           `json:"-"`           // Active indicates whether the user is active or not
-	Account       *Account       `json:"-"`           // Account is the account that the user belongs to
+	ID      uuid.UUID `json:"id"`      // ID is the unique identifier of the user
+	Profile *Profile  `json:"profile"` // Profile is the user information that is visible to all users in an account
+	Active  bool      `json:"-"`       // Active indicates whether the user is active or not
+	//Account       *Account       `json:"-"`           // Account is the account that the user belongs to
 	Created       time.Time      `json:"created"`     // Created is the time when the user was created
 	Updated       time.Time      `json:"updated"`     // Updated is the time when the user was last created
 	AccountKey    []byte         `json:"account_key"` // AccountKey is the encrypted version of the account-level encryption key
 	PassphraseKey []byte         `json:"-"`           // PassphraseKey is the key derived from the passphrase
 	Salt          []byte         `json:"-"`           // Salt is the unique salt for generating the passphrase key
-	Shelves       []*Shelf       `json:"-"`           // Shelves is the set of shelves that belong to the user
-	Logger        *logrus.Logger `json:"-"`
-	DB            *bolt.DB       `json:"-"`
+	Shelves       []*shelf.Shelf `json:"-"`           // Shelves is the set of shelves that belong to the user
+	Logger        *logrus.Logger `json:"-"`           // Logger is a log instance
+	AccountDB     *bolt.DB       `json:"-"`           // AccountDB is the account database
+	DB            *bolt.DB       `json:"-"`           // DB is the user-local database
 }
 
-// NewUser creates a new user object
-func NewUser(db *bolt.DB, logger *logrus.Logger, email string) *User {
+// New creates a new user object
+func New(db *bolt.DB, logger *logrus.Logger, email string) *User {
 	now := time.Now()
 	user := &User{
 		ID: uuid.NewV4(),
-		Profile: &UserProfile{
+		Profile: &Profile{
 			Email: email,
 		},
 		Active:  true,

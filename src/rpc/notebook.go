@@ -9,7 +9,7 @@ import (
 
 // CreateNotebook is the RPC method to create a new notebook
 func CreateNotebook(rpc *Server, message []byte) (proto.Message, error) {
-	response := &messages.EmptyResponse{
+	response := &messages.IdResponse{
 		Header: &messages.ResponseHeader{
 			Code:   int32(codes.ErrorOK),
 			Status: codes.StatusOK,
@@ -25,6 +25,8 @@ func CreateNotebook(rpc *Server, message []byte) (proto.Message, error) {
 		response.Header.Status = code.Error()
 		return response, nil
 	}
+
+	response.Id = notebook.ID.String()
 
 	return response, nil
 }

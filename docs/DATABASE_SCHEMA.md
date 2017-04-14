@@ -4,6 +4,22 @@ There are two separate databases - a master system database and an account
 specific database.  Both databases are stored in the user data directory
 of the application.  BoltDB is used as the database engine.
 
+Databases:
+
+* master
+* account
+* user (1 per user uuid)
+* shelf (1 per shelf uuid)
+* collection (1 per collection uuid)
+
+
+* Each database contains indexes for the database directly below it
+* master db contains index of accounts
+* account dbs contain index of users, & account-level shelves
+* user dbs contain index of user-level shelves
+* shelf dbs contain index of collections & notebook content
+* collection dbs contain notebook content
+
 
 # Master Database
 
@@ -63,3 +79,15 @@ This bucket stores user profile data for account users.
 
 * `key` - unencrypted user UUID
 * `value` - serialized JSON encrypted w/ user-level encryption key
+
+
+### notebooks
+
+* `key` - unencrypted notebook UUID
+* `value` - serialized JSON encrypted w/ user-level encryption key
+
+
+### note_list
+
+* `key` unencrypted notebook UUID
+* `value` serialized JSON encrypted w/ notebook-level encryption key

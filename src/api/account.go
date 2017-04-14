@@ -4,6 +4,7 @@ import (
 	"../account"
 	"../codes"
 	"../crypto"
+	"../user"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 )
@@ -11,7 +12,7 @@ import (
 // CreateAccount creates a new account
 func CreateAccount(db *bolt.DB, logger *logrus.Logger, dataPath string, name string, email string, passphrase string) (*account.Account, error) {
 	// create account object
-	newAccount := account.NewAccount(db, logger, name)
+	newAccount := account.New(db, logger, name)
 
 	// create a new db file for the account
 	err := newAccount.OpenAccountDb(dataPath)
@@ -20,7 +21,7 @@ func CreateAccount(db *bolt.DB, logger *logrus.Logger, dataPath string, name str
 	}
 
 	// create user object & attach it to the account
-	user := account.NewUser(db, logger, email)
+	user := user.New(db, logger, email)
 
 	err = user.CreateKeys([]byte(passphrase))
 	if err != nil {
@@ -82,7 +83,7 @@ func UnlockAccount(acct *account.Account, dataPath string, passphrase string) er
 // SigninAccount signs in to an account
 func SigninAccount(db *bolt.DB, logger *logrus.Logger, dataPath string, name string, email string, passphrase string) (*account.Account, error) {
 	// attempt to find the account (lookup)
-	newAccount := account.NewAccount(db, logger, name)
+	newAccount := account.New(db, logger, name)
 	err := newAccount.Lookup()
 	if err != nil {
 		return nil, err
@@ -94,7 +95,7 @@ func SigninAccount(db *bolt.DB, logger *logrus.Logger, dataPath string, name str
 	}
 
 	// authenticate the user
-	user := account.NewUser(db, logger, email)
+	user := user.New(db, logger, email)
 	err = user.Lookup()
 	if err != nil {
 		return nil, err

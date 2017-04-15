@@ -28,14 +28,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/GoKillers/libsodium-go",
-			"repository": "https://github.com/GoKillers/libsodium-go",
-			"vcs": "git",
-			"revision": "b5f80f3d0206a8426af1ab8e0044704c35951dec",
-			"branch": "master",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
 			"vcs": "git",

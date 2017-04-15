@@ -2,6 +2,7 @@
 
 [] refactor db code to use db module
 [] do we need index & map types to match the corresponding db buckets?
+[] move account data into account db instead of master db & just keep account_map in master db
 [] rpc for shelves
 [] rpc for collections
 [] create default notebook during account creation

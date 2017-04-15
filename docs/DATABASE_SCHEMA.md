@@ -1,21 +1,27 @@
 # Overview
 
-There are two separate databases - a master system database and an account
-specific database.  Both databases are stored in the user data directory
-of the application.  BoltDB is used as the database engine.
-
-Databases:
-
-* master
-* account
-* user (1 per user uuid)
-* shelf (1 per shelf uuid)
-* collection (1 per collection uuid)
+* Databases are stored in the user data directory of the frontend application.
+* BoltDB is used as the database engine.
+* There is a single master database with a common filename.
+* All other databases are named using the UUID of the container they store data for.
 
 
-* Each database contains indexes for the database directly below it
-* master db contains index of accounts
-* account dbs contain index of users, & account-level shelves
+## Database Types
+
+* Master
+* Account (1 per account UUID)
+* User (1 per user UUID)
+* Shelf (1 per shelf UUID)
+* Collection (1 per collection UUID)
+
+
+## Database Hierarchy
+
+Each database contains index buckets for any databases directly below it.
+
+
+* Master DB contains index of accounts
+* account DBs contain index of users, & account-level shelves
 * user dbs contain index of user-level shelves
 * shelf dbs contain index of collections & notebook content
 * collection dbs contain notebook content

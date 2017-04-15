@@ -1,6 +1,9 @@
 package db
 
 import (
+	"time"
+
+	"../codes"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
@@ -8,12 +11,12 @@ import (
 
 // DB Types
 const (
-	DBTypeMaster = iota + 1
-	DBTypeAccount
-	DBTypeUser
-	DBTypeCollection
-	DBTypeShelf
-	DBTypeUnknown
+	TypeMaster = iota + 1
+	TypeAccount
+	TypeUser
+	TypeCollection
+	TypeShelf
+	TypeUnknown
 )
 
 // DB is a database instance
@@ -21,27 +24,20 @@ type DB struct {
 	ID       uuid.UUID
 	Type     int
 	DB       *bolt.DB
-	Path     string
 	Filename string
 	Logger   *logrus.Logger
 }
 
-// New creates a new database
-func New(dbtype int, logger *logrus.Logger) *DB {
-	if dbtype >= DBTypeUnknown {
-		logger.Debug("Unrecognized DB type")
-		return nil
-	}
-	db := &DB{
-		Type:   dbtype,
-		Logger: logger,
-	}
-	return db
-}
-
 // Open a database
-func (db *DB) Open() {
-
+func (db *DB) Open() error {
+	var err error
+	db.DB, err = bolt.Open(db.Filename, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	if err != nil {
+		db.Logger.Debug("Error opening DB type [", db.Type, "] file [", db.Filename, "]")
+		code := codes.New(codes.ErrorDbOpen)
+		return code
+	}
+	return nil
 }
 
 // Close a database

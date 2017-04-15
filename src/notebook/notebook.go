@@ -6,6 +6,7 @@ import (
 
 	"../codes"
 	"../crypto"
+	"../db"
 	"../note"
 	"../tag"
 	"../title"
@@ -28,12 +29,12 @@ type Notebook struct {
 	Created      time.Time      `json:"created"`        // Created is the time when the notebook was created
 	Updated      time.Time      `json:"updated"`        // Updated is the time when the notebook was last updated
 	Locked       bool           `json:"locked"`         // Locked indicates whether the notebook can be modified
-	DB           *bolt.DB       `json:"-"`
+	DBFactory    *db.Factory    `json:"-"`
 	Logger       *logrus.Logger `json:"-"`
 }
 
 // NewNotebook creates a new notebook object
-func NewNotebook(db *bolt.DB, logger *logrus.Logger) *Notebook {
+func NewNotebook(dbFactory *db.Factory, logger *logrus.Logger) *Notebook {
 	now := time.Now()
 	notebook := &Notebook{
 		ID:        uuid.NewV4(),
@@ -42,7 +43,7 @@ func NewNotebook(db *bolt.DB, logger *logrus.Logger) *Notebook {
 		NoteCount: 0,
 		Default:   false,
 		Locked:    false,
-		DB:        db,
+		DBFactory: dbFactory,
 		Logger:    logger,
 	}
 	return notebook
@@ -51,7 +52,8 @@ func NewNotebook(db *bolt.DB, logger *logrus.Logger) *Notebook {
 // Save saves a notebook to the database
 // Account.ActiveUser.PassphraseKey
 func (notebook *Notebook) Save(passphraseKey []byte) error {
-	err := notebook.DB.Update(func(tx *bolt.Tx) error {
+	db := notebook.DBFactory.Find(db.TypeUser, notebook.UserID)
+	err := db.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notebooks"))
 		if err != nil {

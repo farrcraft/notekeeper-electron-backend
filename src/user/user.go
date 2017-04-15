@@ -7,6 +7,7 @@ import (
 
 	"../codes"
 	"../crypto"
+	"../db"
 	"../shelf"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
@@ -22,10 +23,10 @@ type Profile struct {
 
 // User is a single user in an account
 type User struct {
-	ID      uuid.UUID `json:"id"`      // ID is the unique identifier of the user
-	Profile *Profile  `json:"profile"` // Profile is the user information that is visible to all users in an account
-	Active  bool      `json:"-"`       // Active indicates whether the user is active or not
-	//Account       *Account       `json:"-"`           // Account is the account that the user belongs to
+	ID            uuid.UUID      `json:"id"`          // ID is the unique identifier of the user
+	AccountID     uuid.UUID      `json:"account_id"`  // ID is the unique identifier of the account
+	Profile       *Profile       `json:"profile"`     // Profile is the user information that is visible to all users in an account
+	Active        bool           `json:"-"`           // Active indicates whether the user is active or not
 	Created       time.Time      `json:"created"`     // Created is the time when the user was created
 	Updated       time.Time      `json:"updated"`     // Updated is the time when the user was last created
 	AccountKey    []byte         `json:"account_key"` // AccountKey is the encrypted version of the account-level encryption key
@@ -33,23 +34,23 @@ type User struct {
 	Salt          []byte         `json:"-"`           // Salt is the unique salt for generating the passphrase key
 	Shelves       []*shelf.Shelf `json:"-"`           // Shelves is the set of shelves that belong to the user
 	Logger        *logrus.Logger `json:"-"`           // Logger is a log instance
-	AccountDB     *bolt.DB       `json:"-"`           // AccountDB is the account database
-	DB            *bolt.DB       `json:"-"`           // DB is the user-local database
+	DBFactory     *db.Factory    `json:"-"`           // DBFactory provides access to dbs
 }
 
 // New creates a new user object
-func New(db *bolt.DB, logger *logrus.Logger, email string) *User {
+func New(dbFactory *db.Factory, logger *logrus.Logger, accountID uuid.UUID, email string) *User {
 	now := time.Now()
 	user := &User{
-		ID: uuid.NewV4(),
+		ID:        uuid.NewV4(),
+		AccountID: accountID,
 		Profile: &Profile{
 			Email: email,
 		},
-		Active:  true,
-		Created: now,
-		Updated: now,
-		DB:      db,
-		Logger:  logger,
+		Active:    true,
+		Created:   now,
+		Updated:   now,
+		DBFactory: dbFactory,
+		Logger:    logger,
 	}
 	return user
 }
@@ -58,7 +59,8 @@ func New(db *bolt.DB, logger *logrus.Logger, email string) *User {
 func (user *User) Lookup() error {
 	originalID := user.ID
 	user.ID = uuid.Nil
-	err := user.DB.View(func(tx *bolt.Tx) error {
+	db := user.DBFactory.Find(db.TypeAccount, user.AccountID)
+	err := db.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("user_map"))
 		cursor := bucket.Cursor()
@@ -104,7 +106,8 @@ func (user *User) Lookup() error {
 
 // Load loads the user data for a user from the account database
 func (user *User) Load(passphrase string) error {
-	err := user.DB.View(func(tx *bolt.Tx) error {
+	db := user.DBFactory.Find(db.TypeUser, user.ID)
+	err := db.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("users"))
 		cursor := bucket.Cursor()
@@ -151,7 +154,8 @@ func (user *User) Load(passphrase string) error {
 
 // Save saves the user to the database
 func (user *User) Save() error {
-	err := user.DB.Update(func(tx *bolt.Tx) error {
+	userDB := user.DBFactory.DB(db.TypeUser, user.ID)
+	err := userDB.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("users"))
 		if err != nil {
 			user.Logger.Debug("Error creating users bucket - ", err)
@@ -190,7 +194,8 @@ func (user *User) Save() error {
 	// Since users are keyed by only an unencrypted id in the db
 	// we also need to store a mapping between a key derived from the email address and the id
 	// otherwise there is no way to look up a user without taking a brute force decryption test approach
-	err = user.DB.Update(func(tx *bolt.Tx) error {
+	accountDB := user.DBFactory.Find(db.TypeAccount, user.AccountID)
+	err = accountDB.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("user_map"))
 		if err != nil {
 			user.Logger.Debug("Error creating user_map bucket - ", err)

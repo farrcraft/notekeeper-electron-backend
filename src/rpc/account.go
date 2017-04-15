@@ -4,9 +4,11 @@ import (
 	"../account"
 	"../api"
 	"../codes"
+	"../db"
 	messages "../proto"
 
 	"github.com/golang/protobuf/proto"
+	uuid "github.com/satori/go.uuid"
 )
 
 // GetAccountState returns the accessible state of the account
@@ -26,7 +28,8 @@ func GetAccountState(rpc *Server, message []byte) (proto.Message, error) {
 		response.Locked = rpc.Account.IsLocked()
 		response.Exists = true
 	} else {
-		count := account.MapCount(rpc.DB)
+		db := rpc.DBFactory.Find(db.TypeMaster, uuid.Nil)
+		count := account.MapCount(db.DB)
 		if count > 0 {
 			response.Exists = true
 		}
@@ -54,7 +57,7 @@ func CreateAccount(rpc *Server, message []byte) (proto.Message, error) {
 	}
 
 	// create the account
-	newAccount, err := api.CreateAccount(rpc.DB, rpc.Logger, rpc.DataPath, request.Name, request.Email, request.Passphrase)
+	newAccount, err := api.CreateAccount(rpc.DBFactory, rpc.Logger, request.Name, request.Email, request.Passphrase)
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Header.Status = code.Error()
@@ -90,7 +93,7 @@ func UnlockAccount(rpc *Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	err = api.UnlockAccount(rpc.Account, rpc.DataPath, request.Passphrase)
+	err = api.UnlockAccount(rpc.Account, request.Passphrase)
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Header.Code = int32(code.Code)
@@ -118,7 +121,7 @@ func SigninAccount(rpc *Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	newAccount, err := api.SigninAccount(rpc.DB, rpc.Logger, rpc.DataPath, request.Name, request.Email, request.Passphrase)
+	newAccount, err := api.SigninAccount(rpc.DBFactory, rpc.Logger, request.Name, request.Email, request.Passphrase)
 	if err == nil {
 		rpc.Account = newAccount
 	}

@@ -3,12 +3,11 @@ package account
 import (
 	"crypto/subtle"
 	"encoding/json"
-	"fmt"
-	"path/filepath"
 	"time"
 
 	"../codes"
 	"../crypto"
+	"../db"
 	"../shelf"
 	"../user"
 	"github.com/Sirupsen/logrus"
@@ -22,8 +21,7 @@ type Account struct {
 	Name       string          `json:"name"`
 	Users      []*user.Profile `json:"users"`
 	ActiveUser *user.User      `json:"-"`           // ActiveUser is the currently active user of the account
-	MasterDB   *bolt.DB        `json:"-"`           // MasterDB is the application-wide master database
-	DB         *bolt.DB        `json:"-"`           // DB is the account-local database
+	DBFactory  *db.Factory     `json:"-"`           // DB provides access to databases
 	LicenseKey string          `json:"license_key"` // LicenseKey is the token which determines the available application features
 	Shelves    []*shelf.Shelf  `json:"-"`
 	Created    time.Time       `json:"created"`
@@ -61,30 +59,25 @@ func (account *Account) IsLocked() bool {
 
 // OpenAccountDb opens the database file for a account
 // The file is created if it doesn't already exist
-func (account *Account) OpenAccountDb(dataPath string) error {
-	dbFile := fmt.Sprint(account.ID.String(), ".db")
-	fileName := filepath.Join(dataPath, dbFile)
-	account.Logger.Info("Opening account db file [", fileName, "]")
-	var err error
-	account.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
+func (account *Account) OpenAccountDb() error {
+	db := account.DBFactory.DB(db.TypeAccount, account.ID)
+	err := db.Open()
 	if err != nil {
-		account.Logger.Debug("Unable to open account DB [", fileName, "] - ", err)
-		code := codes.New(codes.ErrorAccountDbOpen)
-		return code
+		return err
 	}
 	return nil
 }
 
 // New creates a new Account object
-func New(db *bolt.DB, logger *logrus.Logger, name string) *Account {
+func New(dbFactory *db.Factory, logger *logrus.Logger, name string) *Account {
 	now := time.Now()
 	account := &Account{
-		ID:       uuid.NewV4(),
-		Name:     name,
-		MasterDB: db,
-		Logger:   logger,
-		Created:  now,
-		Updated:  now,
+		ID:        uuid.NewV4(),
+		Name:      name,
+		DBFactory: dbFactory,
+		Logger:    logger,
+		Created:   now,
+		Updated:   now,
 	}
 	return account
 }
@@ -92,7 +85,8 @@ func New(db *bolt.DB, logger *logrus.Logger, name string) *Account {
 // Save saves the account to the database
 func (account *Account) Save() error {
 	// account data is stored in the master database
-	err := account.MasterDB.Update(func(tx *bolt.Tx) error {
+	db := account.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	err := db.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("accounts"))
 		if err != nil {
 			account.Logger.Debug("Error creating accounts bucket - ", err)
@@ -142,7 +136,7 @@ func (account *Account) Save() error {
 	// Since accounts are keyed by only an unencrypted id in the db
 	// we also need to store a mapping between a key derived from the name and the id
 	// otherwise there is no way to look up an account without taking a brute force decryption test approach
-	err = account.MasterDB.Update(func(tx *bolt.Tx) error {
+	err = db.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("account_map"))
 		if err != nil {
 			account.Logger.Debug("Error creating account_map bucket - ", err)
@@ -179,7 +173,8 @@ func (account *Account) Lookup() error {
 	originalID := account.ID
 	account.ID = uuid.Nil
 	// we don't expect many accounts to exist in the db (typically just one), so we iterate through them all
-	err := account.MasterDB.View(func(tx *bolt.Tx) error {
+	db := account.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	err := db.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("account_map"))
 		// If bucket doesn't exist, no accounts have been created yet
@@ -231,7 +226,8 @@ func (account *Account) Lookup() error {
 
 // Load loads an account from the database
 func (account *Account) Load() error {
-	err := account.MasterDB.View(func(tx *bolt.Tx) error {
+	db := account.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	err := db.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("accounts"))
 		if bucket == nil {

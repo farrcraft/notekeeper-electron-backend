@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"../codes"
+	"../db"
 	"github.com/Sirupsen/logrus"
 	"github.com/boltdb/bolt"
 )
@@ -23,12 +24,12 @@ type UIState struct {
 	DisplayHeight    int32          `json:"display_height" mapstructure:"display_height"`
 	DisplayXPosition int32          `json:"display_x_position" mapstructure:"display_x_position"`
 	DisplayYPosition int32          `json:"display_y_position" mapstructure:"display_y_position"`
-	DB               *bolt.DB       `json:"-"`
+	DB               *db.DB         `json:"-"`
 	Logger           *logrus.Logger `json:"-"`
 }
 
 // NewUIState returns a new UIState object
-func NewUIState(db *bolt.DB, logger *logrus.Logger) *UIState {
+func NewUIState(db *db.DB, logger *logrus.Logger) *UIState {
 	state := &UIState{
 		WindowWidth:      -1,
 		WindowHeight:     -1,
@@ -54,7 +55,7 @@ func (state *UIState) Create() error {
 		code := codes.New(codes.ErrorUIStateMissingDb)
 		return code
 	}
-	err := state.DB.Update(func(tx *bolt.Tx) error {
+	err := state.DB.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("ui_state"))
 		if bucket == nil {
 			bucket, err := tx.CreateBucket([]byte("ui_state"))
@@ -92,7 +93,7 @@ func (state *UIState) Create() error {
 
 // Load loads the UI's saved state from the database
 func (state *UIState) Load() error {
-	err := state.DB.View(func(tx *bolt.Tx) error {
+	err := state.DB.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("ui_state"))
 		cursor := bucket.Cursor()
@@ -123,7 +124,7 @@ func (state *UIState) Load() error {
 
 // Save saves the UI's state to the database
 func (state *UIState) Save() error {
-	err := state.DB.Update(func(tx *bolt.Tx) error {
+	err := state.DB.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("ui_state"))
 		if err != nil {
 			state.Logger.Debug("Error creating UI State Bucket - ", err)

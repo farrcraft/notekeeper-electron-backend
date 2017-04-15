@@ -1,52 +1,58 @@
 package account
 
 import (
-	"fmt"
 	"os"
 	"testing"
-	"time"
+
+	"../db"
+	"../user"
 
 	"github.com/Sirupsen/logrus/hooks/test"
-	"github.com/boltdb/bolt"
+	uuid "github.com/satori/go.uuid"
 )
 
 func TestAccount(t *testing.T) {
 	// Setup
 	logger, hook := test.NewNullLogger()
-	masterDbFileName := "master_test.db"
-	masterDB, err := bolt.Open(masterDbFileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
-	if err != nil {
-		t.Error("Failed to create master db - ", err)
-	}
+	factory := db.NewFactory("./", logger)
 
-	count := MapCount(masterDB)
-	if count != 0 {
-		t.Error("Expected account map count to be 0")
-	}
-
-	account := NewAccount(masterDB, logger, "test_account")
+	account := New(factory, logger, "test_account")
 	if account.Name != "test_account" {
 		t.Error("Expected account name to be test_account")
 	}
 
-	err = account.OpenAccountDb("./")
+	masterDB := factory.DB(db.TypeMaster, uuid.Nil)
+	masterDB.Filename = "master_test.db"
+	err := masterDB.Open()
+	if err != nil {
+		t.Error("Failed to create master db - ", err)
+	}
+
+	count := MapCount(masterDB.DB)
+	if count != 0 {
+		t.Error("Expected account map count to be 0")
+	}
+
+	err = account.OpenAccountDb()
 	if err != nil {
 		t.Error("Expected to open account db - ", err)
 	}
 
 	userEmail := "bob@notekeeper.io"
 	userPassphrase := "supersecret"
-	user := NewUser(account.DB, logger, userEmail)
+	user := user.New(factory, logger, account.ID, userEmail)
 	err = user.CreateKeys([]byte(userPassphrase))
 	if err != nil {
 		t.Error("Expected to create user keys - ", err)
 	}
 
-	// save user
-	err = user.Save()
-	if err != nil {
-		t.Error("Expected to save user")
-	}
+	/*
+		// save user
+		err = user.Save()
+		if err != nil {
+			t.Error("Expected to save user")
+		}
+	*/
 	account.Users = append(account.Users, user.Profile)
 	account.ActiveUser = user
 
@@ -55,21 +61,21 @@ func TestAccount(t *testing.T) {
 		t.Error("Expected to save account")
 	}
 
-	count = MapCount(masterDB)
+	count = MapCount(masterDB.DB)
 	if count != 1 {
 		t.Error("Expected account map count to be 1")
 	}
 
 	// Teardown
 	masterDB.Close()
-	err = os.Remove(masterDbFileName)
+	err = os.Remove(masterDB.Filename)
 	if err != nil {
 		t.Error("Failed to cleanup master db - ", err)
 	}
 
-	account.DB.Close()
-	accountDbFileName := fmt.Sprint(account.ID.String(), ".db")
-	err = os.Remove(accountDbFileName)
+	accountDB := factory.Find(db.TypeAccount, account.ID)
+	accountDB.Close()
+	err = os.Remove(accountDB.Filename)
 	if err != nil {
 		t.Error("Failed to cleanup account db - ", err)
 	}

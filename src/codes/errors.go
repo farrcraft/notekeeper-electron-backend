@@ -25,6 +25,7 @@ const (
 	ErrorUnknown
 	ErrorInternalEscape
 
+	ErrorDbOpen
 	ErrorMasterDbOpen
 
 	ErrorMasterDbOpenDecode
@@ -157,6 +158,9 @@ func messageFromCode(code ErrorCode) string {
 		msg = "internal error escape"
 		break
 
+	case ErrorDbOpen:
+		msg = "error opening db"
+		break
 	case ErrorMasterDbOpen:
 		msg = "error opening master db"
 		break

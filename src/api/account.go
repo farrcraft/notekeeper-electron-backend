@@ -4,24 +4,24 @@ import (
 	"../account"
 	"../codes"
 	"../crypto"
+	"../db"
 	"../user"
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
 )
 
 // CreateAccount creates a new account
-func CreateAccount(db *bolt.DB, logger *logrus.Logger, dataPath string, name string, email string, passphrase string) (*account.Account, error) {
+func CreateAccount(dbFactory *db.Factory, logger *logrus.Logger, name string, email string, passphrase string) (*account.Account, error) {
 	// create account object
-	newAccount := account.New(db, logger, name)
+	newAccount := account.New(dbFactory, logger, name)
 
 	// create a new db file for the account
-	err := newAccount.OpenAccountDb(dataPath)
+	err := newAccount.OpenAccountDb()
 	if err != nil {
 		return newAccount, err
 	}
 
 	// create user object & attach it to the account
-	user := user.New(db, logger, email)
+	user := user.New(dbFactory, logger, newAccount.ID, email)
 
 	err = user.CreateKeys([]byte(passphrase))
 	if err != nil {
@@ -44,7 +44,7 @@ func CreateAccount(db *bolt.DB, logger *logrus.Logger, dataPath string, name str
 }
 
 // UnlockAccount unlocks an account
-func UnlockAccount(acct *account.Account, dataPath string, passphrase string) error {
+func UnlockAccount(acct *account.Account, passphrase string) error {
 	if acct == nil {
 		code := codes.New(codes.ErrorUnlockActiveAccount)
 		return code
@@ -72,7 +72,7 @@ func UnlockAccount(acct *account.Account, dataPath string, passphrase string) er
 		return err
 	}
 
-	err = acct.OpenAccountDb(dataPath)
+	err = acct.OpenAccountDb()
 	if err != nil {
 		return err
 	}
@@ -81,21 +81,21 @@ func UnlockAccount(acct *account.Account, dataPath string, passphrase string) er
 }
 
 // SigninAccount signs in to an account
-func SigninAccount(db *bolt.DB, logger *logrus.Logger, dataPath string, name string, email string, passphrase string) (*account.Account, error) {
+func SigninAccount(dbFactory *db.Factory, logger *logrus.Logger, name string, email string, passphrase string) (*account.Account, error) {
 	// attempt to find the account (lookup)
-	newAccount := account.New(db, logger, name)
+	newAccount := account.New(dbFactory, logger, name)
 	err := newAccount.Lookup()
 	if err != nil {
 		return nil, err
 	}
 
-	err = newAccount.OpenAccountDb(dataPath)
+	err = newAccount.OpenAccountDb()
 	if err != nil {
 		return nil, err
 	}
 
 	// authenticate the user
-	user := user.New(db, logger, email)
+	user := user.New(dbFactory, logger, newAccount.ID, email)
 	err = user.Lookup()
 	if err != nil {
 		return nil, err
@@ -127,7 +127,7 @@ func SignoutAccount(acct *account.Account) error {
 		return code
 	}
 	crypto.Zero(acct.ActiveUser.PassphraseKey)
-	acct.DB.Close()
+	acct.DBFactory.CloseAccountDBs()
 	return nil
 }
 
@@ -142,11 +142,10 @@ func LockAccount(acct *account.Account) error {
 		return code
 	}
 	crypto.Zero(acct.ActiveUser.PassphraseKey)
-	if acct.DB == nil {
+	if acct.DBFactory == nil {
 		code := codes.New(codes.ErrorLockActiveDb)
 		return code
 	}
-	acct.DB.Close()
-	acct.DB = nil
+	acct.DBFactory.CloseAccountDBs()
 	return nil
 }

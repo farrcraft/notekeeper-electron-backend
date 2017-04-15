@@ -2,9 +2,11 @@ package rpc
 
 import (
 	"../codes"
+	"../db"
 	messages "../proto"
 	"../uistate"
 	"github.com/golang/protobuf/proto"
+	uuid "github.com/satori/go.uuid"
 )
 
 // LoadUIState returns the the UI state as saved by the master DB
@@ -16,7 +18,8 @@ func LoadUIState(rpc *Server, message []byte) (proto.Message, error) {
 		},
 	}
 
-	state := uistate.NewUIState(rpc.DB, rpc.Logger)
+	db := rpc.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	state := uistate.NewUIState(db, rpc.Logger)
 	err := state.Load()
 	if err != nil {
 		code := codes.ToInternalError(err)
@@ -49,7 +52,8 @@ func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
 		},
 	}
 
-	state := uistate.NewUIState(rpc.DB, rpc.Logger)
+	db := rpc.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	state := uistate.NewUIState(db, rpc.Logger)
 
 	request := messages.SaveUIStateRequest{}
 	err := proto.Unmarshal(message, &request)

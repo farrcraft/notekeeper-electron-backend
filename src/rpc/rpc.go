@@ -13,9 +13,9 @@ import (
 	"strconv"
 
 	"../account"
+	"../db"
 	"github.com/Sirupsen/logrus"
 	"github.com/agl/ed25519"
-	"github.com/boltdb/bolt"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -25,8 +25,7 @@ type Handler func(*Server, []byte) (proto.Message, error)
 // Server is a RPC server instance
 type Server struct {
 	Logger          *logrus.Logger
-	DB              *bolt.DB // This is the master application DB
-	DataPath        string
+	DBFactory       *db.Factory
 	Account         *account.Account
 	Certificate     tls.Certificate
 	Handlers        map[string]Handler
@@ -255,12 +254,9 @@ func (rpc *Server) Start(port string) bool {
 
 // Stop performs shutdown routines before application termination
 func (rpc *Server) Stop() {
-	if rpc.DB != nil {
-		rpc.DB.Close()
-		rpc.DB = nil
+	if rpc.DBFactory == nil {
+		return
 	}
-	if rpc.Account != nil && rpc.Account.DB != nil {
-		rpc.Account.DB.Close()
-		rpc.Account.DB = nil
-	}
+	rpc.DBFactory.CloseAll()
+	rpc.DBFactory = nil
 }

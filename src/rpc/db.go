@@ -1,19 +1,12 @@
 package rpc
 
 import (
-	"path/filepath"
-	"time"
-
 	"../codes"
+	"../db"
 	messages "../proto"
 	"../uistate"
-	"github.com/boltdb/bolt"
 	"github.com/golang/protobuf/proto"
-)
-
-const (
-	// MasterDbFile is the core bolt database filename
-	MasterDbFile = "notekeeper.db"
+	uuid "github.com/satori/go.uuid"
 )
 
 // OpenMasterDb opens the master database in the requested directory
@@ -26,9 +19,8 @@ func OpenMasterDb(rpc *Server, message []byte) (proto.Message, error) {
 	}
 
 	// need to close any existing db
-	if rpc.DB != nil {
-		rpc.DB.Close()
-		rpc.DB = nil
+	if rpc.DBFactory != nil {
+		rpc.DBFactory.CloseAll()
 	}
 
 	request := messages.OpenMasterDbRequest{}
@@ -40,12 +32,13 @@ func OpenMasterDb(rpc *Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	rpc.DataPath = filepath.Clean(request.Path)
+	rpc.DBFactory = db.NewFactory(request.Path, rpc.Logger)
+
 	// This is the master index db
-	// There are additional databases where actual notebook data is stored (one DB file per account)
-	fileName := filepath.Join(rpc.DataPath, MasterDbFile)
-	rpc.Logger.Info("Opening master db file [", fileName, "]")
-	rpc.DB, err = bolt.Open(fileName, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	// There are additional databases where actual notebook data is stored
+	db := rpc.DBFactory.DB(db.TypeMaster, uuid.Nil)
+	rpc.Logger.Info("Opening master db file [", db.Filename, "]")
+	err = db.Open()
 	if err != nil {
 		response.Header.Code = int32(codes.ErrorMasterDbOpen)
 		response.Header.Status = codes.StatusError
@@ -53,7 +46,7 @@ func OpenMasterDb(rpc *Server, message []byte) (proto.Message, error) {
 	}
 
 	// make sure DB has a default UIState saved
-	state := uistate.NewUIState(rpc.DB, rpc.Logger)
+	state := uistate.NewUIState(db, rpc.Logger)
 	err = state.Create()
 	if err != nil {
 		response.Header.Code = int32(codes.ErrorCreateUIState)

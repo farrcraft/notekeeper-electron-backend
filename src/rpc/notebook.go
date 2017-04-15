@@ -16,7 +16,7 @@ func CreateNotebook(rpc *Server, message []byte) (proto.Message, error) {
 		},
 	}
 
-	notebook := notebook.NewNotebook(rpc.DB, rpc.Logger)
+	notebook := notebook.NewNotebook(rpc.DBFactory, rpc.Logger)
 
 	err := notebook.Save(rpc.Account.ActiveUser.PassphraseKey)
 	if err != nil {

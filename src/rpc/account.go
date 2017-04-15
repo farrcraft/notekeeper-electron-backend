@@ -4,11 +4,9 @@ import (
 	"../account"
 	"../api"
 	"../codes"
-	"../db"
 	messages "../proto"
 
 	"github.com/golang/protobuf/proto"
-	uuid "github.com/satori/go.uuid"
 )
 
 // GetAccountState returns the accessible state of the account
@@ -28,8 +26,7 @@ func GetAccountState(rpc *Server, message []byte) (proto.Message, error) {
 		response.Locked = rpc.Account.IsLocked()
 		response.Exists = true
 	} else {
-		db := rpc.DBFactory.Find(db.TypeMaster, uuid.Nil)
-		count := account.MapCount(db.DB)
+		count := account.MapCount(rpc.DBFactory)
 		if count > 0 {
 			response.Exists = true
 		}

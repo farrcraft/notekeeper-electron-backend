@@ -30,9 +30,10 @@ type Account struct {
 }
 
 // MapCount returns the number of records in the account_map table
-func MapCount(db *bolt.DB) int {
+func MapCount(factory *db.Factory) int {
 	count := 0
-	db.View(func(tx *bolt.Tx) error {
+	db := factory.Find(db.TypeMaster, uuid.Nil)
+	db.DB.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("account_map"))
 		if bucket == nil {
 			return nil
@@ -85,9 +86,9 @@ func New(dbFactory *db.Factory, logger *logrus.Logger, name string) *Account {
 // Save saves the account to the database
 func (account *Account) Save() error {
 	// account data is stored in the master database
-	db := account.DBFactory.Find(db.TypeMaster, uuid.Nil)
-	err := db.DB.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte("accounts"))
+	accountDB := account.DBFactory.Find(db.TypeAccount, account.ID)
+	err := accountDB.DB.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte("account"))
 		if err != nil {
 			account.Logger.Debug("Error creating accounts bucket - ", err)
 			code := codes.New(codes.ErrorAccountBucket)
@@ -136,7 +137,8 @@ func (account *Account) Save() error {
 	// Since accounts are keyed by only an unencrypted id in the db
 	// we also need to store a mapping between a key derived from the name and the id
 	// otherwise there is no way to look up an account without taking a brute force decryption test approach
-	err = db.DB.Update(func(tx *bolt.Tx) error {
+	masterDB := account.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	err = masterDB.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("account_map"))
 		if err != nil {
 			account.Logger.Debug("Error creating account_map bucket - ", err)
@@ -226,7 +228,7 @@ func (account *Account) Lookup() error {
 
 // Load loads an account from the database
 func (account *Account) Load() error {
-	db := account.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	db := account.DBFactory.Find(db.TypeAccount, account.ID)
 	err := db.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("accounts"))

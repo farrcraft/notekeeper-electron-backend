@@ -28,7 +28,7 @@ func TestAccount(t *testing.T) {
 		t.Error("Failed to create master db - ", err)
 	}
 
-	count := MapCount(masterDB.DB)
+	count := MapCount(factory)
 	if count != 0 {
 		t.Error("Expected account map count to be 0")
 	}
@@ -61,7 +61,7 @@ func TestAccount(t *testing.T) {
 		t.Error("Expected to save account")
 	}
 
-	count = MapCount(masterDB.DB)
+	count = MapCount(factory)
 	if count != 1 {
 		t.Error("Expected account map count to be 1")
 	}

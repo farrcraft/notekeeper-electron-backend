@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package notekeeper;
+
+import public "title.proto";
+
+message Tag {
+	string id = 1;
+	Title name = 2;
+}

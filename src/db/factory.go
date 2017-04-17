@@ -32,12 +32,7 @@ func NewFactory(path string, logger *logrus.Logger) *Factory {
 }
 
 // DB finds an existing runtime DB object or creates a new one
-func (factory *Factory) DB(dbType int, id uuid.UUID) *DB {
-	if dbType >= TypeUnknown {
-		factory.Logger.Debug("Unrecognized DB type")
-		return nil
-	}
-
+func (factory *Factory) DB(dbType Type, id uuid.UUID) *DB {
 	db := factory.Find(dbType, id)
 	if db != nil {
 		return db
@@ -65,7 +60,7 @@ func (factory *Factory) DB(dbType int, id uuid.UUID) *DB {
 }
 
 // Find an existing DB (runtime only, not on disk)
-func (factory *Factory) Find(dbType int, id uuid.UUID) *DB {
+func (factory *Factory) Find(dbType Type, id uuid.UUID) *DB {
 	for _, db := range factory.DBs {
 		if db.Type == dbType && db.ID == id {
 			return db

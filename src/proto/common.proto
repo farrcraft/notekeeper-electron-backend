@@ -13,4 +13,5 @@ message RequestHeader {
 message ResponseHeader {
 	string status = 1;
 	int32 code = 2;
+	int32 scope = 3;
 }

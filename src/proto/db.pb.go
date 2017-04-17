@@ -21,7 +21,7 @@ type OpenMasterDbRequest struct {
 func (m *OpenMasterDbRequest) Reset()                    { *m = OpenMasterDbRequest{} }
 func (m *OpenMasterDbRequest) String() string            { return proto.CompactTextString(m) }
 func (*OpenMasterDbRequest) ProtoMessage()               {}
-func (*OpenMasterDbRequest) Descriptor() ([]byte, []int) { return fileDescriptor2, []int{0} }
+func (*OpenMasterDbRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
 
 func (m *OpenMasterDbRequest) GetHeader() *RequestHeader {
 	if m != nil {
@@ -41,9 +41,9 @@ func init() {
 	proto.RegisterType((*OpenMasterDbRequest)(nil), "notekeeper.OpenMasterDbRequest")
 }
 
-func init() { proto.RegisterFile("db.proto", fileDescriptor2) }
+func init() { proto.RegisterFile("db.proto", fileDescriptor3) }
 
-var fileDescriptor2 = []byte{
+var fileDescriptor3 = []byte{
 	// 131 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x48, 0x49, 0xd2, 0x2b,
 	0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xca, 0xcb, 0x2f, 0x49, 0xcd, 0x4e, 0x4d, 0x2d, 0x48, 0x2d,

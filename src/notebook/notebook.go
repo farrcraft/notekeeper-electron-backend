@@ -20,6 +20,8 @@ import (
 type Notebook struct {
 	ID           uuid.UUID      `json:"id"`             // ID is the unique identifier for this notebook
 	UserID       uuid.UUID      `json:"user_id"`        // UserID is the user that owns the notebook (only if this is a user-scoped notebook, otherwise nil)
+	ShelfID      uuid.UUID      `json:"shelf_id"`       // ShelfID is the shelf that contains the notebook
+	CollectionID uuid.UUID      `json:"collection_id"`  // CollectionID is the collection that this notebook belongs to
 	Title        *title.Title   `json:"title"`          // Title is the title of the notebook
 	Default      bool           `json:"default"`        // Default indicates whether this is the default notebook
 	EncryptedKey []byte         `json:"encryption_key"` // EncryptedKey is the encrypted version of the notebook's encryption key
@@ -49,16 +51,22 @@ func NewNotebook(dbFactory *db.Factory, logger *logrus.Logger) *Notebook {
 	return notebook
 }
 
-// Save saves a notebook to the database
+// Save a notebook to the database
 // Account.ActiveUser.PassphraseKey
 func (notebook *Notebook) Save(passphraseKey []byte) error {
-	db := notebook.DBFactory.Find(db.TypeUser, notebook.UserID)
-	err := db.DB.Update(func(tx *bolt.Tx) error {
+	// [FIXME] - notebook will be stored either in a shelf or collection db
+	var notebookDB *db.DB
+	if notebook.CollectionID != uuid.Nil {
+		notebookDB = notebook.DBFactory.Find(db.TypeCollection, notebook.CollectionID)
+	} else {
+		notebookDB = notebook.DBFactory.Find(db.TypeShelf, notebook.ShelfID)
+	}
+	err := notebookDB.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notebooks"))
 		if err != nil {
 			notebook.Logger.Debug("Error creating notebook bucket - ", err)
-			code := codes.New(codes.ErrorNotebookBucket)
+			code := codes.New(codes.ScopeNotebook, codes.ErrorCreateBucket)
 			return code
 		}
 
@@ -66,15 +74,15 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 		data, err := json.Marshal(notebook)
 		if err != nil {
 			notebook.Logger.Debug("Error marshaling notebook - ", err)
-			code := codes.New(codes.ErrorNotebookMarshal)
+			code := codes.New(codes.ScopeNotebook, codes.ErrorMarshal)
 			return code
 		}
 
 		// retrieve the encryption key
-		decryptedKey, err := crypto.Open(passphraseKey, notebook.EncryptedKey)
+		decryptedKey, err := crypto.Open(passphraseKey, notebookDB.EncryptedKey)
 		if err != nil {
 			notebook.Logger.Debug("Error retrieving notebook key - ", err)
-			code := codes.New(codes.ErrorNotebookKey)
+			code := codes.New(codes.ScopeNotebook, codes.ErrorOpenKey)
 			return code
 		}
 
@@ -82,7 +90,7 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 		encryptedData, err := crypto.Seal(decryptedKey, data)
 		if err != nil {
 			notebook.Logger.Debug("Error encrypting notebook data - ", err)
-			code := codes.New(codes.ErrorNotebookDecrypt)
+			code := codes.New(codes.ScopeNotebook, codes.ErrorEncrypt)
 			return code
 		}
 
@@ -90,7 +98,7 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 		err = bucket.Put(notebook.ID.Bytes(), encryptedData)
 		if err != nil {
 			notebook.Logger.Debug("Error writing notebook - ", err)
-			code := codes.New(codes.ErrorNotebookWrite)
+			code := codes.New(codes.ScopeNotebook, codes.ErrorWriteBucket)
 			return code
 		}
 		return nil
@@ -101,7 +109,7 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 			return err
 		}
 		notebook.Logger.Debug("Error saving notebook - err")
-		code := codes.New(codes.ErrorNotebookSave)
+		code := codes.New(codes.ScopeNotebook, codes.ErrorSave)
 		return code
 	}
 

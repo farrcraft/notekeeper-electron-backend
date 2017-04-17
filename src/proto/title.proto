@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package notekeeper;
+
+import public "common.proto";
+
+message Title {
+	string text = 1;
+	bool bold = 2;
+	bool italics = 3;
+	bool underscore = 4;
+	bool strike = 5;
+	string color = 6;
+	string background = 7;
+}

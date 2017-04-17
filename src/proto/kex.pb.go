@@ -22,7 +22,7 @@ type KeyExchangeRequest struct {
 func (m *KeyExchangeRequest) Reset()                    { *m = KeyExchangeRequest{} }
 func (m *KeyExchangeRequest) String() string            { return proto.CompactTextString(m) }
 func (*KeyExchangeRequest) ProtoMessage()               {}
-func (*KeyExchangeRequest) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{0} }
+func (*KeyExchangeRequest) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{0} }
 
 func (m *KeyExchangeRequest) GetHeader() *RequestHeader {
 	if m != nil {
@@ -47,7 +47,7 @@ type KeyExchangeResponse struct {
 func (m *KeyExchangeResponse) Reset()                    { *m = KeyExchangeResponse{} }
 func (m *KeyExchangeResponse) String() string            { return proto.CompactTextString(m) }
 func (*KeyExchangeResponse) ProtoMessage()               {}
-func (*KeyExchangeResponse) Descriptor() ([]byte, []int) { return fileDescriptor3, []int{1} }
+func (*KeyExchangeResponse) Descriptor() ([]byte, []int) { return fileDescriptor4, []int{1} }
 
 func (m *KeyExchangeResponse) GetHeader() *ResponseHeader {
 	if m != nil {
@@ -68,9 +68,9 @@ func init() {
 	proto.RegisterType((*KeyExchangeResponse)(nil), "notekeeper.KeyExchangeResponse")
 }
 
-func init() { proto.RegisterFile("kex.proto", fileDescriptor3) }
+func init() { proto.RegisterFile("kex.proto", fileDescriptor4) }
 
-var fileDescriptor3 = []byte{
+var fileDescriptor4 = []byte{
 	// 160 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcc, 0x4e, 0xad, 0xd0,
 	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xca, 0xcb, 0x2f, 0x49, 0xcd, 0x4e, 0x4d, 0x2d, 0x48,

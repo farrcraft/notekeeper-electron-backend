@@ -91,13 +91,13 @@ func (account *Account) Save() error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("account"))
 		if err != nil {
 			account.Logger.Debug("Error creating accounts bucket - ", err)
-			code := codes.New(codes.ErrorAccountBucket)
+			code := codes.New(codes.ScopeAccount, codes.ErrorCreateBucket)
 			return code
 		}
 		data, err := json.Marshal(account)
 		if err != nil {
 			account.Logger.Debug("Error marshaling account - ", err)
-			code := codes.New(codes.ErrorAccountMarshal)
+			code := codes.New(codes.ScopeAccount, codes.ErrorMarshal)
 			return code
 		}
 
@@ -105,21 +105,21 @@ func (account *Account) Save() error {
 		accountKey, err := crypto.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
 		if err != nil {
 			account.Logger.Debug("Error opening account key - ", err)
-			code := codes.New(codes.ErrorAccountKey)
+			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 			return code
 		}
 		encryptedData, err := crypto.Seal(accountKey, data)
 		crypto.Zero(accountKey)
 		if err != nil {
 			account.Logger.Debug("Error encrypting account content - ", err)
-			code := codes.New(codes.ErrorAccountEncrypt)
+			code := codes.New(codes.ScopeAccount, codes.ErrorEncrypt)
 			return code
 		}
 
 		err = bucket.Put(account.ID.Bytes(), encryptedData)
 		if err != nil {
 			account.Logger.Debug("Error writing to account bucket - ", err)
-			code := codes.New(codes.ErrorAccountWrite)
+			code := codes.New(codes.ScopeAccount, codes.ErrorWriteBucket)
 			return code
 		}
 		account.Logger.Debug("Saved account")
@@ -130,7 +130,7 @@ func (account *Account) Save() error {
 			return err
 		}
 		account.Logger.Debug("Error saving account - ", err)
-		code := codes.New(codes.ErrorAccountSave)
+		code := codes.New(codes.ScopeAccount, codes.ErrorSave)
 		return code
 	}
 
@@ -142,19 +142,19 @@ func (account *Account) Save() error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("account_map"))
 		if err != nil {
 			account.Logger.Debug("Error creating account_map bucket - ", err)
-			code := codes.New(codes.ErrorAccountMapBucket)
+			code := codes.New(codes.ScopeAccount, codes.ErrorCreateBucket)
 			return code
 		}
 		encryptedName, err := crypto.DeriveSaltedKey([]byte(account.Name))
 		if err != nil {
 			account.Logger.Debug("Error creating account map key - ", err)
-			code := codes.New(codes.ErrorAccountMapKey)
+			code := codes.New(codes.ScopeAccount, codes.ErrorDeriveKey)
 			return code
 		}
 		err = bucket.Put(encryptedName, account.ID.Bytes())
 		if err != nil {
 			account.Logger.Debug("Error saving account map - ", err)
-			code := codes.New(codes.ErrorAccountMapWrite)
+			code := codes.New(codes.ScopeAccount, codes.ErrorWriteBucket)
 			return code
 		}
 		return nil
@@ -164,7 +164,7 @@ func (account *Account) Save() error {
 			return err
 		}
 		account.Logger.Debug("Error mapping account - ", err)
-		code := codes.New(codes.ErrorAccountMapSave)
+		code := codes.New(codes.ScopeAccount, codes.ErrorSave)
 		return code
 	}
 	return nil
@@ -193,7 +193,7 @@ func (account *Account) Lookup() error {
 			checkName, err := crypto.DeriveKey([]byte(account.Name), salt[:])
 			if err != nil {
 				account.Logger.Debug("Error deriving account map key - ", err)
-				code := codes.New(codes.ErrorAccountMapDerive)
+				code := codes.New(codes.ScopeAccount, codes.ErrorDeriveKey)
 				return code
 			}
 			// the new key should match the existing key if we have the right name and salt
@@ -201,7 +201,7 @@ func (account *Account) Lookup() error {
 				account.ID, err = uuid.FromBytes(value)
 				if err != nil {
 					account.Logger.Debug("Error converting account map uuid - ", err)
-					code := codes.New(codes.ErrorAccountMapConvert)
+					code := codes.New(codes.ScopeAccount, codes.ErrorConvertID)
 					return code
 				}
 				return nil
@@ -214,34 +214,34 @@ func (account *Account) Lookup() error {
 			return err
 		}
 		account.Logger.Debug("Error looking up account map - ", err)
-		code := codes.New(codes.ErrorAccountMapLookup)
+		code := codes.New(codes.ScopeAccount, codes.ErrorLookup)
 		return code
 	}
 	if account.ID == uuid.Nil {
 		account.ID = originalID
 		account.Logger.Debug("account lookup - no account found for [", account.Name, "]")
-		code := codes.New(codes.ErrorAccountLookup)
+		code := codes.New(codes.ScopeAccount, codes.ErrorLookup)
 		return code
 	}
 	return nil
 }
 
-// Load loads an account from the database
+// Load an account from the database
 func (account *Account) Load() error {
 	db := account.DBFactory.Find(db.TypeAccount, account.ID)
 	err := db.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
-		bucket := tx.Bucket([]byte("accounts"))
+		bucket := tx.Bucket([]byte("account"))
 		if bucket == nil {
 			account.Logger.Debug("account bucket does not exist")
-			code := codes.New(codes.ErrorAccountBucketMissing)
+			code := codes.New(codes.ScopeAccount, codes.ErrorBucketMissing)
 			return code
 		}
 		cursor := bucket.Cursor()
 		key, value := cursor.Seek(account.ID.Bytes())
 		if key == nil {
 			account.Logger.Debug("Error loading account")
-			code := codes.New(codes.ErrorAccountLoad)
+			code := codes.New(codes.ScopeAccount, codes.ErrorLoad)
 			return code
 		}
 
@@ -249,7 +249,7 @@ func (account *Account) Load() error {
 		accountKey, err := crypto.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
 		if err != nil {
 			account.Logger.Debug("Error opening account key - ", err)
-			code := codes.New(codes.ErrorAccountKeyOpen)
+			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 			return code
 		}
 
@@ -257,16 +257,17 @@ func (account *Account) Load() error {
 		decryptedData, err := crypto.Open(accountKey, value)
 		if err != nil {
 			account.Logger.Debug("Error decrypting account data - ", err)
-			code := codes.New(codes.ErrorAccountDecrypt)
+			code := codes.New(codes.ScopeAccount, codes.ErrorDecrypt)
 			return code
 		}
 
 		err = json.Unmarshal(decryptedData, account)
 		if err != nil {
 			account.Logger.Debug("Error decoding account json - ", err)
-			code := codes.New(codes.ErrorAccountDecode)
+			code := codes.New(codes.ScopeAccount, codes.ErrorDecode)
 			return code
 		}
+		db.EncryptedKey = account.ActiveUser.AccountKey
 		return nil
 	})
 	if err != nil {
@@ -274,8 +275,9 @@ func (account *Account) Load() error {
 			return err
 		}
 		account.Logger.Debug("Error loading account - ", err)
-		code := codes.New(codes.ErrorAccountLoadView)
+		code := codes.New(codes.ScopeAccount, codes.ErrorLoad)
 		return code
 	}
+
 	return nil
 }

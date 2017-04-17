@@ -31,7 +31,7 @@ type LoadUIStateResponse struct {
 func (m *LoadUIStateResponse) Reset()                    { *m = LoadUIStateResponse{} }
 func (m *LoadUIStateResponse) String() string            { return proto.CompactTextString(m) }
 func (*LoadUIStateResponse) ProtoMessage()               {}
-func (*LoadUIStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor7, []int{0} }
+func (*LoadUIStateResponse) Descriptor() ([]byte, []int) { return fileDescriptor11, []int{0} }
 
 func (m *LoadUIStateResponse) GetHeader() *ResponseHeader {
 	if m != nil {
@@ -135,7 +135,7 @@ type SaveUIStateRequest struct {
 func (m *SaveUIStateRequest) Reset()                    { *m = SaveUIStateRequest{} }
 func (m *SaveUIStateRequest) String() string            { return proto.CompactTextString(m) }
 func (*SaveUIStateRequest) ProtoMessage()               {}
-func (*SaveUIStateRequest) Descriptor() ([]byte, []int) { return fileDescriptor7, []int{1} }
+func (*SaveUIStateRequest) Descriptor() ([]byte, []int) { return fileDescriptor11, []int{1} }
 
 func (m *SaveUIStateRequest) GetHeader() *RequestHeader {
 	if m != nil {
@@ -226,9 +226,9 @@ func init() {
 	proto.RegisterType((*SaveUIStateRequest)(nil), "notekeeper.SaveUIStateRequest")
 }
 
-func init() { proto.RegisterFile("ui_state.proto", fileDescriptor7) }
+func init() { proto.RegisterFile("ui_state.proto", fileDescriptor11) }
 
-var fileDescriptor7 = []byte{
+var fileDescriptor11 = []byte{
 	// 312 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0xd4, 0x4d, 0x4b, 0xc3, 0x30,
 	0x18, 0xc0, 0x71, 0xaa, 0xdb, 0x9c, 0xd9, 0x7c, 0x21, 0x5e, 0xe2, 0x4e, 0xa5, 0x78, 0x28, 0x1e,

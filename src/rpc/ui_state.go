@@ -59,7 +59,8 @@ func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
 		rpc.Logger.Debug("Error unmarshaling save ui state request - ", err)
-		response.Header.Code = int32(codes.ErrorSaveUIStateDecode)
+		response.Header.Code = int32(codes.ErrorDecode)
+		response.Header.Scope = int32(codes.ScopeRPC)
 		response.Header.Status = codes.StatusError
 		return response, nil
 	}

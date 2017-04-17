@@ -7,12 +7,16 @@ Package notekeeper is a generated protocol buffer package.
 
 It is generated from these files:
 	account.proto
+	collection.proto
 	common.proto
 	db.proto
 	kex.proto
 	note.proto
 	notebook.proto
 	rpc.proto
+	shelf.proto
+	tag.proto
+	title.proto
 	ui_state.proto
 	workspace.proto
 
@@ -21,6 +25,7 @@ It has these top-level messages:
 	CreateAccountRequest
 	UnlockAccountRequest
 	SigninAccountRequest
+	Collection
 	RequestHeader
 	ResponseHeader
 	OpenMasterDbRequest
@@ -31,6 +36,9 @@ It has these top-level messages:
 	EmptyResponse
 	IdRequest
 	IdResponse
+	Shelf
+	Tag
+	Title
 	LoadUIStateResponse
 	SaveUIStateRequest
 */

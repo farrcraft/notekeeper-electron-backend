@@ -21,12 +21,12 @@ proto-gen:
 # rebuild the proto definitions
 # export PATH=$PATH:/cygdrive/c/code/go/bin 
 proto:
-	cd src/proto; PATH=$$PATH:/cygdrive/c/code/go/bin protoc -I . *.proto --go_out=.
+	cd src/proto; PATH=$$PATH:C:\\code\\go\\bin ../../../protoc -I . *.proto --go_out=.
 
 proto-copy:
 	cp src/proto/*.proto ../notekeeper-electron-frontend/app/proto/
 
 proto-js:
-	cd ../notekeeper-electron-frontend/app/proto; protoc -I . rpc.proto --js_out=import_style=commonjs,binary:./
+	cd ../notekeeper-electron-frontend/app/proto; ../../../protoc -I . rpc.proto --js_out=import_style=commonjs,binary:./
 
 proto-all: proto proto-copy proto-js

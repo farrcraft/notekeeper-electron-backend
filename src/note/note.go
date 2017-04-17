@@ -8,27 +8,30 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// Type is the type of note
+type Type int
+
 const (
-	// NoteTypePlainText indicates that a note is just plain old text
-	NoteTypePlainText = "plain"
-	// NoteTypeRichText indicates that a note contains rich text
-	NoteTypeRichText = "rich"
-	// NoteTypeMarkdown indicates that a note contains markdown text
-	NoteTypeMarkdown = "markdown"
-	// NoteTypeHTML indicates that a note contains HTML
-	NoteTypeHTML = "html"
-	// NoteTypeImage indicates that a note is an image file
-	NoteTypeImage = "image"
-	// NoteTypeFile indicates that a note is an arbitrary file attachment
-	NoteTypeFile = "file"
-	// NoteTypePdf indicates that a note is a PDF file
-	NoteTypePdf = "pdf"
-	// NoteTypeAudio indicates that a note is an audio file
-	NoteTypeAudio = "audio"
-	// NoteTypeReminder indicates that a note is a reminder
-	NoteTypeReminder = "reminder"
-	// NoteTypeList indicates that a note is a list
-	NoteTypeList = "list"
+	// TypePlainText indicates that a note is just plain old text
+	TypePlainText Type = iota
+	// TypeRichText indicates that a note contains rich text
+	TypeRichText
+	// TypeMarkdown indicates that a note contains markdown text
+	TypeMarkdown
+	// TypeHTML indicates that a note contains HTML
+	TypeHTML
+	// TypeImage indicates that a note is an image file
+	TypeImage
+	// TypeFile indicates that a note is an arbitrary file attachment
+	TypeFile
+	// TypePdf indicates that a note is a PDF file
+	TypePdf
+	// TypeAudio indicates that a note is an audio file
+	TypeAudio
+	// TypeReminder indicates that a note is a reminder
+	TypeReminder
+	// TypeList indicates that a note is a list
+	TypeList
 )
 
 // Note is the primary content type
@@ -36,7 +39,7 @@ type Note struct {
 	ID uuid.UUID `json:"id"` // ID is the unique identifier for this note
 	//Notebook   *Notebook `json:"-"`           // Notebook is the notebook this note belongs to
 	Title         *title.Title `json:"title"`          // Title is the title of the note
-	Type          string       `json:"type"`           // Type is one of the NoteType* identifier values
+	Type          Type         `json:"type"`           // Type is one of the NoteType* identifier values
 	Content       string       `json:"content"`        // Content is the content of the note
 	Tags          []*tag.Tag   `json:"tags"`           // Tags is the set of tags assigned to the note
 	Revisions     []*Note      `json:"-"`              // Revisions is the set of previously saved note revisions

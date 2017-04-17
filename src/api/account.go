@@ -2,17 +2,14 @@ package api
 
 import (
 	"../account"
-	"../codes"
 	"../crypto"
-	"../db"
 	"../user"
-	"github.com/Sirupsen/logrus"
 )
 
 // CreateAccount creates a new account
-func CreateAccount(dbFactory *db.Factory, logger *logrus.Logger, name string, email string, passphrase string) (*account.Account, error) {
+func (api *API) CreateAccount(name string, email string, passphrase string) (*account.Account, error) {
 	// create account object
-	newAccount := account.New(dbFactory, logger, name)
+	newAccount := account.New(api.DBFactory, api.Logger, name)
 
 	// create a new db file for the account
 	err := newAccount.OpenAccountDb()
@@ -21,7 +18,7 @@ func CreateAccount(dbFactory *db.Factory, logger *logrus.Logger, name string, em
 	}
 
 	// create user object & attach it to the account
-	user := user.New(dbFactory, logger, newAccount.ID, email)
+	user := user.New(api.DBFactory, api.Logger, newAccount.ID, email)
 
 	err = user.CreateKeys([]byte(passphrase))
 	if err != nil {
@@ -44,15 +41,15 @@ func CreateAccount(dbFactory *db.Factory, logger *logrus.Logger, name string, em
 }
 
 // UnlockAccount unlocks an account
-func UnlockAccount(acct *account.Account, passphrase string) error {
+func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
 	if acct == nil {
-		code := codes.New(codes.ErrorUnlockActiveAccount)
-		return code
+		api.Logger.Debug("unlock missing account")
+		return nil
 	}
 
 	if acct.ActiveUser == nil {
-		code := codes.New(codes.ErrorUnlockActiveUser)
-		return code
+		api.Logger.Debug("unlock missing user")
+		return nil
 	}
 
 	// generate the derived key from the input passphrase and the stored salt
@@ -81,9 +78,9 @@ func UnlockAccount(acct *account.Account, passphrase string) error {
 }
 
 // SigninAccount signs in to an account
-func SigninAccount(dbFactory *db.Factory, logger *logrus.Logger, name string, email string, passphrase string) (*account.Account, error) {
+func (api *API) SigninAccount(name string, email string, passphrase string) (*account.Account, error) {
 	// attempt to find the account (lookup)
-	newAccount := account.New(dbFactory, logger, name)
+	newAccount := account.New(api.DBFactory, api.Logger, name)
 	err := newAccount.Lookup()
 	if err != nil {
 		return nil, err
@@ -95,13 +92,15 @@ func SigninAccount(dbFactory *db.Factory, logger *logrus.Logger, name string, em
 	}
 
 	// authenticate the user
-	user := user.New(dbFactory, logger, newAccount.ID, email)
+	user := user.New(api.DBFactory, api.Logger, newAccount.ID, email)
 	err = user.Lookup()
 	if err != nil {
+		api.DBFactory.CloseAccountDBs()
 		return nil, err
 	}
 	err = user.Load(passphrase)
 	if err != nil {
+		api.DBFactory.CloseAccountDBs()
 		return nil, err
 	}
 
@@ -111,40 +110,45 @@ func SigninAccount(dbFactory *db.Factory, logger *logrus.Logger, name string, em
 	// load the account
 	err = newAccount.Load()
 	if err != nil {
+		api.DBFactory.CloseAccountDBs()
 		return nil, err
 	}
 	return newAccount, nil
 }
 
 // SignoutAccount signs out an account
-func SignoutAccount(acct *account.Account) error {
+func (api *API) SignoutAccount(acct *account.Account) error {
 	if acct == nil {
-		code := codes.New(codes.ErrorSignoutActiveAccount)
-		return code
+		api.Logger.Debug("signout missing account")
+		return nil
 	}
 	if acct.ActiveUser == nil {
-		code := codes.New(codes.ErrorSignoutActiveUser)
-		return code
+		api.Logger.Debug("signout missing user")
+		return nil
 	}
 	crypto.Zero(acct.ActiveUser.PassphraseKey)
+	if acct.DBFactory == nil {
+		api.Logger.Debug("signout missing db factory")
+		return nil
+	}
 	acct.DBFactory.CloseAccountDBs()
 	return nil
 }
 
 // LockAccount locks an account
-func LockAccount(acct *account.Account) error {
+func (api *API) LockAccount(acct *account.Account) error {
 	if acct == nil {
-		code := codes.New(codes.ErrorLockActiveAccount)
-		return code
+		api.Logger.Debug("lock account missing account")
+		return nil
 	}
 	if acct.ActiveUser == nil {
-		code := codes.New(codes.ErrorLockActiveUser)
-		return code
+		api.Logger.Debug("lock account missing user")
+		return nil
 	}
 	crypto.Zero(acct.ActiveUser.PassphraseKey)
 	if acct.DBFactory == nil {
-		code := codes.New(codes.ErrorLockActiveDb)
-		return code
+		api.Logger.Debug("lock account missing db factory")
+		return nil
 	}
 	acct.DBFactory.CloseAccountDBs()
 	return nil

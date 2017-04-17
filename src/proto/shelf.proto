@@ -5,9 +5,11 @@ package notekeeper;
 import public "common.proto";
 import public "title.proto";
 
-message CreateNotebookRequest {
-	RequestHeader header = 1;
+message Shelf {
+	string id = 1;
 	Title name = 2;
-	string user_id = 3;
-	string shelf_id = 4;
+	string scope = 3;
+	bool default = 4;
+	bool trash = 5;
+	bool locked = 6;
 }

@@ -3,9 +3,11 @@ package collection
 import (
 	"time"
 
+	"../db"
 	"../notebook"
 	"../tag"
 	"../title"
+	"github.com/Sirupsen/logrus"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -21,15 +23,21 @@ type Collection struct {
 	Created   time.Time            `json:"created"`    // Created is the time when the collection was first created
 	Updated   time.Time            `json:"updated"`    // Updated is the time when the collection was last updated
 	Locked    bool                 `json:"locked"`     // Locked indicates whether the collection can be modified
+	DBFactory *db.Factory          `json:"-"`          // DBFactory provides database access
+	Logger    *logrus.Logger       `json:"-"`          // Logger is the logging facility
 }
 
 // New creates a new collection object
-func New() *Collection {
+func New(title *title.Title, dbFactory *db.Factory, logger *logrus.Logger) *Collection {
 	now := time.Now()
 	collection := &Collection{
-		ID:      uuid.NewV4(),
-		Created: now,
-		Updated: now,
+		ID:        uuid.NewV4(),
+		Title:     title,
+		Created:   now,
+		Updated:   now,
+		Locked:    false,
+		DBFactory: dbFactory,
+		Logger:    logger,
 	}
 	return collection
 }

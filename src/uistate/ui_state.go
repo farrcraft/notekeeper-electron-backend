@@ -52,7 +52,7 @@ func NewUIState(db *db.DB, logger *logrus.Logger) *UIState {
 func (state *UIState) Create() error {
 	if state.DB == nil {
 		state.Logger.Debug("ui state create - missing db")
-		code := codes.New(codes.ErrorUIStateMissingDb)
+		code := codes.New(codes.ScopeUIState, codes.ErrorMissingDB)
 		return code
 	}
 	err := state.DB.DB.Update(func(tx *bolt.Tx) error {
@@ -61,20 +61,20 @@ func (state *UIState) Create() error {
 			bucket, err := tx.CreateBucket([]byte("ui_state"))
 			if err != nil {
 				state.Logger.Debug("Error creating ui_state bucket - ", err)
-				code := codes.New(codes.ErrorUIStateCreateBucket)
+				code := codes.New(codes.ScopeUIState, codes.ErrorCreateBucket)
 				return code
 			}
 			data, err := json.Marshal(state)
 			if err != nil {
 				state.Logger.Debug("Error marshaling default UI State - ", err)
-				code := codes.New(codes.ErrorDefaultUIStateMarshal)
+				code := codes.New(codes.ScopeUIState, codes.ErrorMarshal)
 				return code
 			}
 
 			err = bucket.Put([]byte("ui_state"), data)
 			if err != nil {
 				state.Logger.Debug("Error writing default UI State - ", err)
-				code := codes.New(codes.ErrorDefaultUIStateWrite)
+				code := codes.New(codes.ScopeUIState, codes.ErrorWriteBucket)
 				return code
 			}
 		}
@@ -85,7 +85,7 @@ func (state *UIState) Create() error {
 			return err
 		}
 		state.Logger.Debug("error saving default ui state - ", err)
-		code := codes.New(codes.ErrorDefaultUIStateSave)
+		code := codes.New(codes.ScopeUIState, codes.ErrorSave)
 		return code
 	}
 	return nil
@@ -100,14 +100,14 @@ func (state *UIState) Load() error {
 		key, value := cursor.Seek([]byte("ui_state"))
 		if key == nil {
 			state.Logger.Debug("Error loading UI State")
-			code := codes.New(codes.ErrorLoadUIState)
+			code := codes.New(codes.ScopeUIState, codes.ErrorLoad)
 			return code
 		}
 
 		err := json.Unmarshal(value, state)
 		if err != nil {
 			state.Logger.Debug("Error decoding UI State json - ", err)
-			code := codes.New(codes.ErrorUIStateDecode)
+			code := codes.New(codes.ScopeUIState, codes.ErrorDecode)
 			return code
 		}
 		return nil
@@ -128,21 +128,21 @@ func (state *UIState) Save() error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("ui_state"))
 		if err != nil {
 			state.Logger.Debug("Error creating UI State Bucket - ", err)
-			code := codes.New(codes.ErrorUIStateBucket)
+			code := codes.New(codes.ScopeUIState, codes.ErrorCreateBucket)
 			return code
 		}
 
 		data, err := json.Marshal(state)
 		if err != nil {
 			state.Logger.Debug("Error marshaling UI State - ", err)
-			code := codes.New(codes.ErrorUIStatemarshal)
+			code := codes.New(codes.ScopeUIState, codes.ErrorMarshal)
 			return code
 		}
 
 		err = bucket.Put([]byte("ui_state"), data)
 		if err != nil {
 			state.Logger.Debug("Error writing UI State - ", err)
-			code := codes.New(codes.ErrorUIStateWrite)
+			code := codes.New(codes.ScopeUIState, codes.ErrorWriteBucket)
 			return code
 		}
 
@@ -153,7 +153,7 @@ func (state *UIState) Save() error {
 			return err
 		}
 		state.Logger.Debug("Error saving UI State - ", err)
-		code := codes.New(codes.ErrorUIStateSave)
+		code := codes.New(codes.ScopeUIState, codes.ErrorSave)
 		return code
 	}
 	return nil

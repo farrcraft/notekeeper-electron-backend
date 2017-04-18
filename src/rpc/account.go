@@ -37,11 +37,12 @@ func GetAccountState(rpc *Server, message []byte) (proto.Message, error) {
 
 // CreateAccount is the RPC method to create a new account
 func CreateAccount(rpc *Server, message []byte) (proto.Message, error) {
-	response := &messages.IdResponse{
+	response := &messages.UserIdResponse{
 		Header: &messages.ResponseHeader{
 			Code:   int32(codes.ErrorOK),
 			Status: codes.StatusOK,
 		},
+		User: &messages.UserId{},
 	}
 
 	request := messages.CreateAccountRequest{}
@@ -60,6 +61,7 @@ func CreateAccount(rpc *Server, message []byte) (proto.Message, error) {
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Header.Status = code.Error()
+		response.Header.Scope = int32(code.Scope)
 		response.Header.Code = int32(code.Code)
 		return response, nil
 	}
@@ -69,7 +71,8 @@ func CreateAccount(rpc *Server, message []byte) (proto.Message, error) {
 		rpc.Account = newAccount
 	}
 
-	response.Id = newAccount.ID.String()
+	response.User.AccountId = newAccount.ID.String()
+	response.User.UserId = newAccount.ActiveUser.ID.String()
 
 	return response, nil
 }
@@ -98,6 +101,7 @@ func UnlockAccount(rpc *Server, message []byte) (proto.Message, error) {
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Header.Code = int32(code.Code)
+		response.Header.Scope = int32(code.Scope)
 		response.Header.Status = code.Error()
 	}
 
@@ -106,11 +110,12 @@ func UnlockAccount(rpc *Server, message []byte) (proto.Message, error) {
 
 // SigninAccount is the RPC method to sign in to an existing account
 func SigninAccount(rpc *Server, message []byte) (proto.Message, error) {
-	response := &messages.EmptyResponse{
+	response := &messages.UserIdResponse{
 		Header: &messages.ResponseHeader{
 			Code:   int32(codes.ErrorOK),
 			Status: codes.StatusOK,
 		},
+		User: &messages.UserId{},
 	}
 
 	request := messages.SigninAccountRequest{}
@@ -127,10 +132,13 @@ func SigninAccount(rpc *Server, message []byte) (proto.Message, error) {
 	newAccount, err := api.SigninAccount(request.Name, request.Email, request.Passphrase)
 	if err == nil {
 		rpc.Account = newAccount
+		response.User.AccountId = newAccount.ID.String()
+		response.User.UserId = newAccount.ActiveUser.ID.String()
 	}
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Header.Code = int32(code.Code)
+		response.Header.Scope = int32(code.Scope)
 		response.Header.Status = code.Error()
 	}
 
@@ -151,6 +159,7 @@ func SignoutAccount(rpc *Server, message []byte) (proto.Message, error) {
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Header.Code = int32(code.Code)
+		response.Header.Scope = int32(code.Scope)
 		response.Header.Status = code.Error()
 	}
 	rpc.Account = nil

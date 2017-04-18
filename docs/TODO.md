@@ -1,6 +1,6 @@
 # TODO
 
-[] make sure all rpc error paths set the error scope
+[+] make sure all rpc error paths set the error scope
 [] work out encryption key layers
 [] add encryption keys in db module
 [] refactor error codes w/ scope property

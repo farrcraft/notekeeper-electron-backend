@@ -20,9 +20,12 @@ var _ = math.Inf
 // Ignoring public import of Title from title.proto
 
 type Collection struct {
-	Id     string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
-	Name   *Title `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	Locked bool   `protobuf:"varint,3,opt,name=locked" json:"locked,omitempty"`
+	Id      string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	Name    *Title `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	Locked  bool   `protobuf:"varint,3,opt,name=locked" json:"locked,omitempty"`
+	ShelfId string `protobuf:"bytes,4,opt,name=shelfId" json:"shelfId,omitempty"`
+	Created string `protobuf:"bytes,5,opt,name=created" json:"created,omitempty"`
+	Updated string `protobuf:"bytes,6,opt,name=updated" json:"updated,omitempty"`
 }
 
 func (m *Collection) Reset()                    { *m = Collection{} }
@@ -51,22 +54,237 @@ func (m *Collection) GetLocked() bool {
 	return false
 }
 
+func (m *Collection) GetShelfId() string {
+	if m != nil {
+		return m.ShelfId
+	}
+	return ""
+}
+
+func (m *Collection) GetCreated() string {
+	if m != nil {
+		return m.Created
+	}
+	return ""
+}
+
+func (m *Collection) GetUpdated() string {
+	if m != nil {
+		return m.Updated
+	}
+	return ""
+}
+
+type GetCollectionsRequest struct {
+	Header  *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	ShelfId string         `protobuf:"bytes,2,opt,name=shelfId" json:"shelfId,omitempty"`
+	Scope   string         `protobuf:"bytes,3,opt,name=scope" json:"scope,omitempty"`
+}
+
+func (m *GetCollectionsRequest) Reset()                    { *m = GetCollectionsRequest{} }
+func (m *GetCollectionsRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetCollectionsRequest) ProtoMessage()               {}
+func (*GetCollectionsRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{1} }
+
+func (m *GetCollectionsRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *GetCollectionsRequest) GetShelfId() string {
+	if m != nil {
+		return m.ShelfId
+	}
+	return ""
+}
+
+func (m *GetCollectionsRequest) GetScope() string {
+	if m != nil {
+		return m.Scope
+	}
+	return ""
+}
+
+type GetCollectionsResponse struct {
+	Header      *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Collections []*Collection   `protobuf:"bytes,2,rep,name=collections" json:"collections,omitempty"`
+}
+
+func (m *GetCollectionsResponse) Reset()                    { *m = GetCollectionsResponse{} }
+func (m *GetCollectionsResponse) String() string            { return proto.CompactTextString(m) }
+func (*GetCollectionsResponse) ProtoMessage()               {}
+func (*GetCollectionsResponse) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{2} }
+
+func (m *GetCollectionsResponse) GetHeader() *ResponseHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *GetCollectionsResponse) GetCollections() []*Collection {
+	if m != nil {
+		return m.Collections
+	}
+	return nil
+}
+
+type CreateCollectionRequest struct {
+	Header  *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Name    *Title         `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	ShelfId string         `protobuf:"bytes,3,opt,name=shelfId" json:"shelfId,omitempty"`
+	Scope   string         `protobuf:"bytes,4,opt,name=scope" json:"scope,omitempty"`
+}
+
+func (m *CreateCollectionRequest) Reset()                    { *m = CreateCollectionRequest{} }
+func (m *CreateCollectionRequest) String() string            { return proto.CompactTextString(m) }
+func (*CreateCollectionRequest) ProtoMessage()               {}
+func (*CreateCollectionRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{3} }
+
+func (m *CreateCollectionRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *CreateCollectionRequest) GetName() *Title {
+	if m != nil {
+		return m.Name
+	}
+	return nil
+}
+
+func (m *CreateCollectionRequest) GetShelfId() string {
+	if m != nil {
+		return m.ShelfId
+	}
+	return ""
+}
+
+func (m *CreateCollectionRequest) GetScope() string {
+	if m != nil {
+		return m.Scope
+	}
+	return ""
+}
+
+type SaveCollectionRequest struct {
+	Header *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Id     string         `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
+	Scope  string         `protobuf:"bytes,3,opt,name=scope" json:"scope,omitempty"`
+	Name   *Title         `protobuf:"bytes,4,opt,name=name" json:"name,omitempty"`
+	Locked bool           `protobuf:"varint,5,opt,name=locked" json:"locked,omitempty"`
+}
+
+func (m *SaveCollectionRequest) Reset()                    { *m = SaveCollectionRequest{} }
+func (m *SaveCollectionRequest) String() string            { return proto.CompactTextString(m) }
+func (*SaveCollectionRequest) ProtoMessage()               {}
+func (*SaveCollectionRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{4} }
+
+func (m *SaveCollectionRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *SaveCollectionRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *SaveCollectionRequest) GetScope() string {
+	if m != nil {
+		return m.Scope
+	}
+	return ""
+}
+
+func (m *SaveCollectionRequest) GetName() *Title {
+	if m != nil {
+		return m.Name
+	}
+	return nil
+}
+
+func (m *SaveCollectionRequest) GetLocked() bool {
+	if m != nil {
+		return m.Locked
+	}
+	return false
+}
+
+type DeleteCollectionRequest struct {
+	Header *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Id     string         `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
+	Scope  string         `protobuf:"bytes,3,opt,name=scope" json:"scope,omitempty"`
+}
+
+func (m *DeleteCollectionRequest) Reset()                    { *m = DeleteCollectionRequest{} }
+func (m *DeleteCollectionRequest) String() string            { return proto.CompactTextString(m) }
+func (*DeleteCollectionRequest) ProtoMessage()               {}
+func (*DeleteCollectionRequest) Descriptor() ([]byte, []int) { return fileDescriptor1, []int{5} }
+
+func (m *DeleteCollectionRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *DeleteCollectionRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *DeleteCollectionRequest) GetScope() string {
+	if m != nil {
+		return m.Scope
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*Collection)(nil), "notekeeper.Collection")
+	proto.RegisterType((*GetCollectionsRequest)(nil), "notekeeper.GetCollectionsRequest")
+	proto.RegisterType((*GetCollectionsResponse)(nil), "notekeeper.GetCollectionsResponse")
+	proto.RegisterType((*CreateCollectionRequest)(nil), "notekeeper.CreateCollectionRequest")
+	proto.RegisterType((*SaveCollectionRequest)(nil), "notekeeper.SaveCollectionRequest")
+	proto.RegisterType((*DeleteCollectionRequest)(nil), "notekeeper.DeleteCollectionRequest")
 }
 
 func init() { proto.RegisterFile("collection.proto", fileDescriptor1) }
 
 var fileDescriptor1 = []byte{
-	// 148 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x48, 0xce, 0xcf, 0xc9,
-	0x49, 0x4d, 0x2e, 0xc9, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0xca, 0xcb,
-	0x2f, 0x49, 0xcd, 0x4e, 0x4d, 0x2d, 0x48, 0x2d, 0x92, 0xe2, 0x49, 0xce, 0xcf, 0xcd, 0x85, 0xc9,
-	0x48, 0x71, 0x97, 0x64, 0x96, 0xe4, 0xa4, 0x42, 0x38, 0x4a, 0xd1, 0x5c, 0x5c, 0xce, 0x70, 0xad,
-	0x42, 0x7c, 0x5c, 0x4c, 0x99, 0x29, 0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0x9c, 0x41, 0x4c, 0x99, 0x29,
-	0x42, 0xaa, 0x5c, 0x2c, 0x79, 0x89, 0xb9, 0xa9, 0x12, 0x4c, 0x0a, 0x8c, 0x1a, 0xdc, 0x46, 0x82,
-	0x7a, 0x08, 0x33, 0xf5, 0x42, 0x40, 0x86, 0x04, 0x81, 0xa5, 0x85, 0xc4, 0xb8, 0xd8, 0x72, 0xf2,
-	0x93, 0xb3, 0x53, 0x53, 0x24, 0x98, 0x15, 0x18, 0x35, 0x38, 0x82, 0xa0, 0xbc, 0x00, 0x86, 0x00,
-	0xc6, 0x24, 0x36, 0xb0, 0x3d, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x89, 0x6c, 0xa6, 0xe0,
-	0xa2, 0x00, 0x00, 0x00,
+	// 353 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x53, 0xc1, 0x4a, 0xeb, 0x40,
+	0x14, 0x7d, 0x93, 0xa6, 0x79, 0xaf, 0x37, 0x0f, 0xd1, 0xc1, 0xb6, 0x63, 0x57, 0x21, 0x20, 0x64,
+	0x55, 0x30, 0x6e, 0xdc, 0x57, 0x50, 0x77, 0x65, 0xf4, 0x07, 0x62, 0xe6, 0x4a, 0x43, 0xd3, 0x4c,
+	0xcc, 0x4c, 0x5d, 0xf8, 0x01, 0xfe, 0x88, 0x2b, 0x57, 0xfe, 0xa2, 0x74, 0x92, 0x36, 0xd3, 0xa2,
+	0x50, 0x44, 0x5c, 0x1e, 0xce, 0xc9, 0x3d, 0x67, 0xce, 0xbd, 0x81, 0xc3, 0x54, 0xe6, 0x39, 0xa6,
+	0x3a, 0x93, 0xc5, 0xb8, 0xac, 0xa4, 0x96, 0x14, 0x0a, 0xa9, 0x71, 0x8e, 0x58, 0x62, 0x35, 0xfa,
+	0x9f, 0xca, 0xc5, 0x62, 0xcd, 0x8c, 0x7c, 0x9d, 0xe9, 0x1c, 0x6b, 0x10, 0xbe, 0x11, 0x80, 0xc9,
+	0xe6, 0x5b, 0x7a, 0x00, 0x4e, 0x26, 0x18, 0x09, 0x48, 0xd4, 0xe3, 0x4e, 0x26, 0xe8, 0x29, 0xb8,
+	0x45, 0xb2, 0x40, 0xe6, 0x04, 0x24, 0xf2, 0xe3, 0xa3, 0x71, 0x3b, 0x74, 0x7c, 0xb7, 0x9a, 0xc2,
+	0x0d, 0x4d, 0x07, 0xe0, 0xe5, 0x32, 0x9d, 0xa3, 0x60, 0x9d, 0x80, 0x44, 0xff, 0x78, 0x83, 0x28,
+	0x83, 0xbf, 0x6a, 0x86, 0xf9, 0xc3, 0x8d, 0x60, 0xae, 0x99, 0xb9, 0x86, 0x2b, 0x26, 0xad, 0x30,
+	0xd1, 0x28, 0x58, 0xb7, 0x66, 0x1a, 0xb8, 0x62, 0x96, 0xa5, 0x30, 0x8c, 0x57, 0x33, 0x0d, 0x0c,
+	0x9f, 0xa1, 0x7f, 0x85, 0xba, 0x4d, 0xab, 0x38, 0x3e, 0x2e, 0x51, 0x69, 0x7a, 0x06, 0xde, 0x0c,
+	0x13, 0x81, 0x95, 0x49, 0xee, 0xc7, 0x27, 0x76, 0xce, 0x46, 0x74, 0x6d, 0x04, 0xbc, 0x11, 0xda,
+	0xc9, 0x9c, 0xed, 0x64, 0xc7, 0xd0, 0x55, 0xa9, 0x2c, 0xd1, 0x3c, 0xa5, 0xc7, 0x6b, 0x10, 0xbe,
+	0x10, 0x18, 0xec, 0x9a, 0xab, 0x52, 0x16, 0x0a, 0x69, 0xbc, 0xe3, 0x3e, 0xda, 0x76, 0xaf, 0x55,
+	0x3b, 0xf6, 0x17, 0xe0, 0xb7, 0x1b, 0x53, 0xcc, 0x09, 0x3a, 0x91, 0x1f, 0x0f, 0xec, 0x0f, 0x5b,
+	0x27, 0x6e, 0x4b, 0xc3, 0x57, 0x02, 0xc3, 0x89, 0xa9, 0xca, 0x52, 0x7c, 0xbf, 0x87, 0x3d, 0x17,
+	0x6c, 0xd5, 0xd5, 0xf9, 0xa2, 0x2e, 0xd7, 0xae, 0xeb, 0x9d, 0x40, 0xff, 0x36, 0x79, 0xfa, 0x99,
+	0x8c, 0xf5, 0x51, 0x3a, 0x9b, 0xa3, 0xfc, 0x74, 0x43, 0x9b, 0x97, 0xb8, 0xfb, 0x9e, 0x6a, 0xd7,
+	0x3e, 0xd5, 0xb0, 0x82, 0xe1, 0x25, 0xe6, 0xa8, 0x7f, 0x31, 0xf2, 0xf4, 0xcf, 0x94, 0xdc, 0x7b,
+	0xe6, 0x3f, 0x3c, 0xff, 0x08, 0x00, 0x00, 0xff, 0xff, 0x59, 0xb8, 0xde, 0x3a, 0xc2, 0x03, 0x00,
+	0x00,
 }

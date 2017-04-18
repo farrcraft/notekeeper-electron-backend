@@ -7,4 +7,38 @@ import public "title.proto";
 message Tag {
 	string id = 1;
 	Title name = 2;
+	string created = 3;
+	string updated = 4;
 }
+
+message GetTagsRequest {
+	RequestHeader header = 1;
+	string scope = 2;
+}
+
+message GetTagsResponse {
+	ResponseHeader header = 1;
+	repeated Tag tags = 2;
+}
+
+message CreateTagRequest {
+	RequestHeader header = 1;
+	Title name = 2;
+	string scope = 3;
+}
+// Response is an IdResponse
+
+message SaveTagRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string scope = 3;
+	Title name = 4;
+}
+// Response is an EmptyResponse
+
+message DeleteTagRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string scope = 3;
+}
+// Response is an EmptyResponse

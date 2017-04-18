@@ -24,6 +24,7 @@ func LoadUIState(rpc *Server, message []byte) (proto.Message, error) {
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Header.Code = int32(code.Code)
+		response.Header.Scope = int32(code.Scope)
 		response.Header.Status = code.Error()
 		return response, nil
 	}
@@ -81,6 +82,7 @@ func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
 	if err != nil {
 		code := codes.ToInternalError(err)
 		response.Header.Code = int32(code.Code)
+		response.Header.Scope = int32(code.Scope)
 		response.Header.Status = code.Error()
 		return response, nil
 	}

@@ -5,9 +5,51 @@ package notekeeper;
 import public "common.proto";
 import public "title.proto";
 
+message Notebook {
+	string id = 1;
+	string shelfId = 2;
+	string collectionId = 3;
+	bool default = 4;
+	bool locked = 5;
+	int32 noteCount = 6;
+	string created = 7;
+	string updated = 8;
+}
+
 message CreateNotebookRequest {
 	RequestHeader header = 1;
 	Title name = 2;
-	string user_id = 3;
-	string shelf_id = 4;
+	string userId = 3;
+	string shelfId = 4;
+	string scope = 5;
 }
+// Response is an IdResponse
+
+message SaveNotebookRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	Title name = 3;
+	string scope = 4;
+	bool default = 5;
+	bool locked = 6;
+}
+// Response is an EmptyResponse
+
+message GetNotebooksRequest {
+	RequestHeader header = 1;
+	string shelfId = 2;
+	string collectionId = 3;
+	string scope = 4;
+}
+
+message GetNotebooksResponse {
+	ResponseHeader header = 1;
+	repeated Notebook notebooks = 2;
+}
+
+message DeleteNotebookRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string scope = 3;
+}
+// Response is an EmptyResponse

@@ -9,4 +9,42 @@ message Collection {
 	string id = 1;
 	Title name = 2;
 	bool locked = 3;
+	string shelfId = 4;
+	string created = 5;
+	string updated = 6;
 }
+
+message GetCollectionsRequest {
+	RequestHeader header = 1;
+	string shelfId = 2;
+	string scope = 3; // account or user
+}
+
+message GetCollectionsResponse {
+	ResponseHeader header = 1;
+	repeated Collection collections = 2;
+}
+
+message CreateCollectionRequest {
+	RequestHeader header = 1;
+	Title name = 2;
+	string shelfId = 3;
+	string scope = 4;
+}
+// Response is an IdResponse
+
+message SaveCollectionRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string scope = 3;
+	Title name = 4;
+	bool locked = 5;
+}
+// Response is an EmptyResponse
+
+message DeleteCollectionRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string scope = 3;
+}
+// Response is an EmptyResponse

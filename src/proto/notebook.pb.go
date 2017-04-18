@@ -19,17 +19,90 @@ var _ = math.Inf
 
 // Ignoring public import of Title from title.proto
 
+type Notebook struct {
+	Id           string `protobuf:"bytes,1,opt,name=id" json:"id,omitempty"`
+	ShelfId      string `protobuf:"bytes,2,opt,name=shelfId" json:"shelfId,omitempty"`
+	CollectionId string `protobuf:"bytes,3,opt,name=collectionId" json:"collectionId,omitempty"`
+	Default      bool   `protobuf:"varint,4,opt,name=default" json:"default,omitempty"`
+	Locked       bool   `protobuf:"varint,5,opt,name=locked" json:"locked,omitempty"`
+	NoteCount    int32  `protobuf:"varint,6,opt,name=noteCount" json:"noteCount,omitempty"`
+	Created      string `protobuf:"bytes,7,opt,name=created" json:"created,omitempty"`
+	Updated      string `protobuf:"bytes,8,opt,name=updated" json:"updated,omitempty"`
+}
+
+func (m *Notebook) Reset()                    { *m = Notebook{} }
+func (m *Notebook) String() string            { return proto.CompactTextString(m) }
+func (*Notebook) ProtoMessage()               {}
+func (*Notebook) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
+
+func (m *Notebook) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *Notebook) GetShelfId() string {
+	if m != nil {
+		return m.ShelfId
+	}
+	return ""
+}
+
+func (m *Notebook) GetCollectionId() string {
+	if m != nil {
+		return m.CollectionId
+	}
+	return ""
+}
+
+func (m *Notebook) GetDefault() bool {
+	if m != nil {
+		return m.Default
+	}
+	return false
+}
+
+func (m *Notebook) GetLocked() bool {
+	if m != nil {
+		return m.Locked
+	}
+	return false
+}
+
+func (m *Notebook) GetNoteCount() int32 {
+	if m != nil {
+		return m.NoteCount
+	}
+	return 0
+}
+
+func (m *Notebook) GetCreated() string {
+	if m != nil {
+		return m.Created
+	}
+	return ""
+}
+
+func (m *Notebook) GetUpdated() string {
+	if m != nil {
+		return m.Updated
+	}
+	return ""
+}
+
 type CreateNotebookRequest struct {
 	Header  *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
 	Name    *Title         `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
-	UserId  string         `protobuf:"bytes,3,opt,name=user_id,json=userId" json:"user_id,omitempty"`
-	ShelfId string         `protobuf:"bytes,4,opt,name=shelf_id,json=shelfId" json:"shelf_id,omitempty"`
+	UserId  string         `protobuf:"bytes,3,opt,name=userId" json:"userId,omitempty"`
+	ShelfId string         `protobuf:"bytes,4,opt,name=shelfId" json:"shelfId,omitempty"`
+	Scope   string         `protobuf:"bytes,5,opt,name=scope" json:"scope,omitempty"`
 }
 
 func (m *CreateNotebookRequest) Reset()                    { *m = CreateNotebookRequest{} }
 func (m *CreateNotebookRequest) String() string            { return proto.CompactTextString(m) }
 func (*CreateNotebookRequest) ProtoMessage()               {}
-func (*CreateNotebookRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{0} }
+func (*CreateNotebookRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{1} }
 
 func (m *CreateNotebookRequest) GetHeader() *RequestHeader {
 	if m != nil {
@@ -59,24 +132,202 @@ func (m *CreateNotebookRequest) GetShelfId() string {
 	return ""
 }
 
+func (m *CreateNotebookRequest) GetScope() string {
+	if m != nil {
+		return m.Scope
+	}
+	return ""
+}
+
+type SaveNotebookRequest struct {
+	Header  *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Id      string         `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
+	Name    *Title         `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
+	Scope   string         `protobuf:"bytes,4,opt,name=scope" json:"scope,omitempty"`
+	Default bool           `protobuf:"varint,5,opt,name=default" json:"default,omitempty"`
+	Locked  bool           `protobuf:"varint,6,opt,name=locked" json:"locked,omitempty"`
+}
+
+func (m *SaveNotebookRequest) Reset()                    { *m = SaveNotebookRequest{} }
+func (m *SaveNotebookRequest) String() string            { return proto.CompactTextString(m) }
+func (*SaveNotebookRequest) ProtoMessage()               {}
+func (*SaveNotebookRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{2} }
+
+func (m *SaveNotebookRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *SaveNotebookRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *SaveNotebookRequest) GetName() *Title {
+	if m != nil {
+		return m.Name
+	}
+	return nil
+}
+
+func (m *SaveNotebookRequest) GetScope() string {
+	if m != nil {
+		return m.Scope
+	}
+	return ""
+}
+
+func (m *SaveNotebookRequest) GetDefault() bool {
+	if m != nil {
+		return m.Default
+	}
+	return false
+}
+
+func (m *SaveNotebookRequest) GetLocked() bool {
+	if m != nil {
+		return m.Locked
+	}
+	return false
+}
+
+type GetNotebooksRequest struct {
+	Header       *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	ShelfId      string         `protobuf:"bytes,2,opt,name=shelfId" json:"shelfId,omitempty"`
+	CollectionId string         `protobuf:"bytes,3,opt,name=collectionId" json:"collectionId,omitempty"`
+	Scope        string         `protobuf:"bytes,4,opt,name=scope" json:"scope,omitempty"`
+}
+
+func (m *GetNotebooksRequest) Reset()                    { *m = GetNotebooksRequest{} }
+func (m *GetNotebooksRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetNotebooksRequest) ProtoMessage()               {}
+func (*GetNotebooksRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{3} }
+
+func (m *GetNotebooksRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *GetNotebooksRequest) GetShelfId() string {
+	if m != nil {
+		return m.ShelfId
+	}
+	return ""
+}
+
+func (m *GetNotebooksRequest) GetCollectionId() string {
+	if m != nil {
+		return m.CollectionId
+	}
+	return ""
+}
+
+func (m *GetNotebooksRequest) GetScope() string {
+	if m != nil {
+		return m.Scope
+	}
+	return ""
+}
+
+type GetNotebooksResponse struct {
+	Header    *ResponseHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Notebooks []*Notebook     `protobuf:"bytes,2,rep,name=notebooks" json:"notebooks,omitempty"`
+}
+
+func (m *GetNotebooksResponse) Reset()                    { *m = GetNotebooksResponse{} }
+func (m *GetNotebooksResponse) String() string            { return proto.CompactTextString(m) }
+func (*GetNotebooksResponse) ProtoMessage()               {}
+func (*GetNotebooksResponse) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{4} }
+
+func (m *GetNotebooksResponse) GetHeader() *ResponseHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *GetNotebooksResponse) GetNotebooks() []*Notebook {
+	if m != nil {
+		return m.Notebooks
+	}
+	return nil
+}
+
+type DeleteNotebookRequest struct {
+	Header *RequestHeader `protobuf:"bytes,1,opt,name=header" json:"header,omitempty"`
+	Id     string         `protobuf:"bytes,2,opt,name=id" json:"id,omitempty"`
+	Scope  string         `protobuf:"bytes,3,opt,name=scope" json:"scope,omitempty"`
+}
+
+func (m *DeleteNotebookRequest) Reset()                    { *m = DeleteNotebookRequest{} }
+func (m *DeleteNotebookRequest) String() string            { return proto.CompactTextString(m) }
+func (*DeleteNotebookRequest) ProtoMessage()               {}
+func (*DeleteNotebookRequest) Descriptor() ([]byte, []int) { return fileDescriptor6, []int{5} }
+
+func (m *DeleteNotebookRequest) GetHeader() *RequestHeader {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *DeleteNotebookRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *DeleteNotebookRequest) GetScope() string {
+	if m != nil {
+		return m.Scope
+	}
+	return ""
+}
+
 func init() {
+	proto.RegisterType((*Notebook)(nil), "notekeeper.Notebook")
 	proto.RegisterType((*CreateNotebookRequest)(nil), "notekeeper.CreateNotebookRequest")
+	proto.RegisterType((*SaveNotebookRequest)(nil), "notekeeper.SaveNotebookRequest")
+	proto.RegisterType((*GetNotebooksRequest)(nil), "notekeeper.GetNotebooksRequest")
+	proto.RegisterType((*GetNotebooksResponse)(nil), "notekeeper.GetNotebooksResponse")
+	proto.RegisterType((*DeleteNotebookRequest)(nil), "notekeeper.DeleteNotebookRequest")
 }
 
 func init() { proto.RegisterFile("notebook.proto", fileDescriptor6) }
 
 var fileDescriptor6 = []byte{
-	// 191 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x4c, 0x8e, 0xcf, 0xca, 0x82, 0x40,
-	0x14, 0x47, 0xbf, 0xf9, 0x12, 0xad, 0x31, 0x82, 0x06, 0x22, 0x75, 0x25, 0x41, 0xe0, 0x4a, 0xa8,
-	0x1e, 0xa1, 0x4d, 0x6e, 0x42, 0x86, 0xf6, 0xa1, 0xcd, 0x0d, 0xc5, 0x3f, 0xd7, 0xc6, 0xf1, 0x91,
-	0x7a, 0xcf, 0x98, 0x51, 0xa8, 0xe5, 0xe1, 0xfc, 0xce, 0xcc, 0xa5, 0xab, 0x16, 0x15, 0xe4, 0x88,
-	0x55, 0xdc, 0x49, 0x54, 0xc8, 0xa8, 0xe6, 0x0a, 0xa0, 0x03, 0x19, 0x2c, 0x1f, 0xd8, 0x34, 0xd8,
-	0x8e, 0x26, 0x70, 0x55, 0xa9, 0x6a, 0x18, 0x61, 0xf7, 0x26, 0x74, 0x73, 0x96, 0x90, 0x29, 0xb8,
-	0x4e, 0x3d, 0x87, 0xd7, 0x00, 0xbd, 0x62, 0x07, 0x6a, 0x17, 0x90, 0x09, 0x90, 0x1e, 0x09, 0x49,
-	0xe4, 0x1e, 0xfd, 0xf8, 0xfb, 0x62, 0x3c, 0x8d, 0x2e, 0x66, 0xc0, 0xa7, 0x21, 0xdb, 0x53, 0xab,
-	0xcd, 0x1a, 0xf0, 0xfe, 0x4d, 0xb0, 0xfe, 0x0d, 0x6e, 0xfa, 0x4f, 0x6e, 0x34, 0xdb, 0x52, 0x67,
-	0xe8, 0x41, 0xde, 0x4b, 0xe1, 0xcd, 0x42, 0x12, 0x2d, 0xb8, 0xad, 0x31, 0x11, 0xcc, 0xa7, 0xf3,
-	0xbe, 0x80, 0xfa, 0xa9, 0x8d, 0x65, 0x8c, 0x63, 0x38, 0x11, 0xe9, 0x5f, 0x4a, 0x72, 0xdb, 0x9c,
-	0x7c, 0xfa, 0x04, 0x00, 0x00, 0xff, 0xff, 0x6d, 0xb2, 0x4e, 0x1e, 0xeb, 0x00, 0x00, 0x00,
+	// 408 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0x4f, 0xee, 0x93, 0x40,
+	0x14, 0x76, 0xf8, 0xd7, 0xf6, 0xd1, 0x34, 0x71, 0xda, 0x9a, 0xb1, 0x71, 0x41, 0x48, 0x4c, 0x58,
+	0x35, 0x11, 0x8f, 0x50, 0x13, 0xed, 0xc6, 0x34, 0xe8, 0x05, 0x28, 0xf3, 0x9a, 0x92, 0x52, 0x06,
+	0x61, 0x70, 0xe9, 0x49, 0xbc, 0x88, 0x27, 0xf0, 0x12, 0x1e, 0xc6, 0x30, 0x03, 0x14, 0x1a, 0x75,
+	0x53, 0x7f, 0xcb, 0xef, 0x7d, 0xef, 0x91, 0xef, 0xcf, 0x04, 0x58, 0xe4, 0x42, 0xe2, 0x51, 0x88,
+	0xcb, 0xb6, 0x28, 0x85, 0x14, 0x14, 0x1a, 0x7c, 0x41, 0x2c, 0xb0, 0xdc, 0xcc, 0x13, 0x71, 0xbd,
+	0x8a, 0x5c, 0x33, 0x1b, 0x57, 0xa6, 0x32, 0x43, 0x0d, 0xfc, 0x5f, 0x04, 0xa6, 0x1f, 0xdb, 0x4b,
+	0xba, 0x00, 0x23, 0xe5, 0x8c, 0x78, 0x24, 0x98, 0x45, 0x46, 0xca, 0x29, 0x83, 0x49, 0x75, 0xc6,
+	0xec, 0xb4, 0xe7, 0xcc, 0x50, 0xc3, 0x0e, 0x52, 0x1f, 0xe6, 0x89, 0xc8, 0x32, 0x4c, 0x64, 0x2a,
+	0xf2, 0x3d, 0x67, 0xa6, 0xa2, 0x47, 0xb3, 0xe6, 0x9a, 0xe3, 0x29, 0xae, 0x33, 0xc9, 0x2c, 0x8f,
+	0x04, 0xd3, 0xa8, 0x83, 0xf4, 0x05, 0x38, 0x99, 0x48, 0x2e, 0xc8, 0x99, 0xad, 0x88, 0x16, 0xd1,
+	0x57, 0x30, 0x6b, 0x54, 0xef, 0x44, 0x9d, 0x4b, 0xe6, 0x78, 0x24, 0xb0, 0xa3, 0xdb, 0xa0, 0xf9,
+	0x5e, 0x52, 0x62, 0x2c, 0x91, 0xb3, 0x89, 0x56, 0xd3, 0xc2, 0x86, 0xa9, 0x0b, 0xae, 0x98, 0xa9,
+	0x66, 0x5a, 0xe8, 0xff, 0x20, 0xb0, 0xde, 0xa9, 0xad, 0xce, 0x64, 0x84, 0x5f, 0x6a, 0xac, 0x24,
+	0x7d, 0x03, 0xce, 0x19, 0x63, 0x8e, 0xa5, 0xf2, 0xeb, 0x86, 0x2f, 0xb7, 0xb7, 0xc0, 0xb6, 0xed,
+	0xd2, 0x07, 0xb5, 0x10, 0xb5, 0x8b, 0xf4, 0x35, 0x58, 0x79, 0x7c, 0x45, 0x95, 0x85, 0x1b, 0x3e,
+	0x1f, 0x1e, 0x7c, 0x6e, 0x22, 0x8d, 0x14, 0xdd, 0xb8, 0xab, 0x2b, 0x2c, 0xfb, 0x54, 0x5a, 0x34,
+	0x4c, 0xd3, 0x1a, 0xa7, 0xb9, 0x02, 0xbb, 0x4a, 0x44, 0x81, 0x2a, 0x8e, 0x59, 0xa4, 0x81, 0xff,
+	0x93, 0xc0, 0xf2, 0x53, 0xfc, 0xf5, 0x7f, 0x28, 0xd7, 0xc5, 0x1a, 0x7d, 0xb1, 0x9d, 0x13, 0xf3,
+	0xdf, 0x4e, 0x7a, 0x5d, 0xd6, 0x40, 0xd7, 0xb0, 0x57, 0xfb, 0x6f, 0xbd, 0x3a, 0xc3, 0x5e, 0xfd,
+	0xef, 0x04, 0x96, 0xef, 0x51, 0x76, 0x46, 0xaa, 0x07, 0x9c, 0x3c, 0xf6, 0x24, 0xff, 0x68, 0xc8,
+	0xff, 0x06, 0xab, 0xb1, 0xba, 0xaa, 0x10, 0x79, 0x85, 0x34, 0xbc, 0x93, 0xb7, 0x19, 0xcb, 0xd3,
+	0x5b, 0x77, 0xfa, 0x42, 0xfd, 0x84, 0xd5, 0x87, 0x98, 0xe1, 0x99, 0x81, 0x1b, 0xae, 0x86, 0x67,
+	0x7d, 0x99, 0xb7, 0x35, 0xbf, 0x80, 0xf5, 0x3b, 0xcc, 0x50, 0x3e, 0x45, 0xd3, 0xbd, 0x63, 0x73,
+	0xe0, 0xf8, 0xf0, 0xec, 0x40, 0x8e, 0x8e, 0xfa, 0x01, 0xbc, 0xfd, 0x1d, 0x00, 0x00, 0xff, 0xff,
+	0x11, 0x9c, 0x1f, 0x8e, 0x39, 0x04, 0x00, 0x00,
 }

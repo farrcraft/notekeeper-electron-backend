@@ -8,8 +8,43 @@ import public "title.proto";
 message Shelf {
 	string id = 1;
 	Title name = 2;
-	string scope = 3;
+	string scope = 3; // account or user
 	bool default = 4;
 	bool trash = 5;
 	bool locked = 6;
+	string created = 7;
+	string updated = 8;
 }
+
+message GetShelvesRequest {
+	RequestHeader header = 1;
+	string id = 2; // Either a user id or an account id
+	string scope = 3; // account or user
+}
+
+message GetShelvesResponse {
+	ResponseHeader header = 1;
+	repeated Shelf shelves = 2;
+}
+
+message CreateShelfRequest {
+	RequestHeader header = 1;
+	Title name = 2;
+	string scope = 3;
+}
+// Response is an IdResponse
+
+message SaveShelfRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	Title title = 3;
+	bool locked = 4;
+}
+// Response is an EmptyResponse
+
+message DeleteShelfRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string scope = 3;
+}
+// Response is an EmptyResponse

@@ -18,6 +18,16 @@ message CreateAccountRequest {
 	string passphrase = 4; // user password
 }
 
+message UserId {
+	string accountId = 1;
+	string userId = 2;
+}
+
+message UserIdResponse {
+	ResponseHeader header = 1;
+	UserId user = 2;
+}
+
 message UnlockAccountRequest {
 	RequestHeader header = 1;
 	string id = 2;
@@ -30,3 +40,4 @@ message SigninAccountRequest {
 	string email = 3;
 	string passphrase = 4;
 }
+// Response is a UserIdResponse

@@ -2,3 +2,43 @@ syntax = "proto3";
 
 package notekeeper;
 
+import public "common.proto";
+import public "title.proto";
+
+// This is just note metadata
+// Note content is treated separately
+message Note {
+	string id = 1;
+	Title name = 2;
+	string type = 3;
+	int32 revisions = 4;
+	bool locked = 5;
+	string created = 6;
+	string updated = 7;
+}
+
+message CreateNoteRequest {
+	RequestHeader header = 1;
+	string notebookId = 2;
+	string scope = 3;
+	Title name = 4;
+}
+// Response is an IdResponse
+
+message DeleteNoteRequest {
+	RequestHeader header = 1;
+	string noteId = 2;
+	string scope = 3;
+}
+// Response is an EmptyResponse
+
+message GetNotesRequest {
+	RequestHeader header = 1;
+	string notebookId = 2;
+	string scope = 3;
+}
+
+message GetNotesResponse {
+	ResponseHeader header = 1;
+	repeated Note notes = 2;
+}

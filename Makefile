@@ -13,6 +13,9 @@ release:
 gvt:
 	go get -u github.com/FiloSottile/gvt
 
+loc:
+	cd src; find . -name '*.go' | xargs wc -l
+
 # install the protoc golang plugin
 # export GOPATH=C:/code/go
 proto-gen:

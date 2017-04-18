@@ -1,9 +1,6 @@
 # TODO
 
-[+] make sure all rpc error paths set the error scope
-[] work out encryption key layers
-[] add encryption keys in db module
-[] refactor error codes w/ scope property
+[] generate code coverage reports
 [] do we need index & map types to match the corresponding db buckets?
 [] create shelf
 [] save shelf
@@ -42,5 +39,9 @@
 
 # DONE
 
+[+] make sure all rpc error paths set the error scope
+[+] refactor error codes w/ scope property
+[+] work out encryption key layers
+[+] add encryption keys in db module
 [+] refactor db code to use db module
 [+] move account data into account db instead of master db & just keep account_map in master db

@@ -64,8 +64,7 @@ func New(title *title.Title, scope Scope, dbFactory *db.Factory, logger *logrus.
 	return shelf
 }
 
-// Save a shelf to the DB
-func (shelf *Shelf) Save(passphraseKey []byte) error {
+func (shelf *Shelf) getDB() *db.DB {
 	// even though the *content* of a shelf gets its own db, the shelf itself
 	// is stored in the parent db
 	var dbType db.Type
@@ -78,6 +77,12 @@ func (shelf *Shelf) Save(passphraseKey []byte) error {
 		id = shelf.AccountID
 	}
 	db := shelf.DBFactory.Find(dbType, id)
+	return db
+}
+
+// Save a shelf to the DB
+func (shelf *Shelf) Save(passphraseKey []byte) error {
+	db := shelf.getDB()
 	err := db.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("shelves"))
@@ -139,12 +144,13 @@ func (shelf *Shelf) Load() error {
 }
 
 // LoadAll of the shelves from an account or user DB
-func LoadAll(passphraseKey []byte, shelfDB *db.DB, dbFactory *db.Factory, logger *logrus.Logger) ([]*Shelf, error) {
+func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
 	var shelves []*Shelf
 
+	shelfDB := shelf.getDB()
 	shelfKey, err := crypto.Open(passphraseKey, shelfDB.EncryptedKey)
 	if err != nil {
-		logger.Debug("Error opening shelf key - ", err)
+		shelf.Logger.Debug("Error opening shelf key - ", err)
 		code := codes.New(codes.ScopeShelf, codes.ErrorOpenKey)
 		return shelves, code
 	}
@@ -153,7 +159,7 @@ func LoadAll(passphraseKey []byte, shelfDB *db.DB, dbFactory *db.Factory, logger
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("shelves"))
 		if bucket == nil {
-			logger.Debug("shelf bucket does not exist")
+			shelf.Logger.Debug("shelf bucket does not exist")
 			code := codes.New(codes.ScopeShelf, codes.ErrorBucketMissing)
 			return code
 		}
@@ -162,21 +168,21 @@ func LoadAll(passphraseKey []byte, shelfDB *db.DB, dbFactory *db.Factory, logger
 
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
 			newShelf := &Shelf{
-				DBFactory: dbFactory,
-				Logger:    logger,
+				DBFactory: shelf.DBFactory,
+				Logger:    shelf.Logger,
 			}
 
 			// decrypt value
 			decryptedData, err := crypto.Open(shelfKey, value)
 			if err != nil {
-				logger.Debug("Error decrypting shelf data - ", err)
+				shelf.Logger.Debug("Error decrypting shelf data - ", err)
 				code := codes.New(codes.ScopeShelf, codes.ErrorDecrypt)
 				return code
 			}
 
 			err = json.Unmarshal(decryptedData, newShelf)
 			if err != nil {
-				logger.Debug("Error decoding shelf json - ", err)
+				shelf.Logger.Debug("Error decoding shelf json - ", err)
 				code := codes.New(codes.ScopeShelf, codes.ErrorDecode)
 				return code
 			}

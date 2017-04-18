@@ -48,24 +48,6 @@ func NewServer(logger *logrus.Logger) *Server {
 	return server
 }
 
-// RegisterHandlers registers all of the RPC handlers
-func (rpc *Server) RegisterHandlers() {
-	rpc.Handlers["KeyExchange"] = KeyExchange
-
-	rpc.Handlers["MasterDb::open"] = OpenMasterDb
-
-	rpc.Handlers["Account::create"] = CreateAccount
-	rpc.Handlers["Account::unlock"] = UnlockAccount
-	rpc.Handlers["Account::signin"] = SigninAccount
-	rpc.Handlers["Account::signout"] = SignoutAccount
-	rpc.Handlers["Account::lock"] = LockAccount
-
-	rpc.Handlers["AccountState::get"] = GetAccountState
-
-	rpc.Handlers["UIState::load"] = LoadUIState
-	rpc.Handlers["UIState::save"] = SaveUIState
-}
-
 // RequestHeader contains the custom headers from a request
 type RequestHeader struct {
 	Signature []byte
@@ -237,18 +219,6 @@ func (rpc *Server) Start(port string) bool {
 	}
 	rpc.Logger.Debug("RPC listening on port [", port, "]")
 	server.Serve(tlsListener)
-	/*
-		tlsConfig := &tls.Config{
-			Rand:         rand.Reader,
-			Certificates: []tls.Certificate{rpc.Certificate},
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-			},
-		}
-	*/
 	return true
 }
 

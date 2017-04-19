@@ -64,6 +64,7 @@ const (
 	ErrorConvertID
 	ErrorLookup
 	ErrorLoad
+	ErrorDelete
 )
 
 // String converts error code to a string
@@ -193,6 +194,8 @@ func defaultMessageFromCode(code Code) string {
 		msg = "error looking up"
 	case ErrorLoad:
 		msg = "error loading"
+	case ErrorDelete:
+		msg = "error deleting"
 	}
 
 	return msg

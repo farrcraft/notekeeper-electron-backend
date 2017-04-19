@@ -12,10 +12,7 @@ import (
 // OpenMasterDb opens the master database in the requested directory
 func OpenMasterDb(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.EmptyResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header: newResponseHeader(),
 	}
 
 	// need to close any existing db
@@ -27,9 +24,7 @@ func OpenMasterDb(rpc *Server, message []byte) (proto.Message, error) {
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
 		rpc.Logger.Debug("Error unmarshaling open master db request - ", err)
-		response.Header.Code = int32(codes.ErrorDecode)
-		response.Header.Scope = int32(codes.ScopeRPC)
-		response.Header.Status = codes.StatusError
+		setRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
@@ -41,9 +36,7 @@ func OpenMasterDb(rpc *Server, message []byte) (proto.Message, error) {
 	rpc.Logger.Info("Opening master db file [", db.Filename, "]")
 	err = db.Open()
 	if err != nil {
-		response.Header.Code = int32(codes.ErrorDbOpen)
-		response.Header.Scope = int32(codes.ScopeRPC)
-		response.Header.Status = codes.StatusError
+		setRPCError(response.Header, codes.ErrorDbOpen)
 		return response, nil
 	}
 
@@ -51,10 +44,7 @@ func OpenMasterDb(rpc *Server, message []byte) (proto.Message, error) {
 	state := uistate.NewUIState(db, rpc.Logger)
 	err = state.Create()
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Code = int32(code.Code)
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Status = code.Error()
+		setInternalError(response.Header, err)
 	}
 	return response, nil
 }

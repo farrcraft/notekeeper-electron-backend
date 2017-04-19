@@ -30,21 +30,25 @@ message GetShelvesResponse {
 message CreateShelfRequest {
 	RequestHeader header = 1;
 	Title name = 2;
-	string scope = 3;
+	string id = 3; // Either a user id or an account id
+	string scope = 4; // account or user
 }
 // Response is an IdResponse
 
 message SaveShelfRequest {
 	RequestHeader header = 1;
-	string id = 2;
-	Title title = 3;
-	bool locked = 4;
+	string id = 2; // id of the shelf
+	string ownerId = 3; // Either a user id or an account id
+	string scope = 4; // account or user
+	Title name = 5;
+	bool locked = 6;
 }
 // Response is an EmptyResponse
 
 message DeleteShelfRequest {
 	RequestHeader header = 1;
-	string id = 2;
-	string scope = 3;
+	string id = 2; // id of the shelf
+	string ownerId = 3; // Either a user id or an account id
+	string scope = 4; // account or user
 }
 // Response is an EmptyResponse

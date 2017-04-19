@@ -12,10 +12,7 @@ import (
 // GetAccountState returns the accessible state of the account
 func GetAccountState(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.AccountStateResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header:   newResponseHeader(),
 		SignedIn: false,
 		Locked:   true,
 		Exists:   false,
@@ -38,20 +35,15 @@ func GetAccountState(rpc *Server, message []byte) (proto.Message, error) {
 // CreateAccount is the RPC method to create a new account
 func CreateAccount(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.UserIdResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
-		User: &messages.UserId{},
+		Header: newResponseHeader(),
+		User:   &messages.UserId{},
 	}
 
 	request := messages.CreateAccountRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
 		rpc.Logger.Debug("Error unmarshaling create account request - ", err)
-		response.Header.Code = int32(codes.ErrorDecode)
-		response.Header.Scope = int32(codes.ScopeRPC)
-		response.Header.Status = codes.StatusError
+		setRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
@@ -59,10 +51,7 @@ func CreateAccount(rpc *Server, message []byte) (proto.Message, error) {
 	api := api.New(rpc.DBFactory, rpc.Logger)
 	newAccount, err := api.CreateAccount(request.Name, request.Email, request.Passphrase)
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Status = code.Error()
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Code = int32(code.Code)
+		setInternalError(response.Header, err)
 		return response, nil
 	}
 
@@ -80,29 +69,21 @@ func CreateAccount(rpc *Server, message []byte) (proto.Message, error) {
 // UnlockAccount is the RPC method to unlock the current account
 func UnlockAccount(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.EmptyResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header: newResponseHeader(),
 	}
 
 	request := messages.UnlockAccountRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
 		rpc.Logger.Debug("Error unmarshaling unlock account request - ", err)
-		response.Header.Code = int32(codes.ErrorDecode)
-		response.Header.Scope = int32(codes.ScopeRPC)
-		response.Header.Status = codes.StatusError
+		setRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	api := api.New(rpc.DBFactory, rpc.Logger)
 	err = api.UnlockAccount(rpc.Account, request.Passphrase)
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Code = int32(code.Code)
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Status = code.Error()
+		setInternalError(response.Header, err)
 	}
 
 	return response, nil
@@ -111,20 +92,15 @@ func UnlockAccount(rpc *Server, message []byte) (proto.Message, error) {
 // SigninAccount is the RPC method to sign in to an existing account
 func SigninAccount(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.UserIdResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
-		User: &messages.UserId{},
+		Header: newResponseHeader(),
+		User:   &messages.UserId{},
 	}
 
 	request := messages.SigninAccountRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
 		rpc.Logger.Debug("Error unmarshaling signin account request - ", err)
-		response.Header.Code = int32(codes.ErrorDecode)
-		response.Header.Scope = int32(codes.ScopeRPC)
-		response.Header.Status = codes.StatusError
+		setRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
@@ -136,10 +112,7 @@ func SigninAccount(rpc *Server, message []byte) (proto.Message, error) {
 		response.User.UserId = newAccount.ActiveUser.ID.String()
 	}
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Code = int32(code.Code)
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Status = code.Error()
+		setInternalError(response.Header, err)
 	}
 
 	return response, nil
@@ -148,19 +121,13 @@ func SigninAccount(rpc *Server, message []byte) (proto.Message, error) {
 // SignoutAccount is the RPC method to sign out from the active account
 func SignoutAccount(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.EmptyResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header: newResponseHeader(),
 	}
 
 	api := api.New(rpc.DBFactory, rpc.Logger)
 	err := api.SignoutAccount(rpc.Account)
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Code = int32(code.Code)
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Status = code.Error()
+		setInternalError(response.Header, err)
 	}
 	rpc.Account = nil
 
@@ -170,19 +137,13 @@ func SignoutAccount(rpc *Server, message []byte) (proto.Message, error) {
 // LockAccount is the RPC method to lock the active account
 func LockAccount(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.EmptyResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header: newResponseHeader(),
 	}
 
 	api := api.New(rpc.DBFactory, rpc.Logger)
 	err := api.LockAccount(rpc.Account)
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Code = int32(code.Code)
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Status = code.Error()
+		setInternalError(response.Header, err)
 	}
 
 	return response, nil

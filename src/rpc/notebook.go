@@ -1,7 +1,6 @@
 package rpc
 
 import (
-	"../codes"
 	"../notebook"
 	messages "../proto"
 	"github.com/golang/protobuf/proto"
@@ -10,20 +9,14 @@ import (
 // CreateNotebook is the RPC method to create a new notebook
 func CreateNotebook(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.IdResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header: newResponseHeader(),
 	}
 
 	notebook := notebook.NewNotebook(rpc.DBFactory, rpc.Logger)
 
 	err := notebook.Save(rpc.Account.ActiveUser.PassphraseKey)
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Code = int32(code.Code)
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Status = code.Error()
+		setInternalError(response.Header, err)
 		return response, nil
 	}
 

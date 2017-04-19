@@ -12,20 +12,14 @@ import (
 // LoadUIState returns the the UI state as saved by the master DB
 func LoadUIState(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.LoadUIStateResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header: newResponseHeader(),
 	}
 
 	db := rpc.DBFactory.Find(db.TypeMaster, uuid.Nil)
 	state := uistate.NewUIState(db, rpc.Logger)
 	err := state.Load()
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Code = int32(code.Code)
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Status = code.Error()
+		setInternalError(response.Header, err)
 		return response, nil
 	}
 
@@ -47,10 +41,7 @@ func LoadUIState(rpc *Server, message []byte) (proto.Message, error) {
 // SaveUIState saves the current UI state to the master DB
 func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.EmptyResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header: newResponseHeader(),
 	}
 
 	db := rpc.DBFactory.Find(db.TypeMaster, uuid.Nil)
@@ -60,9 +51,7 @@ func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
 		rpc.Logger.Debug("Error unmarshaling save ui state request - ", err)
-		response.Header.Code = int32(codes.ErrorDecode)
-		response.Header.Scope = int32(codes.ScopeRPC)
-		response.Header.Status = codes.StatusError
+		setRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
@@ -80,10 +69,7 @@ func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
 
 	err = state.Save()
 	if err != nil {
-		code := codes.ToInternalError(err)
-		response.Header.Code = int32(code.Code)
-		response.Header.Scope = int32(code.Scope)
-		response.Header.Status = code.Error()
+		setInternalError(response.Header, err)
 		return response, nil
 	}
 

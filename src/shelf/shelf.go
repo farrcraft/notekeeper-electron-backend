@@ -195,3 +195,37 @@ func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
 
 	return shelves, err
 }
+
+// Delete a shelf
+func (shelf *Shelf) Delete() error {
+	shelfDB := shelf.getDB()
+	err := shelfDB.DB.Update(func(tx *bolt.Tx) error {
+		// Assume bucket exists and has keys
+		bucket := tx.Bucket([]byte("shelves"))
+		if bucket == nil {
+			shelf.Logger.Debug("shelf bucket does not exist")
+			code := codes.New(codes.ScopeShelf, codes.ErrorBucketMissing)
+			return code
+		}
+
+		err := bucket.Delete(shelf.ID.Bytes())
+		if err != nil {
+			shelf.Logger.Debug("Error deleting shelf - ", err)
+			code := codes.New(codes.ScopeShelf, codes.ErrorDelete)
+			return code
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if codes.IsInternalError(err) {
+			return err
+		}
+		shelf.Logger.Debug("Error deleting shelf - ", err)
+		code := codes.New(codes.ScopeShelf, codes.ErrorDelete)
+		return code
+	}
+
+	return nil
+}

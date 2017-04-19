@@ -39,19 +39,14 @@ func (rpc *Server) VerifyRequest(message []byte, sig []byte) bool {
 // KeyExchange performs a key exchange between client & server
 func KeyExchange(rpc *Server, message []byte) (proto.Message, error) {
 	response := &messages.KeyExchangeResponse{
-		Header: &messages.ResponseHeader{
-			Code:   int32(codes.ErrorOK),
-			Status: codes.StatusOK,
-		},
+		Header: newResponseHeader(),
 	}
 
 	request := messages.KeyExchangeRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
 		rpc.Logger.Debug("Error unmarshaling message - ", err)
-		response.Header.Code = int32(codes.ErrorDecode)
-		response.Header.Scope = int32(codes.ScopeRPC)
-		response.Header.Status = codes.StatusError
+		setRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 

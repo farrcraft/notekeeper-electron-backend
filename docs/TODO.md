@@ -1,5 +1,7 @@
 # TODO
 
+[] add FSM for account/user state
+[] move rpc handlers out of base rpc module & into their own module
 [] generate code coverage reports
 [] do we need index & map types to match the corresponding db buckets?
 [] create shelf

@@ -8,8 +8,8 @@ import (
 	"../title"
 )
 
-// titleToMessage converts a title domain instance into a protobuf instance
-func titleToMessage(t *title.Title) *messages.Title {
+// TitleToMessage converts a title domain instance into a protobuf instance
+func TitleToMessage(t *title.Title) *messages.Title {
 	m := &messages.Title{
 		Text:       t.Title,
 		Bold:       t.Formatting.Bold,
@@ -22,13 +22,14 @@ func titleToMessage(t *title.Title) *messages.Title {
 	return m
 }
 
-// timeToMessage converts a native time to a consistent string representation
-func timeToMessage(t time.Time) string {
+// TimeToMessage converts a native time to a consistent string representation
+func TimeToMessage(t time.Time) string {
 	s := t.Format(time.RFC3339)
 	return s
 }
 
-func messageToTitle(msg *messages.Title) *title.Title {
+// MessageToTitle converts a protobuf title message to a native title
+func MessageToTitle(msg *messages.Title) *title.Title {
 	t := title.New(msg.Text)
 	t.Formatting.Bold = msg.Bold
 	t.Formatting.Italics = msg.Italics
@@ -39,20 +40,23 @@ func messageToTitle(msg *messages.Title) *title.Title {
 	return t
 }
 
-func setInternalError(header *messages.ResponseHeader, err error) {
+// SetInternalError sets an error in a response header
+func SetInternalError(header *messages.ResponseHeader, err error) {
 	code := codes.ToInternalError(err)
 	header.Code = int32(code.Code)
 	header.Scope = int32(code.Scope)
 	header.Status = code.Error()
 }
 
-func setRPCError(header *messages.ResponseHeader, c codes.Code) {
+// SetRPCError sets an rpc-specific error in a response header
+func SetRPCError(header *messages.ResponseHeader, c codes.Code) {
 	header.Code = int32(c)
 	header.Scope = int32(codes.ScopeRPC)
 	header.Status = codes.StatusError
 }
 
-func newResponseHeader() *messages.ResponseHeader {
+// NewResponseHeader creates a new response header
+func NewResponseHeader() *messages.ResponseHeader {
 	header := &messages.ResponseHeader{
 		Code:   int32(codes.ErrorOK),
 		Status: codes.StatusOK,

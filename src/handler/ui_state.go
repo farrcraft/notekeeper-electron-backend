@@ -1,25 +1,26 @@
-package rpc
+package handler
 
 import (
 	"../codes"
 	"../db"
 	messages "../proto"
+	"../rpc"
 	"../uistate"
 	"github.com/golang/protobuf/proto"
 	uuid "github.com/satori/go.uuid"
 )
 
 // LoadUIState returns the the UI state as saved by the master DB
-func LoadUIState(rpc *Server, message []byte) (proto.Message, error) {
+func LoadUIState(server *rpc.Server, message []byte) (proto.Message, error) {
 	response := &messages.LoadUIStateResponse{
-		Header: newResponseHeader(),
+		Header: rpc.NewResponseHeader(),
 	}
 
-	db := rpc.DBFactory.Find(db.TypeMaster, uuid.Nil)
-	state := uistate.NewUIState(db, rpc.Logger)
+	db := server.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	state := uistate.NewUIState(db, server.Logger)
 	err := state.Load()
 	if err != nil {
-		setInternalError(response.Header, err)
+		rpc.SetInternalError(response.Header, err)
 		return response, nil
 	}
 
@@ -39,19 +40,19 @@ func LoadUIState(rpc *Server, message []byte) (proto.Message, error) {
 }
 
 // SaveUIState saves the current UI state to the master DB
-func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
+func SaveUIState(server *rpc.Server, message []byte) (proto.Message, error) {
 	response := &messages.EmptyResponse{
-		Header: newResponseHeader(),
+		Header: rpc.NewResponseHeader(),
 	}
 
-	db := rpc.DBFactory.Find(db.TypeMaster, uuid.Nil)
-	state := uistate.NewUIState(db, rpc.Logger)
+	db := server.DBFactory.Find(db.TypeMaster, uuid.Nil)
+	state := uistate.NewUIState(db, server.Logger)
 
 	request := messages.SaveUIStateRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		rpc.Logger.Debug("Error unmarshaling save ui state request - ", err)
-		setRPCError(response.Header, codes.ErrorDecode)
+		server.Logger.Debug("Error unmarshaling save ui state request - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
@@ -69,7 +70,7 @@ func SaveUIState(rpc *Server, message []byte) (proto.Message, error) {
 
 	err = state.Save()
 	if err != nil {
-		setInternalError(response.Header, err)
+		rpc.SetInternalError(response.Header, err)
 		return response, nil
 	}
 

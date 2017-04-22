@@ -93,11 +93,13 @@ func (api *API) SigninAccount(name string, email string, passphrase string) (*ac
 
 	// authenticate the user
 	user := user.New(api.DBFactory, api.Logger, newAccount.ID, email)
+	// resolve the user id from the user map in the account db
 	err = user.Lookup()
 	if err != nil {
 		api.DBFactory.CloseAccountDBs()
 		return nil, err
 	}
+	// load the user from the user db
 	err = user.Load(passphrase)
 	if err != nil {
 		api.DBFactory.CloseAccountDBs()

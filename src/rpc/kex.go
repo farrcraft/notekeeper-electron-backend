@@ -1,12 +1,8 @@
 package rpc
 
 import (
-	"github.com/golang/protobuf/proto"
-
 	"encoding/base64"
 
-	"../codes"
-	messages "../proto"
 	"github.com/agl/ed25519"
 )
 
@@ -34,45 +30,4 @@ func (rpc *Server) VerifyRequest(message []byte, sig []byte) bool {
 		return false
 	}
 	return true
-}
-
-// KeyExchange performs a key exchange between client & server
-func KeyExchange(rpc *Server, message []byte) (proto.Message, error) {
-	response := &messages.KeyExchangeResponse{
-		Header: newResponseHeader(),
-	}
-
-	request := messages.KeyExchangeRequest{}
-	err := proto.Unmarshal(message, &request)
-	if err != nil {
-		rpc.Logger.Debug("Error unmarshaling message - ", err)
-		setRPCError(response.Header, codes.ErrorDecode)
-		return response, nil
-	}
-
-	// [FIXME] - assert request key length matches our target array size
-
-	// client sent its own public key so we can verify requests it sends us later
-	// this is a bit weak sauce wrt security since signature & verification key
-	// are contained in the same message body, but it does give us assurance
-	// that we at least have a functional verification key.
-	rpc.VerifyPublicKey = new([ed25519.PublicKeySize]byte)
-	copy(rpc.VerifyPublicKey[:], request.PublicKey)
-
-	// send our own public key so client can verify our responses
-	response.PublicKey = rpc.SignPublicKey[:]
-
-	// reset sequence counters
-	rpc.SendCounter = 0
-	rpc.RecvCounter = 1
-
-	return response, nil
-	/*
-		ok := rpc.VerifyRequest(message)
-		if !ok {
-			response.Code = int(codes.ErrorVerifyRequestSignature)
-			response.Status = codes.StatusError
-			return response, nil
-		}
-	*/
 }

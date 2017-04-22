@@ -85,7 +85,7 @@ func (shelf *Shelf) Save(passphraseKey []byte) error {
 	db := shelf.getDB()
 	err := db.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
-		bucket, err := tx.CreateBucketIfNotExists([]byte("shelves"))
+		bucket, err := tx.CreateBucketIfNotExists([]byte("shelf_index"))
 		if err != nil {
 			shelf.Logger.Debug("Error creating shelf bucket - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorCreateBucket)
@@ -138,10 +138,12 @@ func (shelf *Shelf) Save(passphraseKey []byte) error {
 	return nil
 }
 
+/*
 // Load a shelf from the DB
 func (shelf *Shelf) Load() error {
 	return nil
 }
+*/
 
 // LoadAll of the shelves from an account or user DB
 func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
@@ -157,7 +159,7 @@ func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
 
 	err = shelfDB.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
-		bucket := tx.Bucket([]byte("shelves"))
+		bucket := tx.Bucket([]byte("shelf_index"))
 		if bucket == nil {
 			shelf.Logger.Debug("shelf bucket does not exist")
 			code := codes.New(codes.ScopeShelf, codes.ErrorBucketMissing)
@@ -201,7 +203,7 @@ func (shelf *Shelf) Delete() error {
 	shelfDB := shelf.getDB()
 	err := shelfDB.DB.Update(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
-		bucket := tx.Bucket([]byte("shelves"))
+		bucket := tx.Bucket([]byte("shelf_index"))
 		if bucket == nil {
 			shelf.Logger.Debug("shelf bucket does not exist")
 			code := codes.New(codes.ScopeShelf, codes.ErrorBucketMissing)

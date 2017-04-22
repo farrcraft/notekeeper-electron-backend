@@ -26,6 +26,7 @@ type Handler func(*Server, []byte) (proto.Message, error)
 type Server struct {
 	Logger          *logrus.Logger
 	DBFactory       *db.Factory
+	UserState       UserState
 	Account         *account.Account
 	Certificate     tls.Certificate
 	Handlers        map[string]Handler
@@ -43,8 +44,8 @@ func NewServer(logger *logrus.Logger) *Server {
 		Handlers:    make(map[string]Handler, 0),
 		RecvCounter: 0,
 		SendCounter: 0,
+		UserState:   UserStateSignedOut,
 	}
-	server.RegisterHandlers()
 	return server
 }
 

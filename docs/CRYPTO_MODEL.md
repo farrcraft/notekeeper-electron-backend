@@ -48,6 +48,55 @@ Given:
 * user email
 * use passphrase
 
-Look up the account UUID in the master DB account_map bucket
+Database Files:
 
+* notekeeper.db
+    - contains account index
+* <account UUID>.db
+    - contains account
+    - contains user index
+    - contains shelf index
+* <user UUID>.db
+    - contains user
+    - contains shelf index
+* <user owned shelf UUID>.db
+    - contains collection index
+    - contains notebooks
+    - contains notes
+* <account owned shelf UUID>.db
+    - contains collection index
+    - contains notebooks
+    - contains notes
+* <user owned collection UUID>.db
+    - contains notebooks
+    - contains notes
+* <account owned collection UUID>.db
+    - contains notebooks
+    - contains notes
+
+(Signin Flow)
+Look up the account name in the master DB account_map bucket to find the <account UUID>
+Open <account UUID>.db
+Look up the user email in the <account UUID>.db user_map bucket to find the <user UUID>
+Open <user UUID>.db
+Load user from <user UUID>.db; decrypt using passphrase key
+Set <user UUID>.db EncryptedKey from user UserKey
+Load account from <account UUID>.db
+Set <account UUID>.db Encrypted key from user AccountKey
+-----
+Account & User are loaded in memory
+Account & User db are open & encrypted keys are in memory
+
+// Need to decide what persistent memory model looks like
+// How much state do we persist between RPC calls?
+// Is it more of a RESTful model?
+// Or is there something of an active session?
+// Or is there something of an FSM that transitions between states?
+For everything below the user db we cache open db's in memory and provide a way
+to look up the db key index bucket, but don't actually store any of the content
+in memory. We just load it and return it in an rpc response and forget about it.
+That way we're not duplicating a bunch of stuff in memory in frontend & backend
+and don't have to worry about supporting future workflows.
+
+(Retrieve account shelf list)
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"./handler"
 	"./rpc"
 
 	"github.com/Sirupsen/logrus"
@@ -79,6 +80,7 @@ func (backend *Backend) Start(svc service.Service) error {
 // Run is called when the application is started
 func (backend *Backend) Run() {
 	backend.RPC = rpc.NewServer(backend.Logger)
+	backend.RPC.RegisterHandlers(handler.Handlers())
 	ok := backend.RPC.Start(BackendPort)
 	if !ok {
 		os.Exit(1)

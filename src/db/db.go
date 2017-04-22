@@ -17,8 +17,8 @@ const (
 	TypeMaster Type = iota
 	TypeAccount
 	TypeUser
-	TypeCollection
 	TypeShelf
+	TypeCollection
 )
 
 // DB is a database instance

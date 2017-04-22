@@ -1,50 +1,51 @@
-package rpc
+package handler
 
 import (
 	"../codes"
 	"../db"
 	messages "../proto"
+	"../rpc"
 	"../uistate"
 	"github.com/golang/protobuf/proto"
 	uuid "github.com/satori/go.uuid"
 )
 
 // OpenMasterDb opens the master database in the requested directory
-func OpenMasterDb(rpc *Server, message []byte) (proto.Message, error) {
+func OpenMasterDb(server *rpc.Server, message []byte) (proto.Message, error) {
 	response := &messages.EmptyResponse{
-		Header: newResponseHeader(),
+		Header: rpc.NewResponseHeader(),
 	}
 
 	// need to close any existing db
-	if rpc.DBFactory != nil {
-		rpc.DBFactory.CloseAll()
+	if server.DBFactory != nil {
+		server.DBFactory.CloseAll()
 	}
 
 	request := messages.OpenMasterDbRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		rpc.Logger.Debug("Error unmarshaling open master db request - ", err)
-		setRPCError(response.Header, codes.ErrorDecode)
+		server.Logger.Debug("Error unmarshaling open master db request - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
-	rpc.DBFactory = db.NewFactory(request.Path, rpc.Logger)
+	server.DBFactory = db.NewFactory(request.Path, server.Logger)
 
 	// This is the master index db
 	// There are additional databases where actual notebook data is stored
-	db := rpc.DBFactory.DB(db.TypeMaster, uuid.Nil)
-	rpc.Logger.Info("Opening master db file [", db.Filename, "]")
+	db := server.DBFactory.DB(db.TypeMaster, uuid.Nil)
+	server.Logger.Info("Opening master db file [", db.Filename, "]")
 	err = db.Open()
 	if err != nil {
-		setRPCError(response.Header, codes.ErrorDbOpen)
+		rpc.SetRPCError(response.Header, codes.ErrorDbOpen)
 		return response, nil
 	}
 
 	// make sure DB has a default UIState saved
-	state := uistate.NewUIState(db, rpc.Logger)
+	state := uistate.NewUIState(db, server.Logger)
 	err = state.Create()
 	if err != nil {
-		setInternalError(response.Header, err)
+		rpc.SetInternalError(response.Header, err)
 	}
 	return response, nil
 }

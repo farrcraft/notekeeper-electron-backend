@@ -46,10 +46,45 @@ func New(title *title.Title, dbFactory *db.Factory, logger *logrus.Logger) *Coll
 	return collection
 }
 
+func (collection *Collection) getDB(passphraseKey []byte) (*db.DB, error) {
+	// even though the *content* of a collection gets its own db, the collection
+	// itself is stored in the parent db
+	var dbType db.Type
+	var ownerID uuid.UUID
+	if collection.UserID != uuid.Nil {
+		dbType = db.TypeUser
+		ownerID = collection.UserID
+	} else {
+		dbType = db.TypeAccount
+		ownerID = collection.AccountID
+	}
+
+	collectionDB := collection.DBFactory.Find(db.TypeShelf, collection.ShelfID)
+	if collectionDB == nil {
+		key := db.Key{
+			ID:   collection.ID,
+			Type: db.TypeCollection,
+		}
+		parentKey := db.Key{
+			ID:   collection.ShelfID,
+			Type: dbType,
+		}
+		var err error
+		collectionDB, err = collection.DBFactory.Open(key, parentKey, ownerID, passphraseKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return collectionDB, nil
+}
+
 // Save a collection
 func (collection *Collection) Save(passphraseKey []byte) error {
-	shelfDB := collection.DBFactory.Find(db.TypeShelf, collection.ShelfID)
-	err := shelfDB.DB.Update(func(tx *bolt.Tx) error {
+	shelfDB, err := collection.getDB(passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = shelfDB.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("collection_index"))
 		if err != nil {
@@ -107,10 +142,93 @@ func (collection *Collection) Save(passphraseKey []byte) error {
 // LoadAll collections
 func (collection *Collection) LoadAll(passphraseKey []byte) ([]*Collection, error) {
 	var collections []*Collection
+
+	shelfDB, err := collection.getDB(passphraseKey)
+	if err != nil {
+		return collections, err
+	}
+
+	shelfKey, err := crypto.Open(passphraseKey, shelfDB.EncryptedKey)
+	if err != nil {
+		collection.Logger.Debug("Error opening shelf key - ", err)
+		code := codes.New(codes.ScopeCollection, codes.ErrorOpenKey)
+		return collections, code
+	}
+
+	err = shelfDB.DB.View(func(tx *bolt.Tx) error {
+		// Assume bucket exists and has keys
+		bucket := tx.Bucket([]byte("collection_index"))
+		if bucket == nil {
+			collection.Logger.Debug("collection index bucket does not exist")
+			code := codes.New(codes.ScopeCollection, codes.ErrorBucketMissing)
+			return code
+		}
+
+		cursor := bucket.Cursor()
+
+		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
+			newCollection := &Collection{
+				DBFactory: collection.DBFactory,
+				Logger:    collection.Logger,
+			}
+
+			// decrypt value
+			decryptedData, err := crypto.Open(shelfKey, value)
+			if err != nil {
+				collection.Logger.Debug("Error decrypting shelf data - ", err)
+				code := codes.New(codes.ScopeCollection, codes.ErrorDecrypt)
+				return code
+			}
+
+			err = json.Unmarshal(decryptedData, newCollection)
+			if err != nil {
+				collection.Logger.Debug("Error decoding shelf json - ", err)
+				code := codes.New(codes.ScopeCollection, codes.ErrorDecode)
+				return code
+			}
+
+			collections = append(collections, newCollection)
+		}
+
+		return nil
+	})
+
 	return collections, nil
 }
 
 // Delete a collection
-func (collection *Collection) Delete() error {
+func (collection *Collection) Delete(passphraseKey []byte) error {
+	shelfDB, err := collection.getDB(passphraseKey)
+	if err != nil {
+		return err
+	}
+
+	err = shelfDB.DB.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte("collection_index"))
+		if bucket == nil {
+			collection.Logger.Debug("collection index bucket does not exist")
+			code := codes.New(codes.ScopeCollection, codes.ErrorBucketMissing)
+			return code
+		}
+
+		err := bucket.Delete(collection.ID.Bytes())
+		if err != nil {
+			collection.Logger.Debug("Error deleting collection - ", err)
+			code := codes.New(codes.ScopeCollection, codes.ErrorDelete)
+			return code
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if codes.IsInternalError(err) {
+			return err
+		}
+		collection.Logger.Debug("Error deleting collection - ", err)
+		code := codes.New(codes.ScopeCollection, codes.ErrorDelete)
+		return code
+	}
+
 	return nil
 }

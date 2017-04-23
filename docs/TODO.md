@@ -27,6 +27,7 @@
 [] rpc - create notebook
 [] rpc - get notebooks
 [] rpc - get notebook notes
+[] delete db file when deleting objects
 [] Document how error handling & logging will work (in general & in rpc responses)
 [] Update general error handling & logging
 [] Update rpc error handling & rpc responses

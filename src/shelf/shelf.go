@@ -64,7 +64,7 @@ func New(title *title.Title, scope Scope, dbFactory *db.Factory, logger *logrus.
 	return shelf
 }
 
-func (shelf *Shelf) getDB(passphraseKey []byte) *db.DB {
+func (shelf *Shelf) getDB(passphraseKey []byte) (*db.DB, error) {
 	// even though the *content* of a shelf gets its own db, the shelf itself
 	// is stored in the parent db
 	var dbType db.Type
@@ -86,15 +86,22 @@ func (shelf *Shelf) getDB(passphraseKey []byte) *db.DB {
 			ID:   id,
 			Type: dbType,
 		}
-		shelf.DBFactory.Open(key, parentKey, id, passphraseKey)
+		var err error
+		shelfDB, err = shelf.DBFactory.Open(key, parentKey, id, passphraseKey)
+		if err != nil {
+			return shelfDB, err
+		}
 	}
-	return shelfDB
+	return shelfDB, nil
 }
 
 // Save a shelf to the DB
 func (shelf *Shelf) Save(passphraseKey []byte) error {
-	db := shelf.getDB(passphraseKey)
-	err := db.DB.Update(func(tx *bolt.Tx) error {
+	db, err := shelf.getDB(passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = db.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("shelf_index"))
 		if err != nil {
@@ -160,7 +167,11 @@ func (shelf *Shelf) Load() error {
 func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
 	var shelves []*Shelf
 
-	shelfDB := shelf.getDB(passphraseKey)
+	shelfDB, err := shelf.getDB(passphraseKey)
+	if err != nil {
+		return shelves, err
+	}
+
 	shelfKey, err := crypto.Open(passphraseKey, shelfDB.EncryptedKey)
 	if err != nil {
 		shelf.Logger.Debug("Error opening shelf key - ", err)
@@ -211,9 +222,11 @@ func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
 
 // Delete a shelf
 func (shelf *Shelf) Delete(passphraseKey []byte) error {
-	shelfDB := shelf.getDB(passphraseKey)
-	err := shelfDB.DB.Update(func(tx *bolt.Tx) error {
-		// Assume bucket exists and has keys
+	shelfDB, err := shelf.getDB(passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = shelfDB.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("shelf_index"))
 		if bucket == nil {
 			shelf.Logger.Debug("shelf bucket does not exist")

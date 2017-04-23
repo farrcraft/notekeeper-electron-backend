@@ -41,6 +41,11 @@ func GetShelves(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
+	if !server.IsSignedIn() {
+		rpc.SetRPCError(response.Header, codes.ErrorUnauthorized)
+		return response, nil
+	}
+
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
 		server.Logger.Debug("Invalid id - ", err)
@@ -91,6 +96,11 @@ func CreateShelf(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
+	if !server.IsSignedIn() {
+		rpc.SetRPCError(response.Header, codes.ErrorUnauthorized)
+		return response, nil
+	}
+
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
 		server.Logger.Debug("Invalid id - ", err)
@@ -126,6 +136,11 @@ func SaveShelf(server *rpc.Server, message []byte) (proto.Message, error) {
 	if err != nil {
 		server.Logger.Debug("Error unmarshaling save shelf request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
+		return response, nil
+	}
+
+	if !server.IsSignedIn() {
+		rpc.SetRPCError(response.Header, codes.ErrorUnauthorized)
 		return response, nil
 	}
 
@@ -167,6 +182,11 @@ func DeleteShelf(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
+	if !server.IsSignedIn() {
+		rpc.SetRPCError(response.Header, codes.ErrorUnauthorized)
+		return response, nil
+	}
+
 	id, err := uuid.FromString(request.OwnerId)
 	if err != nil {
 		server.Logger.Debug("Invalid id - ", err)
@@ -181,7 +201,7 @@ func DeleteShelf(server *rpc.Server, message []byte) (proto.Message, error) {
 
 	s := shelf.New(nil, scope, server.DBFactory, server.Logger)
 	s.ID = id
-	err = s.Delete()
+	err = s.Delete(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 	}

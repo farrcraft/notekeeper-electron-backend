@@ -1,10 +1,15 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 
+	"../codes"
+	"../crypto"
+
 	"github.com/Sirupsen/logrus"
+	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -18,6 +23,11 @@ type Factory struct {
 	DataPath string
 	DBs      []*DB
 	Logger   *logrus.Logger
+}
+
+// IndexEntry is the stub of an index record used for loading the encrypted key
+type IndexEntry struct {
+	EncryptedKey []byte `json:"encryption_key"`
 }
 
 // NewFactory creates a new database factory
@@ -87,4 +97,96 @@ func (factory *Factory) CloseAccountDBs() {
 		}
 	}
 	factory.DBs = master
+}
+
+// Open a DB file & load its encrypted key
+func (factory *Factory) Open(key Key, parentKey Key, ownerID uuid.UUID, passphraseKey []byte) (*DB, error) {
+	var bucketName string
+	var parentDB *DB
+
+	if parentKey.Type != TypeAccount && parentKey.Type != TypeUser {
+		code := codes.New(codes.ScopeDB, codes.ErrorInvalidType)
+		return nil, code
+	}
+
+	if key.Type == TypeShelf {
+		bucketName = "shelf_index"
+		// parent should always be a findable account or user db
+		parentDB = factory.Find(parentKey.Type, parentKey.ID)
+	} else if key.Type == TypeCollection {
+		bucketName = "collection_index"
+		parentDB = factory.Find(TypeShelf, parentKey.ID)
+		if parentDB == nil {
+			parentDB = factory.DB(TypeShelf, parentKey.ID)
+			// had to open parent fresh which means we need to find the parent's encrypted key too
+			// we need to load the shelf record from either the user or account db
+			ownerDB := factory.Find(parentKey.Type, ownerID)
+			encryptedKey, err := factory.LoadEncryptedKey(parentKey.ID, passphraseKey, []byte("shelf_index"), ownerDB)
+			if err != nil {
+				return nil, err
+			}
+			parentDB.EncryptedKey = encryptedKey
+		}
+	} else {
+		// unsupported type
+		code := codes.New(codes.ScopeDB, codes.ErrorInvalidType)
+		return nil, code
+	}
+
+	encryptedKey, err := factory.LoadEncryptedKey(key.ID, passphraseKey, []byte(bucketName), parentDB)
+	if err != nil {
+		return nil, err
+	}
+
+	db := factory.DB(key.Type, key.ID)
+	db.EncryptedKey = encryptedKey
+	return db, nil
+}
+
+// LoadEncryptedKey loads the encrypted key from an index bucket
+func (factory *Factory) LoadEncryptedKey(id uuid.UUID, passphraseKey []byte, bucketName []byte, db *DB) ([]byte, error) {
+	var encryptedKey []byte
+	err := db.DB.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(bucketName)
+		if bucket == nil {
+			factory.Logger.Debug(bucketName, " bucket does not exist")
+			code := codes.New(codes.ScopeDB, codes.ErrorBucketMissing)
+			return code
+		}
+
+		cursor := bucket.Cursor()
+		key, value := cursor.Seek(id.Bytes())
+		if key == nil {
+			factory.Logger.Debug("Error loading record from index [", bucketName, "]")
+			code := codes.New(codes.ScopeDB, codes.ErrorLoad)
+			return code
+		}
+
+		encryptionKey, err := crypto.Open(passphraseKey, db.EncryptedKey)
+		if err != nil {
+			factory.Logger.Debug("Error opening key - ", err)
+			code := codes.New(codes.ScopeDB, codes.ErrorOpenKey)
+			return code
+		}
+
+		// decrypt value
+		decryptedData, err := crypto.Open(encryptionKey, value)
+		if err != nil {
+			factory.Logger.Debug("Error decrypting data - ", err)
+			code := codes.New(codes.ScopeDB, codes.ErrorDecrypt)
+			return code
+		}
+
+		entry := &IndexEntry{}
+		err = json.Unmarshal(decryptedData, entry)
+		if err != nil {
+			factory.Logger.Debug("Error decoding json - ", err)
+			code := codes.New(codes.ScopeDB, codes.ErrorDecode)
+			return code
+		}
+
+		encryptedKey = entry.EncryptedKey
+		return nil
+	})
+	return encryptedKey, err
 }

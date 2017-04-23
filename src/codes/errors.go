@@ -49,6 +49,8 @@ const (
 	ErrorUnknown
 	ErrorInternalEscape // This means a non-internal error tried to escape the RPC boundary
 
+	ErrorUnauthorized
+	ErrorInvalidType
 	ErrorMissingDB
 	ErrorDbOpen
 	ErrorCreateBucket
@@ -164,6 +166,10 @@ func defaultMessageFromCode(code Code) string {
 		// default value
 	case ErrorInternalEscape:
 		msg = "internal error escape"
+	case ErrorUnauthorized:
+		msg = "error unauthorized"
+	case ErrorInvalidType:
+		msg = "error invalid type"
 	case ErrorMissingDB:
 		msg = "error missing db"
 	case ErrorDbOpen:

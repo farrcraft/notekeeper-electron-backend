@@ -31,6 +31,30 @@ type DB struct {
 	Logger       *logrus.Logger
 }
 
+// Key to a DB
+type Key struct {
+	ID   uuid.UUID
+	Type Type
+}
+
+// StrToType converts a string representation of a type to its native type value
+func StrToType(typeName string) Type {
+	var t Type
+	switch typeName {
+	case "master":
+		t = TypeMaster
+	case "account":
+		t = TypeAccount
+	case "user":
+		t = TypeUser
+	case "shelf":
+		t = TypeShelf
+	case "collection":
+		t = TypeCollection
+	}
+	return t
+}
+
 // Open a database
 func (db *DB) Open() error {
 	var err error

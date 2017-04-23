@@ -61,8 +61,7 @@ func (account *Account) IsLocked() bool {
 // OpenAccountDb opens the database file for a account
 // The file is created if it doesn't already exist
 func (account *Account) OpenAccountDb() error {
-	db := account.DBFactory.DB(db.TypeAccount, account.ID)
-	err := db.Open()
+	_, err := account.DBFactory.DB(db.TypeAccount, account.ID)
 	if err != nil {
 		return err
 	}

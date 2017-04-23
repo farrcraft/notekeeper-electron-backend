@@ -1,3 +1,4 @@
 *.log
 src/src*
 *.db
+coverage/

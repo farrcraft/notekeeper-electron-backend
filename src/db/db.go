@@ -55,12 +55,20 @@ func StrToType(typeName string) Type {
 	return t
 }
 
+// IsValidType tests validity of a type value
+func IsValidType(t Type) bool {
+	if t != TypeMaster && t != TypeAccount && t != TypeUser && t != TypeShelf && t != TypeCollection {
+		return false
+	}
+	return true
+}
+
 // Open a database
 func (db *DB) Open() error {
 	var err error
 	db.DB, err = bolt.Open(db.Filename, 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		db.Logger.Debug("Error opening DB type [", db.Type, "] file [", db.Filename, "]")
+		db.Logger.Debug("Error opening DB type [", db.Type, "] file [", db.Filename, "] - ", err)
 		var scope codes.Scope
 		switch db.Type {
 		case TypeMaster:

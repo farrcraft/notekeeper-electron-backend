@@ -42,10 +42,15 @@ func NewFactory(path string, logger *logrus.Logger) *Factory {
 }
 
 // DB finds an existing runtime DB object or creates a new one
-func (factory *Factory) DB(dbType Type, id uuid.UUID) *DB {
+func (factory *Factory) DB(dbType Type, id uuid.UUID) (*DB, error) {
 	db := factory.Find(dbType, id)
 	if db != nil {
-		return db
+		return db, nil
+	}
+
+	if !IsValidType(dbType) {
+		code := codes.New(codes.ScopeDB, codes.ErrorInvalidType)
+		return nil, code
 	}
 
 	db = &DB{
@@ -64,9 +69,14 @@ func (factory *Factory) DB(dbType Type, id uuid.UUID) *DB {
 		db.Filename = filepath.Join(factory.DataPath, dbFile)
 	}
 
+	err := db.Open()
+	if err != nil {
+		return nil, err
+	}
+
 	factory.DBs = append(factory.DBs, db)
 
-	return db
+	return db, nil
 }
 
 // Find an existing DB (runtime only, not on disk)
@@ -117,7 +127,11 @@ func (factory *Factory) Open(key Key, parentKey Key, ownerID uuid.UUID, passphra
 		bucketName = "collection_index"
 		parentDB = factory.Find(TypeShelf, parentKey.ID)
 		if parentDB == nil {
-			parentDB = factory.DB(TypeShelf, parentKey.ID)
+			var err error
+			parentDB, err = factory.DB(TypeShelf, parentKey.ID)
+			if err != nil {
+				return nil, err
+			}
 			// had to open parent fresh which means we need to find the parent's encrypted key too
 			// we need to load the shelf record from either the user or account db
 			ownerDB := factory.Find(parentKey.Type, ownerID)
@@ -138,7 +152,10 @@ func (factory *Factory) Open(key Key, parentKey Key, ownerID uuid.UUID, passphra
 		return nil, err
 	}
 
-	db := factory.DB(key.Type, key.ID)
+	db, err := factory.DB(key.Type, key.ID)
+	if err != nil {
+		return nil, err
+	}
 	db.EncryptedKey = encryptedKey
 	return db, nil
 }

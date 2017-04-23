@@ -33,9 +33,8 @@ func OpenMasterDb(server *rpc.Server, message []byte) (proto.Message, error) {
 
 	// This is the master index db
 	// There are additional databases where actual notebook data is stored
-	db := server.DBFactory.DB(db.TypeMaster, uuid.Nil)
+	db, err := server.DBFactory.DB(db.TypeMaster, uuid.Nil)
 	server.Logger.Info("Opening master db file [", db.Filename, "]")
-	err = db.Open()
 	if err != nil {
 		rpc.SetRPCError(response.Header, codes.ErrorDbOpen)
 		return response, nil

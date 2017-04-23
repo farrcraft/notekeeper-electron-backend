@@ -158,8 +158,11 @@ func (user *User) Load(passphrase string) error {
 
 // Save saves the user to the database
 func (user *User) Save() error {
-	userDB := user.DBFactory.DB(db.TypeUser, user.ID)
-	err := userDB.DB.Update(func(tx *bolt.Tx) error {
+	userDB, err := user.DBFactory.DB(db.TypeUser, user.ID)
+	if err != nil {
+		return err
+	}
+	err = userDB.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("user"))
 		if err != nil {
 			user.Logger.Debug("Error creating users bucket - ", err)

@@ -21,9 +21,7 @@ func TestAccount(t *testing.T) {
 		t.Error("Expected account name to be test_account")
 	}
 
-	masterDB := factory.DB(db.TypeMaster, uuid.Nil)
-	masterDB.Filename = "master_test.db"
-	err := masterDB.Open()
+	masterDB, err := factory.DB(db.TypeMaster, uuid.Nil)
 	if err != nil {
 		t.Error("Failed to create master db - ", err)
 	}

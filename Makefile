@@ -5,6 +5,13 @@ build:
 test:
 	cd src; go test ./... -v -race
 
+coverage-dep:
+	go get -u github.com/wadey/gocovmerge
+
+# https://github.com/golang/go/issues/6909
+coverage:
+	shell ./coverage.sh
+
 # create a release build
 # The -s ldflag strips symbol table & debug info
 release:
@@ -33,3 +40,5 @@ proto-js:
 	cd ../notekeeper-electron-frontend/app/proto; ../../../protoc -I . rpc.proto --js_out=import_style=commonjs,binary:./
 
 proto-all: proto proto-copy proto-js
+
+.PHONY: coverage

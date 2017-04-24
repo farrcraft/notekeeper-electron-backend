@@ -7,3 +7,4 @@
 * service - Custom/Permissive MIT or BSD derived?  - https://github.com/kardianos/service
 * uuid - MIT - https://github.com/satori/go.uuid
 * cli - MIT - https://github.com/urfave/cli
+* gocovmerge - BST - https://github.com/wadey/gocovmerge

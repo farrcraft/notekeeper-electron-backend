@@ -32,12 +32,12 @@ func Handlers() map[string]rpc.Handler {
 	handlers["Collection::save"] = SaveCollection
 	handlers["Collection::delete"] = DeleteCollection
 
-	/*
-		handlers["Tag::loadAll"] = GetTags
-		handlers["Tag::create"] = CreateTag
-		handlers["Tag::save"] = SaveTag
-		handlers["Tag::delete"] = DeleteTag
+	handlers["Tag::loadAll"] = GetTags
+	handlers["Tag::create"] = CreateTag
+	handlers["Tag::save"] = SaveTag
+	handlers["Tag::delete"] = DeleteTag
 
+	/*
 		handlers["Notebook::loadAll"] = GetNotebooks
 		handlers["Notebook::create"] = CreateNotebook
 		handlers["Notebook::save"] = SaveNotebook

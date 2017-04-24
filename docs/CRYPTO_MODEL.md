@@ -56,9 +56,11 @@ Database Files:
     - contains account
     - contains user index
     - contains shelf index
+    - contains tag index
 * <user UUID>.db
     - contains user
     - contains shelf index
+    - contains tag index
 * <user owned shelf UUID>.db
     - contains collection index
     - contains notebooks

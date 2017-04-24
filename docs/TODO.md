@@ -1,5 +1,8 @@
 # TODO
 
+[] add tag handlers
+[] add notebook handlers
+[] add note handlers
 [] add FSM for account/user state
 [] do we need index & map types to match the corresponding db buckets?
 [] create shelf

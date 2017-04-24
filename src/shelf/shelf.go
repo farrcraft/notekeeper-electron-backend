@@ -26,15 +26,15 @@ const (
 	ScopeAccount
 )
 
-// Shelf contains a collection of notebooks
+// Shelf contains notebooks & collections of notebooks
 type Shelf struct {
 	ID           uuid.UUID                `json:"id"`             // ID is the unique identifier for the shelf
 	Title        *title.Title             `json:"title"`          // Title is the title of the shelf
 	Scope        Scope                    `json:"scope"`          // Type is one of the Type* identifier values
 	Default      bool                     `json:"default"`        // Default indicates whether this is the default shelf
 	Trash        bool                     `json:"trash"`          // Trash indicates whether this is the trash shelf
-	AccountID    uuid.UUID                `json:"account_id"`     // AccountID is the ID of the account owning the shelf
-	UserID       uuid.UUID                `json:"user_id"`        // UserID is the ID of the user owning the shelf
+	AccountID    uuid.UUID                `json:"-"`              // AccountID is the ID of the account owning the shelf
+	UserID       uuid.UUID                `json:"-"`              // UserID is the ID of the user owning the shelf
 	EncryptedKey []byte                   `json:"encryption_key"` // EncryptedKey is the encrypted encryption key for the shelf DB
 	Notebooks    []*notebook.Notebook     `json:"-"`              // Notebooks is the set of notebooks in the shelf
 	Collections  []*collection.Collection `json:"-"`              // Collections is the set of collections in the shelf

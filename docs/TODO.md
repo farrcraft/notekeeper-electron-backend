@@ -3,6 +3,7 @@
 [] add tag handlers
 [] add notebook handlers
 [] add note handlers
+[] need to separate note metadata & note content in db so that loading a list of notes gets the metadata & loading a single note gets the content
 [] add FSM for account/user state
 [] do we need index & map types to match the corresponding db buckets?
 [] create shelf

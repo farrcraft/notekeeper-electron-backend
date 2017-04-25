@@ -40,7 +40,10 @@ It has these top-level messages:
 	KeyExchangeResponse
 	Note
 	CreateNoteRequest
+	SaveNoteRequest
 	DeleteNoteRequest
+	LoadNoteRequest
+	LoadNoteResponse
 	GetNotesRequest
 	GetNotesResponse
 	Notebook

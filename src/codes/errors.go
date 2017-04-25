@@ -66,6 +66,7 @@ const (
 	ErrorConvertID
 	ErrorLookup
 	ErrorLoad
+	ErrorLoadAll
 	ErrorDelete
 )
 
@@ -200,6 +201,8 @@ func defaultMessageFromCode(code Code) string {
 		msg = "error looking up"
 	case ErrorLoad:
 		msg = "error loading"
+	case ErrorLoadAll:
+		msg = "error loading all"
 	case ErrorDelete:
 		msg = "error deleting"
 	}

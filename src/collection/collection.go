@@ -15,27 +15,38 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// Scope indicates the scope of the collection
+type Scope int
+
+const (
+	// ScopeUser indicates that a collection belongs to a single user
+	ScopeUser Scope = iota
+	// ScopeAccount indicates that a collection belongs to a whole account
+	ScopeAccount
+)
+
 // Collection holds a collection of notebooks
 type Collection struct {
-	ID        uuid.UUID            `json:"id"`         // ID is the unique collection identifier
-	Title     *title.Title         `json:"title"`      // Title is a title for the collection
-	Notebooks []*notebook.Notebook `json:"-"`          // Notebooks is the set of notebooks in the collection
-	AccountID uuid.UUID            `json:"account_id"` // AccountID is the account that the collection belongs to
-	UserID    uuid.UUID            `json:"user_id"`    // UserID is the individual account user that the collection belongs to
-	ShelfID   uuid.UUID            `json:"shelf_id"`   // ShelfID is the shelf that contains the collection
-	Tags      []*tag.Tag           `json:"tags"`       // Tags is the set of tags assigned to the collection
-	Created   time.Time            `json:"created"`    // Created is the time when the collection was first created
-	Updated   time.Time            `json:"updated"`    // Updated is the time when the collection was last updated
-	Locked    bool                 `json:"locked"`     // Locked indicates whether the collection can be modified
-	DBFactory *db.Factory          `json:"-"`          // DBFactory provides database access
-	Logger    *logrus.Logger       `json:"-"`          // Logger is the logging facility
+	ID        uuid.UUID            `json:"id"`       // ID is the unique collection identifier
+	Title     *title.Title         `json:"title"`    // Title is a title for the collection
+	Notebooks []*notebook.Notebook `json:"-"`        // Notebooks is the set of notebooks in the collection
+	OwnerID   uuid.UUID            `json:"owner_id"` // OwnerID is the account or user that the collection belongs to
+	Scope     Scope                `json:"scope"`    // Scope is the ownership scope of the collection (user or account)
+	ShelfID   uuid.UUID            `json:"shelf_id"` // ShelfID is the shelf that contains the collection
+	Tags      []*tag.Tag           `json:"tags"`     // Tags is the set of tags assigned to the collection
+	Created   time.Time            `json:"created"`  // Created is the time when the collection was first created
+	Updated   time.Time            `json:"updated"`  // Updated is the time when the collection was last updated
+	Locked    bool                 `json:"locked"`   // Locked indicates whether the collection can be modified
+	DBFactory *db.Factory          `json:"-"`        // DBFactory provides database access
+	Logger    *logrus.Logger       `json:"-"`        // Logger is the logging facility
 }
 
 // New creates a new collection object
-func New(title *title.Title, dbFactory *db.Factory, logger *logrus.Logger) *Collection {
+func New(title *title.Title, scope Scope, dbFactory *db.Factory, logger *logrus.Logger) *Collection {
 	now := time.Now()
 	collection := &Collection{
 		ID:        uuid.NewV4(),
+		Scope:     scope,
 		Title:     title,
 		Created:   now,
 		Updated:   now,
@@ -50,13 +61,10 @@ func (collection *Collection) getDB(passphraseKey []byte) (*db.DB, error) {
 	// even though the *content* of a collection gets its own db, the collection
 	// itself is stored in the parent db
 	var dbType db.Type
-	var ownerID uuid.UUID
-	if collection.UserID != uuid.Nil {
+	if collection.Scope == ScopeUser {
 		dbType = db.TypeUser
-		ownerID = collection.UserID
 	} else {
 		dbType = db.TypeAccount
-		ownerID = collection.AccountID
 	}
 
 	collectionDB := collection.DBFactory.Find(db.TypeShelf, collection.ShelfID)
@@ -70,7 +78,7 @@ func (collection *Collection) getDB(passphraseKey []byte) (*db.DB, error) {
 			Type: dbType,
 		}
 		var err error
-		collectionDB, err = collection.DBFactory.Open(key, parentKey, ownerID, passphraseKey)
+		collectionDB, err = collection.DBFactory.Open(key, parentKey, collection.OwnerID, passphraseKey)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +158,7 @@ func (collection *Collection) LoadAll(passphraseKey []byte) ([]*Collection, erro
 
 	shelfKey, err := crypto.Open(passphraseKey, shelfDB.EncryptedKey)
 	if err != nil {
-		collection.Logger.Debug("Error opening shelf key - ", err)
+		collection.Logger.Debug("Error opening collection key - ", err)
 		code := codes.New(codes.ScopeCollection, codes.ErrorOpenKey)
 		return collections, code
 	}
@@ -175,14 +183,14 @@ func (collection *Collection) LoadAll(passphraseKey []byte) ([]*Collection, erro
 			// decrypt value
 			decryptedData, err := crypto.Open(shelfKey, value)
 			if err != nil {
-				collection.Logger.Debug("Error decrypting shelf data - ", err)
+				collection.Logger.Debug("Error decrypting collection data - ", err)
 				code := codes.New(codes.ScopeCollection, codes.ErrorDecrypt)
 				return code
 			}
 
 			err = json.Unmarshal(decryptedData, newCollection)
 			if err != nil {
-				collection.Logger.Debug("Error decoding shelf json - ", err)
+				collection.Logger.Debug("Error decoding collection json - ", err)
 				code := codes.New(codes.ScopeCollection, codes.ErrorDecode)
 				return code
 			}

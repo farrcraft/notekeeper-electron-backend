@@ -36,17 +36,22 @@ func GetCollections(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	// create a new collection instance to act as a proxy
-	c := collection.New(nil, server.DBFactory, server.Logger)
-	c.ShelfID = shelfID
-
+	var ownerID uuid.UUID
+	var scope collection.Scope
 	if request.Scope == "account" {
-		c.AccountID = server.Account.ID
+		ownerID = server.Account.ID
+		scope = collection.ScopeAccount
 	} else if request.Scope == "user" {
-		c.UserID = server.Account.ActiveUser.ID
+		ownerID = server.Account.ActiveUser.ID
+		scope = collection.ScopeUser
 	} else {
 		return response, nil
 	}
+
+	// create a new collection instance to act as a proxy
+	c := collection.New(nil, scope, server.DBFactory, server.Logger)
+	c.ShelfID = shelfID
+	c.OwnerID = ownerID
 
 	collections, err := c.LoadAll(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
@@ -95,17 +100,22 @@ func CreateCollection(server *rpc.Server, message []byte) (proto.Message, error)
 		return response, nil
 	}
 
-	t := rpc.MessageToTitle(request.Name)
-	c := collection.New(t, server.DBFactory, server.Logger)
-	c.ShelfID = shelfID
-
+	var ownerID uuid.UUID
+	var scope collection.Scope
 	if request.Scope == "account" {
-		c.AccountID = server.Account.ID
+		ownerID = server.Account.ID
+		scope = collection.ScopeAccount
 	} else if request.Scope == "user" {
-		c.UserID = server.Account.ActiveUser.ID
+		ownerID = server.Account.ActiveUser.ID
+		scope = collection.ScopeUser
 	} else {
 		return response, nil
 	}
+
+	t := rpc.MessageToTitle(request.Name)
+	c := collection.New(t, scope, server.DBFactory, server.Logger)
+	c.ShelfID = shelfID
+	c.OwnerID = ownerID
 
 	err = c.Save(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
@@ -143,18 +153,23 @@ func SaveCollection(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	t := rpc.MessageToTitle(request.Name)
-	c := collection.New(t, server.DBFactory, server.Logger)
-	c.ShelfID = shelfID
-	c.Locked = request.Locked
-
+	var ownerID uuid.UUID
+	var scope collection.Scope
 	if request.Scope == "account" {
-		c.AccountID = server.Account.ID
+		ownerID = server.Account.ID
+		scope = collection.ScopeAccount
 	} else if request.Scope == "user" {
-		c.UserID = server.Account.ActiveUser.ID
+		ownerID = server.Account.ActiveUser.ID
+		scope = collection.ScopeUser
 	} else {
 		return response, nil
 	}
+
+	t := rpc.MessageToTitle(request.Name)
+	c := collection.New(t, scope, server.DBFactory, server.Logger)
+	c.ShelfID = shelfID
+	c.OwnerID = ownerID
+	c.Locked = request.Locked
 
 	err = c.Save(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
@@ -197,9 +212,22 @@ func DeleteCollection(server *rpc.Server, message []byte) (proto.Message, error)
 		return response, nil
 	}
 
-	c := collection.New(nil, server.DBFactory, server.Logger)
+	var ownerID uuid.UUID
+	var scope collection.Scope
+	if request.Scope == "account" {
+		ownerID = server.Account.ID
+		scope = collection.ScopeAccount
+	} else if request.Scope == "user" {
+		ownerID = server.Account.ActiveUser.ID
+		scope = collection.ScopeUser
+	} else {
+		return response, nil
+	}
+
+	c := collection.New(nil, scope, server.DBFactory, server.Logger)
 	c.ID = id
 	c.ShelfID = shelfID
+	c.OwnerID = ownerID
 
 	err = c.Delete(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {

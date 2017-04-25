@@ -37,18 +37,16 @@ func Handlers() map[string]rpc.Handler {
 	handlers["Tag::save"] = SaveTag
 	handlers["Tag::delete"] = DeleteTag
 
-	/*
-		handlers["Notebook::loadAll"] = GetNotebooks
-		handlers["Notebook::create"] = CreateNotebook
-		handlers["Notebook::save"] = SaveNotebook
-		handlers["Notebook::delete"] = DeleteNotebook
+	handlers["Notebook::loadAll"] = GetNotebooks
+	handlers["Notebook::create"] = CreateNotebook
+	handlers["Notebook::save"] = SaveNotebook
+	handlers["Notebook::delete"] = DeleteNotebook
 
-		handlers["Note::loadAll"] = GetNotes
-		handlers["Note::load"] = LoadNote
-		handlers["Note::create"] = CreateNote
-		handlers["Note::save"] = SaveNote
-		handlers["Note::delete"] = DeleteNote
-	*/
+	handlers["Note::loadAll"] = GetNotes
+	handlers["Note::load"] = LoadNote
+	handlers["Note::create"] = CreateNote
+	handlers["Note::save"] = SaveNote
+	handlers["Note::delete"] = DeleteNote
 
 	return handlers
 }

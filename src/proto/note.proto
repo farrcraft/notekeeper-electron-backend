@@ -9,33 +9,74 @@ import public "title.proto";
 // Note content is treated separately
 message Note {
 	string id = 1;
-	Title name = 2;
-	string type = 3;
-	int32 revisions = 4;
-	bool locked = 5;
-	string created = 6;
-	string updated = 7;
+	string notebookId = 2;
+	string ownerId = 3;
+	string storeId = 4;
+	string scope = 5; // account or user
+	string store = 6; // shelf or collection
+	Title name = 7;
+	string type = 8;
+	int32 revisions = 9;
+	bool locked = 10;
+	string created = 11;
+	string updated = 12;
 }
 
 message CreateNoteRequest {
 	RequestHeader header = 1;
 	string notebookId = 2;
-	string scope = 3;
-	Title name = 4;
+	string storeId = 3;
+	string ownerId = 4;
+	string scope = 5;
+	string store = 6;
+	Title name = 7;
 }
 // Response is an IdResponse
 
-message DeleteNoteRequest {
+message SaveNoteRequest {
 	RequestHeader header = 1;
-	string noteId = 2;
-	string scope = 3;
+	string id = 2;
+	string notebookId = 3;
+	string storeId = 4;
+	string ownerId = 5;
+	string scope = 6;
+	string store = 7;
+	Title name = 8;
 }
 // Response is an EmptyResponse
+
+message DeleteNoteRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string notebookId = 3;
+	string storeId = 4;
+	string ownerId = 5;
+	string scope = 6;
+	string store = 7;
+}
+// Response is an EmptyResponse
+
+message LoadNoteRequest {
+	RequestHeader header = 1;
+	string id = 2;
+	string storeId = 3;
+	string ownerId = 4;
+	string scope = 5;
+	string store = 6;
+}
+
+message LoadNoteResponse {
+	ResponseHeader header = 1;
+	Note note = 2;
+}
 
 message GetNotesRequest {
 	RequestHeader header = 1;
 	string notebookId = 2;
-	string scope = 3;
+	string storeId = 3;
+	string ownerId = 4;
+	string scope = 5;
+	string store = 6;
 }
 
 message GetNotesResponse {

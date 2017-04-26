@@ -84,14 +84,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/kardianos/service",
-			"repository": "https://github.com/kardianos/service",
-			"vcs": "git",
-			"revision": "ef06f2f890aa4f20d1ff55da91b29392ba6af3af",
-			"branch": "master",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/satori/go.uuid",
 			"repository": "https://github.com/satori/go.uuid",
 			"vcs": "git",

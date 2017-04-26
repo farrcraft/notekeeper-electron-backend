@@ -11,7 +11,6 @@ import (
 	"github.com/boltdb/bolt"
 	//	"google.golang.org/grpc/credentials"
 	//	"golang.org/x/crypto/nacl/box"
-	"github.com/kardianos/service"
 )
 
 const (
@@ -54,27 +53,12 @@ func NewBackend() *Backend {
 	return backend
 }
 
-// Stop stops the backend service
-func (backend *Backend) Stop(s service.Service) error {
-	backend.Logger.Debug("Stopping service...")
-	// Stop should not block. Return with a few seconds.
-	backend.Shutdown()
-	return nil
-}
-
 // Shutdown is called when the application is terminated
 // Caveat - running via CLI on Windows under MSYS2 (e.g. babun) doesn't seem to capture ctrl^c
 // So shutdown won't get called. Use normal CMD prompt or powershell in that scenario instead.
 func (backend *Backend) Shutdown() {
 	backend.Logger.Debug("Shutting down service...")
 	backend.RPC.Stop()
-}
-
-// Start starts the backend service
-func (backend *Backend) Start(svc service.Service) error {
-	// Start should not block. Do the actual work async.
-	go backend.Run()
-	return nil
 }
 
 // Run is called when the application is started

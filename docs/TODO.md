@@ -1,7 +1,6 @@
 # TODO
 
-[] add tag handlers
-[] add notebook handlers
+[+] remove service library (backend won't be a native service)
 [] add note handlers
 [] need to separate note metadata & note content in db so that loading a list of notes gets the metadata & loading a single note gets the content
 [] add FSM for account/user state
@@ -44,6 +43,8 @@
 
 # DONE
 
+[+] add tag handlers
+[+] add notebook handlers
 [+] generate code coverage reports
 [+] move rpc handlers out of base rpc module & into their own module
 [+] make sure all rpc error paths set the error scope

@@ -30,6 +30,7 @@ proto-gen:
 
 # rebuild the proto definitions
 # export PATH=$PATH:/cygdrive/c/code/go/bin 
+# export PATH=$PATH:/c/Go/bin (use this)
 proto:
 	cd src/proto; PATH=$$PATH:C:\\code\\go\\bin ../../../protoc -I . *.proto --go_out=.
 

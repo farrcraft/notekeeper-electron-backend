@@ -58,6 +58,7 @@ const (
 	ErrorOpenKey
 	ErrorEncrypt
 	ErrorDecrypt
+	ErrorCrypto
 	ErrorWriteBucket
 	ErrorSave
 	ErrorBucketMissing
@@ -185,6 +186,8 @@ func defaultMessageFromCode(code Code) string {
 		msg = "error encrypting"
 	case ErrorDecrypt:
 		msg = "error decrypting"
+	case ErrorCrypto:
+		msg = "cryptography error"
 	case ErrorWriteBucket:
 		msg = "error writing to bucket"
 	case ErrorSave:

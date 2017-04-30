@@ -52,8 +52,21 @@ func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
 		return nil
 	}
 
+	err := acct.OpenAccountDb()
+	if err != nil {
+		api.Logger.Debug("unlock could not open account db")
+		return err
+	}
+
+	err = acct.ActiveUser.Lookup()
+	if err != nil {
+		api.Logger.Debug("unlock could not lookup user")
+		return err
+	}
+
 	// generate the derived key from the input passphrase and the stored salt
-	key, err := crypto.DeriveKey([]byte(passphrase), acct.ActiveUser.Salt)
+	c := crypto.New(api.Logger)
+	key, err := c.DeriveKey([]byte(passphrase), acct.ActiveUser.Salt)
 	if err != nil {
 		return err
 	}
@@ -63,7 +76,7 @@ func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
 
 	// since we never stored the original derived key
 	// the only way we know if the key is valid is to try using it to open something
-	_, err = crypto.Open(acct.ActiveUser.PassphraseKey, acct.ActiveUser.AccountKey)
+	_, err = c.Open(acct.ActiveUser.PassphraseKey, acct.ActiveUser.AccountKey)
 	if err != nil {
 		crypto.Zero(acct.ActiveUser.PassphraseKey)
 		return err
@@ -147,7 +160,8 @@ func (api *API) LockAccount(acct *account.Account) error {
 		api.Logger.Debug("lock account missing user")
 		return nil
 	}
-	crypto.Zero(acct.ActiveUser.PassphraseKey)
+	acct.ActiveUser.PassphraseKey = []byte{}
+	//crypto.Zero(acct.ActiveUser.PassphraseKey)
 	if acct.DBFactory == nil {
 		api.Logger.Debug("lock account missing db factory")
 		return nil

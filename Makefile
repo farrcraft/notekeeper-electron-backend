@@ -1,6 +1,6 @@
 # default target
 build:
-	cd src; go build -tags debug
+	cd src; go build -tags debug; cp src.exe ../../notekeeper-electron-frontend/app/resources/backend.exe
 
 test:
 	cd src; go test ./... -v -race

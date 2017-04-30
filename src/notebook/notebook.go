@@ -110,7 +110,8 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 		}
 
 		// retrieve the encryption key
-		decryptedKey, err := crypto.Open(passphraseKey, notebookDB.EncryptedKey)
+		c := crypto.New(notebook.Logger)
+		decryptedKey, err := c.Open(passphraseKey, notebookDB.EncryptedKey)
 		if err != nil {
 			notebook.Logger.Debug("Error retrieving notebook key - ", err)
 			code := codes.New(codes.ScopeNotebook, codes.ErrorOpenKey)
@@ -118,7 +119,7 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 		}
 
 		// encrypt the data
-		encryptedData, err := crypto.Seal(decryptedKey, data)
+		encryptedData, err := c.Seal(decryptedKey, data)
 		if err != nil {
 			notebook.Logger.Debug("Error encrypting notebook data - ", err)
 			code := codes.New(codes.ScopeNotebook, codes.ErrorEncrypt)
@@ -152,7 +153,8 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 	var notebooks []*Notebook
 
 	notebookDB := notebook.getDB()
-	notebookKey, err := crypto.Open(passphraseKey, notebookDB.EncryptedKey)
+		c := crypto.New(notebook.Logger)
+	notebookKey, err := c.Open(passphraseKey, notebookDB.EncryptedKey)
 	if err != nil {
 		notebook.Logger.Debug("Error opening notebook key - ", err)
 		code := codes.New(codes.ScopeNotebook, codes.ErrorOpenKey)
@@ -177,7 +179,7 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 			}
 
 			// decrypt value
-			decryptedData, err := crypto.Open(notebookKey, value)
+			decryptedData, err := c.Open(notebookKey, value)
 			if err != nil {
 				notebook.Logger.Debug("Error decrypting notebook data - ", err)
 				code := codes.New(codes.ScopeNotebook, codes.ErrorDecrypt)

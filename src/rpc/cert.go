@@ -148,7 +148,8 @@ func (rpc *Server) createCertificate() bool {
 	certPath := filepath.Join(appdir.AppDataPath(), "certificate")
 	err = ioutil.WriteFile(certPath, certBuf.Bytes(), 0600)
 	if err != nil {
-
+		rpc.Logger.Debug("Error writing certificate - ", err)
+		return false
 	}
 
 	return true

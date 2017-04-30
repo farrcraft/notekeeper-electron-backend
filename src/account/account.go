@@ -101,13 +101,14 @@ func (account *Account) Save() error {
 		}
 
 		// account data must be encrypted with the account key and not the user key
-		accountKey, err := crypto.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
+		c := crypto.New(account.Logger)
+		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
 		if err != nil {
 			account.Logger.Debug("Error opening account key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 			return code
 		}
-		encryptedData, err := crypto.Seal(accountKey, data)
+		encryptedData, err := c.Seal(accountKey, data)
 		crypto.Zero(accountKey)
 		if err != nil {
 			account.Logger.Debug("Error encrypting account content - ", err)
@@ -144,7 +145,8 @@ func (account *Account) Save() error {
 			code := codes.New(codes.ScopeAccount, codes.ErrorCreateBucket)
 			return code
 		}
-		encryptedName, err := crypto.DeriveSaltedKey([]byte(account.Name))
+		c := crypto.New(account.Logger)
+		encryptedName, err := c.DeriveSaltedKey([]byte(account.Name))
 		if err != nil {
 			account.Logger.Debug("Error creating account map key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorDeriveKey)
@@ -184,12 +186,12 @@ func (account *Account) Lookup() error {
 			return nil
 		}
 		cursor := bucket.Cursor()
-
+		c := crypto.New(account.Logger)
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
 			// extract the salt from the existing encrypted name
 			salt, encryptedName := crypto.ExtractSalt(key)
 			// create a new key using the extracted salt and the unencrypted name we're searching for
-			checkName, err := crypto.DeriveKey([]byte(account.Name), salt[:])
+			checkName, err := c.DeriveKey([]byte(account.Name), salt[:])
 			if err != nil {
 				account.Logger.Debug("Error deriving account map key - ", err)
 				code := codes.New(codes.ScopeAccount, codes.ErrorDeriveKey)
@@ -245,7 +247,8 @@ func (account *Account) Load() error {
 		}
 
 		// account data is encrypted with the account key and not the user key
-		accountKey, err := crypto.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
+		c := crypto.New(account.Logger)
+		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
 		if err != nil {
 			account.Logger.Debug("Error opening account key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
@@ -253,7 +256,7 @@ func (account *Account) Load() error {
 		}
 
 		// decrypt value
-		decryptedData, err := crypto.Open(accountKey, value)
+		decryptedData, err := c.Open(accountKey, value)
 		if err != nil {
 			account.Logger.Debug("Error decrypting account data - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorDecrypt)

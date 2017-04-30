@@ -22,16 +22,20 @@ const (
 
 // Backend is the main service type
 type Backend struct {
-	Logger *logrus.Logger
-	DB     *bolt.DB // This is the master application DB
-	RPC    *rpc.Server
+	Logger   *logrus.Logger
+	DB       *bolt.DB // This is the master application DB
+	RPC      *rpc.Server
+	Status   chan string
+	Shutdown chan bool
 	//Account *Account
 }
 
 // NewBackend creates a new backend object
 func NewBackend() *Backend {
 	backend := &Backend{
-		Logger: logrus.New(),
+		Logger:   logrus.New(),
+		Status:   make(chan string),
+		Shutdown: make(chan bool),
 	}
 
 	backend.Logger.Formatter = &logrus.JSONFormatter{}
@@ -53,20 +57,23 @@ func NewBackend() *Backend {
 	return backend
 }
 
-// Shutdown is called when the application is terminated
-// Caveat - running via CLI on Windows under MSYS2 (e.g. babun) doesn't seem to capture ctrl^c
-// So shutdown won't get called. Use normal CMD prompt or powershell in that scenario instead.
-func (backend *Backend) Shutdown() {
-	backend.Logger.Debug("Shutting down service...")
-	backend.RPC.Stop()
-}
-
 // Run is called when the application is started
 func (backend *Backend) Run() {
-	backend.RPC = rpc.NewServer(backend.Logger)
+	backend.RPC = rpc.NewServer(backend.Logger, backend.Status, backend.Shutdown)
 	backend.RPC.RegisterHandlers(handler.Handlers())
-	ok := backend.RPC.Start(BackendPort)
-	if !ok {
-		os.Exit(1)
+	go backend.RPC.Start(BackendPort)
+	for {
+		select {
+		case msg := <-backend.Status:
+			fmt.Println(msg)
+		case ok := <-backend.Shutdown:
+			backend.Logger.Debug("Shutting down service...")
+			backend.RPC.Stop()
+			if !ok {
+				os.Exit(1)
+			} else {
+				os.Exit(0)
+			}
+		}
 	}
 }

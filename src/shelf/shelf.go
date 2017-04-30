@@ -119,7 +119,8 @@ func (shelf *Shelf) Save(passphraseKey []byte) error {
 		}
 
 		// retrieve the encryption key
-		decryptedKey, err := crypto.Open(passphraseKey, db.EncryptedKey)
+		c := crypto.New(shelf.Logger)
+		decryptedKey, err := c.Open(passphraseKey, db.EncryptedKey)
 		if err != nil {
 			shelf.Logger.Debug("Error retrieving shelf key - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorOpenKey)
@@ -127,7 +128,7 @@ func (shelf *Shelf) Save(passphraseKey []byte) error {
 		}
 
 		// encrypt the data
-		encryptedData, err := crypto.Seal(decryptedKey, data)
+		encryptedData, err := c.Seal(decryptedKey, data)
 		if err != nil {
 			shelf.Logger.Debug("Error encrypting shelf data - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorEncrypt)
@@ -172,7 +173,8 @@ func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
 		return shelves, err
 	}
 
-	shelfKey, err := crypto.Open(passphraseKey, shelfDB.EncryptedKey)
+	c := crypto.New(shelf.Logger)
+	shelfKey, err := c.Open(passphraseKey, shelfDB.EncryptedKey)
 	if err != nil {
 		shelf.Logger.Debug("Error opening shelf key - ", err)
 		code := codes.New(codes.ScopeShelf, codes.ErrorOpenKey)
@@ -197,7 +199,7 @@ func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
 			}
 
 			// decrypt value
-			decryptedData, err := crypto.Open(shelfKey, value)
+			decryptedData, err := c.Open(shelfKey, value)
 			if err != nil {
 				shelf.Logger.Debug("Error decrypting shelf data - ", err)
 				code := codes.New(codes.ScopeShelf, codes.ErrorDecrypt)

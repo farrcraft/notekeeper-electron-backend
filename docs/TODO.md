@@ -1,7 +1,6 @@
 # TODO
 
-[+] remove service library (backend won't be a native service)
-[] add note handlers
+[] add shutdown rpc handler
 [] need to separate note metadata & note content in db so that loading a list of notes gets the metadata & loading a single note gets the content
 [] add FSM for account/user state
 [] do we need index & map types to match the corresponding db buckets?
@@ -23,12 +22,7 @@
 [] get list of notebooks
 [] delete notebook
 [] encrypt bucket names
-[] rpc for shelves
-[] rpc for collections
 [] create default notebook during account creation
-[] rpc - create notebook
-[] rpc - get notebooks
-[] rpc - get notebook notes
 [] delete db file when deleting objects
 [] Document how error handling & logging will work (in general & in rpc responses)
 [] Update general error handling & logging
@@ -43,6 +37,14 @@
 
 # DONE
 
+[+] rpc for shelves
+[+] rpc for collections
+[+] rpc - create notebook
+[+] rpc - get notebooks
+[+] rpc - get notebook notes
+[+] remove service library (backend won't be a native service)
+[+] add ready rpc handler
+[+] add note handlers
 [+] add tag handlers
 [+] add notebook handlers
 [+] generate code coverage reports

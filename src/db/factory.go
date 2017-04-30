@@ -71,7 +71,9 @@ func (factory *Factory) DB(dbType Type, id uuid.UUID) (*DB, error) {
 
 	err := db.Open()
 	if err != nil {
-		return nil, err
+		factory.Logger.Debug("Error opening db file [", db.Filename, "] - ", err)
+		code := codes.New(codes.ScopeDB, codes.ErrorDbOpen)
+		return nil, code
 	}
 
 	factory.DBs = append(factory.DBs, db)
@@ -179,7 +181,8 @@ func (factory *Factory) LoadEncryptedKey(id uuid.UUID, passphraseKey []byte, buc
 			return code
 		}
 
-		encryptionKey, err := crypto.Open(passphraseKey, db.EncryptedKey)
+		c := crypto.New(factory.Logger)
+		encryptionKey, err := c.Open(passphraseKey, db.EncryptedKey)
 		if err != nil {
 			factory.Logger.Debug("Error opening key - ", err)
 			code := codes.New(codes.ScopeDB, codes.ErrorOpenKey)
@@ -187,7 +190,7 @@ func (factory *Factory) LoadEncryptedKey(id uuid.UUID, passphraseKey []byte, buc
 		}
 
 		// decrypt value
-		decryptedData, err := crypto.Open(encryptionKey, value)
+		decryptedData, err := c.Open(encryptionKey, value)
 		if err != nil {
 			factory.Logger.Debug("Error decrypting data - ", err)
 			code := codes.New(codes.ScopeDB, codes.ErrorDecrypt)

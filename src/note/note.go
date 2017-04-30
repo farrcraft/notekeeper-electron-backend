@@ -134,7 +134,8 @@ func (note *Note) Save(passphraseKey []byte) error {
 		}
 
 		// retrieve the encryption key
-		decryptedKey, err := crypto.Open(passphraseKey, noteDB.EncryptedKey)
+		c := crypto.New(note.Logger)
+		decryptedKey, err := c.Open(passphraseKey, noteDB.EncryptedKey)
 		if err != nil {
 			note.Logger.Debug("Error retrieving note key - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
@@ -142,7 +143,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 		}
 
 		// encrypt the data
-		encryptedData, err := crypto.Seal(decryptedKey, data)
+		encryptedData, err := c.Seal(decryptedKey, data)
 		if err != nil {
 			note.Logger.Debug("Error encrypting note data - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorEncrypt)
@@ -176,7 +177,8 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 	var notes []*Note
 
 	noteDB := note.getDB()
-	noteKey, err := crypto.Open(passphraseKey, noteDB.EncryptedKey)
+	c := crypto.New(note.Logger)
+	noteKey, err := c.Open(passphraseKey, noteDB.EncryptedKey)
 	if err != nil {
 		note.Logger.Debug("Error opening note key - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
@@ -201,7 +203,7 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 			}
 
 			// decrypt value
-			decryptedData, err := crypto.Open(noteKey, value)
+			decryptedData, err := c.Open(noteKey, value)
 			if err != nil {
 				note.Logger.Debug("Error decrypting note data - ", err)
 				code := codes.New(codes.ScopeNote, codes.ErrorDecrypt)
@@ -235,7 +237,8 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 // Load a note
 func (note *Note) Load(passphraseKey []byte) error {
 	noteDB := note.getDB()
-	noteKey, err := crypto.Open(passphraseKey, noteDB.EncryptedKey)
+	c := crypto.New(note.Logger)
+	noteKey, err := c.Open(passphraseKey, noteDB.EncryptedKey)
 	if err != nil {
 		note.Logger.Debug("Error opening note key - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
@@ -261,7 +264,7 @@ func (note *Note) Load(passphraseKey []byte) error {
 		}
 
 		// decrypt value
-		decryptedData, err := crypto.Open(noteKey, value)
+		decryptedData, err := c.Open(noteKey, value)
 		if err != nil {
 			note.Logger.Debug("Error decrypting note data - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorDecrypt)

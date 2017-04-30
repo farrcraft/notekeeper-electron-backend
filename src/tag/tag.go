@@ -87,7 +87,8 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 		}
 
 		// retrieve the encryption key
-		decryptedKey, err := crypto.Open(passphraseKey, db.EncryptedKey)
+		c := crypto.New(tag.Logger)
+		decryptedKey, err := c.Open(passphraseKey, db.EncryptedKey)
 		if err != nil {
 			tag.Logger.Debug("Error retrieving tag key - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorOpenKey)
@@ -95,7 +96,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 		}
 
 		// encrypt the data
-		encryptedData, err := crypto.Seal(decryptedKey, data)
+		encryptedData, err := c.Seal(decryptedKey, data)
 		if err != nil {
 			tag.Logger.Debug("Error encrypting tag data - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorEncrypt)
@@ -128,7 +129,8 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 	var tags []*Tag
 	tagDB := tag.getDB()
-	tagKey, err := crypto.Open(passphraseKey, tagDB.EncryptedKey)
+	c := crypto.New(tag.Logger)
+	tagKey, err := c.Open(passphraseKey, tagDB.EncryptedKey)
 	if err != nil {
 		tag.Logger.Debug("Error opening tag key - ", err)
 		code := codes.New(codes.ScopeTag, codes.ErrorOpenKey)
@@ -153,7 +155,7 @@ func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 			}
 
 			// decrypt value
-			decryptedData, err := crypto.Open(tagKey, value)
+			decryptedData, err := c.Open(tagKey, value)
 			if err != nil {
 				tag.Logger.Debug("Error decrypting tag data - ", err)
 				code := codes.New(codes.ScopeTag, codes.ErrorDecrypt)

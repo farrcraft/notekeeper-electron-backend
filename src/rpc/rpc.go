@@ -29,6 +29,8 @@ type Server struct {
 	UserState       UserState
 	Account         *account.Account
 	Certificate     tls.Certificate
+	Status          chan string
+	Shutdown        chan bool
 	Handlers        map[string]Handler
 	RecvCounter     int32
 	SendCounter     int32
@@ -38,13 +40,15 @@ type Server struct {
 }
 
 // NewServer creates a new RPCServer instance
-func NewServer(logger *logrus.Logger) *Server {
+func NewServer(logger *logrus.Logger, Status chan string, Shutdown chan bool) *Server {
 	server := &Server{
 		Logger:      logger,
 		Handlers:    make(map[string]Handler, 0),
 		RecvCounter: 0,
 		SendCounter: 0,
 		UserState:   UserStateSignedOut,
+		Status:      Status,
+		Shutdown:    Shutdown,
 	}
 	return server
 }
@@ -65,6 +69,10 @@ func (rpc *Server) VerifyHeaders(req *http.Request) *RequestHeader {
 	if header.Method == "" {
 		rpc.Logger.Debug("Missing request method")
 		return nil
+	}
+
+	if header.Method == "SERVICE-READY" {
+		return header
 	}
 
 	// base64 encoded signature of the request body
@@ -103,6 +111,8 @@ func (rpc *Server) VerifyHeaders(req *http.Request) *RequestHeader {
 
 // ServeHTTP handles HTTP requests
 func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	rpc.Logger.Debug("PING")
+
 	// we only accept POST requests
 	if req.Method != "POST" {
 		rpc.Logger.Debug("Unexpected request method - ", req.Method)
@@ -123,6 +133,16 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		rpc.Logger.Debug("Error reading request body - ", err)
+		return
+	}
+
+	rpc.Logger.Debug(header.Method)
+	if header.Method == "SERVICE-READY" {
+		_, err = resp.Write([]byte("OK"))
+		rpc.Logger.Debug("ready!")
+		if err != nil {
+			rpc.Logger.Debug("Error writing response - ", err)
+		}
 		return
 	}
 
@@ -219,6 +239,10 @@ func (rpc *Server) Start(port string) bool {
 		ErrorLog: log.New(writer, "", 0),
 	}
 	rpc.Logger.Debug("RPC listening on port [", port, "]")
+
+	// send a token to stdout so the frontend knows the backend is done initializing
+	rpc.Status <- "NOTEKEEPER_SERVICE_READY"
+
 	server.Serve(tlsListener)
 	return true
 }

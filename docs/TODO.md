@@ -1,5 +1,6 @@
 # TODO
 
+[] create default notebook during account creation
 [] add shutdown rpc handler
 [] need to separate note metadata & note content in db so that loading a list of notes gets the metadata & loading a single note gets the content
 [] add FSM for account/user state
@@ -22,7 +23,6 @@
 [] get list of notebooks
 [] delete notebook
 [] encrypt bucket names
-[] create default notebook during account creation
 [] delete db file when deleting objects
 [] Document how error handling & logging will work (in general & in rpc responses)
 [] Update general error handling & logging

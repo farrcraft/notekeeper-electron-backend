@@ -3,6 +3,9 @@ package api
 import (
 	"../account"
 	"../crypto"
+	"../notebook"
+	"../shelf"
+	"../title"
 	"../user"
 )
 
@@ -37,7 +40,75 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 	if err != nil {
 		return newAccount, err
 	}
+
+	err = api.CreateAccountDefaults(newAccount, user)
+	if err != nil {
+		return newAccount, err
+	}
+
 	return newAccount, nil
+}
+
+// CreateAccountDefaults creates default objects and settings for an account
+func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) error {
+	// Create the account-scoped default shelf 'My Shelf'
+	defaultShelfTitle := title.New("My Shelf")
+	accountShelf := shelf.New(defaultShelfTitle, shelf.ScopeAccount, api.DBFactory, api.Logger)
+	accountShelf.AccountID = acct.ID
+	accountShelf.Default = true
+	err := accountShelf.Save(user.PassphraseKey)
+	if err != nil {
+		return err
+	}
+
+	// Create the user-scoped default shelf 'My Shelf'
+	userShelf := shelf.New(defaultShelfTitle, shelf.ScopeUser, api.DBFactory, api.Logger)
+	userShelf.UserID = user.ID
+	userShelf.Default = true
+	err = userShelf.Save(user.PassphraseKey)
+	if err != nil {
+		return err
+	}
+
+	// Create the account-scoped default notebook 'My Notebook' inside the account-scoped default shelf
+	defaultNotebookTitle := title.New("My Notebook")
+	accountNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeAccount, notebook.ContainerTypeShelf, api.DBFactory, api.Logger)
+	accountNotebook.OwnerID = acct.ID
+	accountNotebook.Default = true
+	err = accountNotebook.Save(user.PassphraseKey)
+	if err != nil {
+		return err
+	}
+
+	// Create the user-scoped default notebook 'My Notebook' inside the user-scoped default shelf
+	userNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeUser, notebook.ContainerTypeShelf, api.DBFactory, api.Logger)
+	userNotebook.OwnerID = user.ID
+	userNotebook.Default = true
+	err = userNotebook.Save(user.PassphraseKey)
+	if err != nil {
+		return err
+	}
+
+	// Create the account-scoped special 'Trash' shelf
+	trashShelfTitle := title.New("Trash")
+	accountTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeAccount, api.DBFactory, api.Logger)
+	accountTrashShelf.AccountID = acct.ID
+	accountTrashShelf.Trash = true
+	err = accountTrashShelf.Save(user.PassphraseKey)
+	if err != nil {
+		return err
+	}
+
+	// Create the user-scoped special 'Trash' shelf
+	userTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeUser, api.DBFactory, api.Logger)
+	userTrashShelf.UserID = user.ID
+	userTrashShelf.Trash = true
+	err = userTrashShelf.Save(user.PassphraseKey)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // UnlockAccount unlocks an account

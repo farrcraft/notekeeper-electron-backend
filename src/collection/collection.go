@@ -60,13 +60,6 @@ func New(title *title.Title, scope Scope, dbFactory *db.Factory, logger *logrus.
 func (collection *Collection) getDB(passphraseKey []byte) (*db.DB, error) {
 	// even though the *content* of a collection gets its own db, the collection
 	// itself is stored in the parent db
-	var dbType db.Type
-	if collection.Scope == ScopeUser {
-		dbType = db.TypeUser
-	} else {
-		dbType = db.TypeAccount
-	}
-
 	collectionDB := collection.DBFactory.Find(db.TypeShelf, collection.ShelfID)
 	if collectionDB == nil {
 		key := db.Key{
@@ -75,10 +68,20 @@ func (collection *Collection) getDB(passphraseKey []byte) (*db.DB, error) {
 		}
 		parentKey := db.Key{
 			ID:   collection.ShelfID,
-			Type: dbType,
+			Type: db.TypeShelf,
+		}
+		var ownerType db.Type
+		if collection.Scope == ScopeUser {
+			ownerType = db.TypeUser
+		} else {
+			ownerType = db.TypeAccount
+		}
+		ownerKey := db.Key{
+			ID:   collection.OwnerID,
+			Type: ownerType,
 		}
 		var err error
-		collectionDB, err = collection.DBFactory.Open(key, parentKey, collection.OwnerID, passphraseKey)
+		collectionDB, err = collection.DBFactory.Open(key, parentKey, ownerKey, passphraseKey)
 		if err != nil {
 			return nil, err
 		}
@@ -86,8 +89,8 @@ func (collection *Collection) getDB(passphraseKey []byte) (*db.DB, error) {
 	return collectionDB, nil
 }
 
-// Save a collection
-func (collection *Collection) Save(passphraseKey []byte) error {
+// SaveIndex save a collection in the collection index
+func (collection *Collection) SaveIndex(passphraseKey []byte) error {
 	shelfDB, err := collection.getDB(passphraseKey)
 	if err != nil {
 		return err
@@ -206,8 +209,8 @@ func (collection *Collection) LoadAll(passphraseKey []byte) ([]*Collection, erro
 	return collections, nil
 }
 
-// Delete a collection
-func (collection *Collection) Delete(passphraseKey []byte) error {
+// DeleteIndex deletes a collection from the collection index
+func (collection *Collection) DeleteIndex(passphraseKey []byte) error {
 	shelfDB, err := collection.getDB(passphraseKey)
 	if err != nil {
 		return err

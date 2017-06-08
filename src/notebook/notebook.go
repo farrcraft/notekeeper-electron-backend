@@ -77,21 +77,49 @@ func New(title *title.Title, scope Scope, container ContainerType, dbFactory *db
 	return notebook
 }
 
-func (notebook *Notebook) getDB() *db.DB {
+func (notebook *Notebook) getDB(passphraseKey []byte) *db.DB {
 	var notebookDB *db.DB
+	var dbType db.Type
 	if notebook.ContainerType == ContainerTypeCollection {
+		dbType = db.TypeCollection
 		notebookDB = notebook.DBFactory.Find(db.TypeCollection, notebook.ContainerID)
 	} else {
+		dbType = db.TypeShelf
 		notebookDB = notebook.DBFactory.Find(db.TypeShelf, notebook.ContainerID)
 	}
 	// [FIXME] - open if db nil
+	if notebookDB == nil {
+		// notebook db is either a shelf or collection db
+		key := db.Key{
+			ID:   notebook.ContainerID,
+			Type: dbType,
+		}
+		var parentDBType db.Type
+		if notebook.Scope == ScopeAccount {
+			parentDBType = db.TypeAccount
+		} else {
+			parentDBType = db.TypeUser
+		}
+		parentKey := db.Key{
+			ID:   notebook.OwnerID,
+			Type: parentDBType,
+		}
+		var err error
+		notebookDB, err = notebook.DBFactory.Open(key, parentKey, parentKey, passphraseKey)
+		if err != nil {
+			return nil
+		}
+		notebook.Logger.Debug("opened notebook parent db")
+	} else {
+		notebook.Logger.Debug("notebook db already open")
+	}
 	return notebookDB
 }
 
 // Save a notebook to the database
 // Account.ActiveUser.PassphraseKey
 func (notebook *Notebook) Save(passphraseKey []byte) error {
-	notebookDB := notebook.getDB()
+	notebookDB := notebook.getDB(passphraseKey)
 	err := notebookDB.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notebooks"))
@@ -152,8 +180,8 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 	var notebooks []*Notebook
 
-	notebookDB := notebook.getDB()
-		c := crypto.New(notebook.Logger)
+	notebookDB := notebook.getDB(passphraseKey)
+	c := crypto.New(notebook.Logger)
 	notebookKey, err := c.Open(passphraseKey, notebookDB.EncryptedKey)
 	if err != nil {
 		notebook.Logger.Debug("Error opening notebook key - ", err)
@@ -212,7 +240,7 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 
 // Delete a notebook
 func (notebook *Notebook) Delete(passphraseKey []byte) error {
-	notebookDB := notebook.getDB()
+	notebookDB := notebook.getDB(passphraseKey)
 	err := notebookDB.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("notebooks"))
 		if bucket == nil {

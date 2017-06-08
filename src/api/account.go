@@ -2,7 +2,9 @@ package api
 
 import (
 	"../account"
+	"../codes"
 	"../crypto"
+	"../db"
 	"../notebook"
 	"../shelf"
 	"../title"
@@ -41,6 +43,22 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 		return newAccount, err
 	}
 
+	accountDB := api.DBFactory.Find(db.TypeAccount, newAccount.ID)
+	if accountDB == nil {
+		api.Logger.Debug("create account - missing account db")
+		code := codes.New(codes.ScopeAPI, codes.ErrorMissingDB)
+		return newAccount, code
+	}
+	accountDB.EncryptedKey = user.AccountKey
+
+	userDB := api.DBFactory.Find(db.TypeUser, user.ID)
+	if userDB == nil {
+		api.Logger.Debug("create account - missing user db")
+		code := codes.New(codes.ScopeAPI, codes.ErrorMissingDB)
+		return newAccount, code
+	}
+	userDB.EncryptedKey = user.UserKey
+
 	err = api.CreateAccountDefaults(newAccount, user)
 	if err != nil {
 		return newAccount, err
@@ -58,6 +76,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	accountShelf.Default = true
 	err := accountShelf.Save(user.PassphraseKey)
 	if err != nil {
+		api.Logger.Debug("could not create default account shelf")
 		return err
 	}
 
@@ -67,6 +86,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	userShelf.Default = true
 	err = userShelf.Save(user.PassphraseKey)
 	if err != nil {
+		api.Logger.Debug("could not create default user shelf")
 		return err
 	}
 
@@ -74,18 +94,22 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	defaultNotebookTitle := title.New("My Notebook")
 	accountNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeAccount, notebook.ContainerTypeShelf, api.DBFactory, api.Logger)
 	accountNotebook.OwnerID = acct.ID
+	accountNotebook.ContainerID = accountShelf.ID
 	accountNotebook.Default = true
 	err = accountNotebook.Save(user.PassphraseKey)
 	if err != nil {
+		api.Logger.Debug("could not create default account notebook")
 		return err
 	}
 
 	// Create the user-scoped default notebook 'My Notebook' inside the user-scoped default shelf
 	userNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeUser, notebook.ContainerTypeShelf, api.DBFactory, api.Logger)
 	userNotebook.OwnerID = user.ID
+	userNotebook.ContainerID = userShelf.ID
 	userNotebook.Default = true
 	err = userNotebook.Save(user.PassphraseKey)
 	if err != nil {
+		api.Logger.Debug("could not create default user notebook")
 		return err
 	}
 
@@ -96,6 +120,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	accountTrashShelf.Trash = true
 	err = accountTrashShelf.Save(user.PassphraseKey)
 	if err != nil {
+		api.Logger.Debug("could not create account trash shelf")
 		return err
 	}
 
@@ -105,6 +130,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	userTrashShelf.Trash = true
 	err = userTrashShelf.Save(user.PassphraseKey)
 	if err != nil {
+		api.Logger.Debug("could not create user trash shelf")
 		return err
 	}
 

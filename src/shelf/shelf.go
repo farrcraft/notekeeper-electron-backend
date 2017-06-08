@@ -95,8 +95,8 @@ func (shelf *Shelf) getDB(passphraseKey []byte) (*db.DB, error) {
 	return shelfDB, nil
 }
 
-// Save a shelf to the DB
-func (shelf *Shelf) Save(passphraseKey []byte) error {
+// SaveIndex a shelf to the DB
+func (shelf *Shelf) SaveIndex(passphraseKey []byte) error {
 	db, err := shelf.getDB(passphraseKey)
 	if err != nil {
 		return err
@@ -222,8 +222,8 @@ func (shelf *Shelf) LoadAll(passphraseKey []byte) ([]*Shelf, error) {
 	return shelves, err
 }
 
-// Delete a shelf
-func (shelf *Shelf) Delete(passphraseKey []byte) error {
+// DeleteIndex deletes a shelf from the index
+func (shelf *Shelf) DeleteIndex(passphraseKey []byte) error {
 	shelfDB, err := shelf.getDB(passphraseKey)
 	if err != nil {
 		return err

@@ -95,5 +95,5 @@ This bucket stores user profile data for account users.
 
 ### note_list
 
-* `key` unencrypted notebook UUID
+* `key` unencrypted note UUID
 * `value` serialized JSON encrypted w/ notebook-level encryption key

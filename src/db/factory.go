@@ -112,7 +112,7 @@ func (factory *Factory) CloseAccountDBs() {
 }
 
 // Open a DB file & load its encrypted key
-func (factory *Factory) Open(key Key, parentKey Key, ownerID uuid.UUID, passphraseKey []byte) (*DB, error) {
+func (factory *Factory) Open(key Key, parentKey Key, ownerKey Key, passphraseKey []byte) (*DB, error) {
 	var bucketName string
 	var parentDB *DB
 
@@ -136,7 +136,7 @@ func (factory *Factory) Open(key Key, parentKey Key, ownerID uuid.UUID, passphra
 			}
 			// had to open parent fresh which means we need to find the parent's encrypted key too
 			// we need to load the shelf record from either the user or account db
-			ownerDB := factory.Find(parentKey.Type, ownerID)
+			ownerDB := factory.Find(ownerKey.Type, ownerKey.ID)
 			encryptedKey, err := factory.LoadEncryptedKey(parentKey.ID, passphraseKey, []byte("shelf_index"), ownerDB)
 			if err != nil {
 				return nil, err

@@ -7,15 +7,15 @@ import (
 
 // API interface
 type API struct {
-	DBFactory *db.Factory
-	Logger    *logrus.Logger
+	DBRegistry *db.Registry
+	Logger     *logrus.Logger
 }
 
 // New creates a new API object
-func New(factory *db.Factory, logger *logrus.Logger) *API {
+func New(registry *db.Registry, logger *logrus.Logger) *API {
 	api := &API{
-		DBFactory: factory,
-		Logger:    logger,
+		DBRegistry: registry,
+		Logger:     logger,
 	}
 	return api
 }

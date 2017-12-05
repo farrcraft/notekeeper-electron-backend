@@ -1,7 +1,6 @@
 package user
 
 import (
-	"crypto/subtle"
 	"encoding/json"
 	"time"
 
@@ -23,23 +22,23 @@ type Profile struct {
 
 // User is a single user in an account
 type User struct {
-	ID            uuid.UUID      `json:"id"`          // ID is the unique identifier of the user
-	AccountID     uuid.UUID      `json:"account_id"`  // ID is the unique identifier of the account
-	Profile       *Profile       `json:"profile"`     // Profile is the user information that is visible to all users in an account
-	Active        bool           `json:"-"`           // Active indicates whether the user is active or not
-	Created       time.Time      `json:"created"`     // Created is the time when the user was created
-	Updated       time.Time      `json:"updated"`     // Updated is the time when the user was last created
-	AccountKey    []byte         `json:"account_key"` // AccountKey is the encrypted version of the account-level encryption key
-	UserKey       []byte         `json:"user_key"`    // UserKey is the encrypted version of the user-level encryption key
-	PassphraseKey []byte         `json:"-"`           // PassphraseKey is the key derived from the passphrase
-	Salt          []byte         `json:"-"`           // Salt is the unique salt for generating the passphrase key
-	Shelves       []*shelf.Shelf `json:"-"`           // Shelves is the set of shelves that belong to the user
-	Logger        *logrus.Logger `json:"-"`           // Logger is a log instance
-	DBFactory     *db.Factory    `json:"-"`           // DBFactory provides access to dbs
+	ID            uuid.UUID      `json:"id"`             // ID is the unique identifier of the user
+	AccountID     uuid.UUID      `json:"account_id"`     // ID is the unique identifier of the account
+	Profile       *Profile       `json:"profile"`        // Profile is the user information that is visible to all users in an account
+	Active        bool           `json:"-"`              // Active indicates whether the user is active or not
+	Created       time.Time      `json:"created"`        // Created is the time when the user was created
+	Updated       time.Time      `json:"updated"`        // Updated is the time when the user was last created
+	AccountKey    []byte         `json:"account_key"`    // AccountKey is the encrypted version of the account-level encryption key
+	UserKey       []byte         `json:"encryption_key"` // UserKey is the encrypted version of the user-level encryption key
+	PassphraseKey []byte         `json:"-"`              // PassphraseKey is the key derived from the passphrase
+	Salt          []byte         `json:"-"`              // Salt is the unique salt for generating the passphrase key
+	Shelves       []*shelf.Shelf `json:"-"`              // Shelves is the set of shelves that belong to the user
+	Logger        *logrus.Logger `json:"-"`              // Logger is a log instance
+	DBRegistry    *db.Registry   `json:"-"`              // DBRegistry provides access to dbs
 }
 
 // New creates a new user object
-func New(dbFactory *db.Factory, logger *logrus.Logger, accountID uuid.UUID, email string) *User {
+func New(dbRegistry *db.Registry, logger *logrus.Logger, accountID uuid.UUID, email string) *User {
 	now := time.Now()
 	user := &User{
 		ID:        uuid.NewV4(),
@@ -47,80 +46,32 @@ func New(dbFactory *db.Factory, logger *logrus.Logger, accountID uuid.UUID, emai
 		Profile: &Profile{
 			Email: email,
 		},
-		Active:    true,
-		Created:   now,
-		Updated:   now,
-		DBFactory: dbFactory,
-		Logger:    logger,
+		Active:     true,
+		Created:    now,
+		Updated:    now,
+		DBRegistry: dbRegistry,
+		Logger:     logger,
 	}
 	return user
 }
 
-// Lookup a user id in the account database
-func (user *User) Lookup() error {
-	originalID := user.ID
-	user.ID = uuid.Nil
-	db := user.DBFactory.Find(db.TypeAccount, user.AccountID)
-	err := db.DB.View(func(tx *bolt.Tx) error {
-		// Assume bucket exists and has keys
-		bucket := tx.Bucket([]byte("user_map"))
-		if bucket == nil {
-			code := codes.New(codes.ScopeUser, codes.ErrorBucketMissing)
-			return code
-		}
-		cursor := bucket.Cursor()
-
-		c := crypto.New(user.Logger)
-		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
-			// extract the salt from the existing encrypted email
-			salt, encryptedEmail := crypto.ExtractSalt(key)
-			// create a new key using the extracted salt and the unencrypted email we're searching for
-			checkEmail, err := c.DeriveKey([]byte(user.Profile.Email), salt[:])
-			if err != nil {
-				user.Logger.Debug("Error deriving user map key - ", err)
-				code := codes.New(codes.ScopeUser, codes.ErrorDeriveKey)
-				return code
-			}
-			// the new key should match the existing key if we have the right email and salt
-			if subtle.ConstantTimeCompare(encryptedEmail[:], checkEmail[:]) == 1 {
-				user.ID, err = uuid.FromBytes(value)
-				if err != nil {
-					user.Logger.Debug("Error converting email map uuid - ", err)
-					code := codes.New(codes.ScopeUser, codes.ErrorConvertID)
-					return code
-				}
-				// the salt stored in the email key is also the primary user passphrase key salt
-				user.Salt = salt[:]
-				return nil
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		if codes.IsInternalError(err) {
-			return err
-		}
-		// [FIXME] - handle unknown error
-	}
-	if user.ID == uuid.Nil {
-		user.ID = originalID
-		code := codes.New(codes.ScopeUser, codes.ErrorLookup)
-		return code
-	}
-	return nil
-}
-
 // Load the user data for a user from the account database
 func (user *User) Load(passphrase string) error {
-	userDB := user.DBFactory.Find(db.TypeUser, user.ID)
-	if userDB == nil {
-		var err error
-		userDB, err = user.DBFactory.DB(db.TypeUser, user.ID)
-		if err != nil {
-			return err
-		}
+	// salt will have already been provided from a previous Lookup() operation
+	c := crypto.New(user.Logger)
+	passphraseKey, err := c.DeriveKey([]byte(passphrase), user.Salt)
+	if err != nil {
+		user.Logger.Debug("Error deriving key from passphrase - ", err)
+		code := codes.New(codes.ScopeUser, codes.ErrorDeriveKey)
+		return code
 	}
-	err := userDB.DB.View(func(tx *bolt.Tx) error {
+
+	userKey := db.Key{Type: db.TypeUser, ID: user.ID}
+	userDBHandle, err := user.DBRegistry.GetHandle(userKey, passphraseKey[:])
+	if err != nil {
+		return err
+	}
+	err = userDBHandle.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("user"))
 		cursor := bucket.Cursor()
@@ -131,14 +82,6 @@ func (user *User) Load(passphrase string) error {
 			return code
 		}
 
-		// salt will have already been provided from a previous Lookup() operation
-		c := crypto.New(user.Logger)
-		passphraseKey, err := c.DeriveKey([]byte(passphrase), user.Salt)
-		if err != nil {
-			user.Logger.Debug("Error deriving key from passphrase - ", err)
-			code := codes.New(codes.ScopeUser, codes.ErrorDeriveKey)
-			return code
-		}
 		// need to decrypt value
 		// the user data is a special case - it is sealed with the passphrase key instead
 		// of the user db key - that key won't be available until the user data is unsealed.
@@ -157,7 +100,7 @@ func (user *User) Load(passphrase string) error {
 			return code
 		}
 		user.PassphraseKey = passphraseKey[:]
-		userDB.EncryptedKey = user.UserKey
+		userDBHandle.EncryptedKey = user.UserKey
 		return nil
 	})
 	if err != nil {
@@ -171,12 +114,13 @@ func (user *User) Load(passphrase string) error {
 
 // Save saves the user to the database
 func (user *User) Save() error {
-	userDB, err := user.DBFactory.DB(db.TypeUser, user.ID)
+	userKey := db.Key{Type: db.TypeUser, ID: user.ID}
+	userDBHandle, err := user.DBRegistry.GetHandle(userKey, user.PassphraseKey)
 	if err != nil {
 		return err
 	}
 	c := crypto.New(user.Logger)
-	err = userDB.DB.Update(func(tx *bolt.Tx) error {
+	err = userDBHandle.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("user"))
 		if err != nil {
 			user.Logger.Debug("Error creating users bucket - ", err)
@@ -209,40 +153,6 @@ func (user *User) Save() error {
 			return err
 		}
 		user.Logger.Debug("Error saving user - ", err)
-		code := codes.New(codes.ScopeUser, codes.ErrorSave)
-		return code
-	}
-	// Since users are keyed by only an unencrypted id in the db
-	// we also need to store a mapping between a key derived from the email address and the id
-	// otherwise there is no way to look up a user without taking a brute force decryption test approach
-	accountDB := user.DBFactory.Find(db.TypeAccount, user.AccountID)
-	err = accountDB.DB.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte("user_map"))
-		if err != nil {
-			user.Logger.Debug("Error creating user_map bucket - ", err)
-			code := codes.New(codes.ScopeUser, codes.ErrorCreateBucket)
-			return code
-		}
-		encryptedEmail, err := c.DeriveKey([]byte(user.Profile.Email), user.Salt)
-		if err != nil {
-			user.Logger.Debug("Error creating user map key - ", err)
-			code := codes.New(codes.ScopeUser, codes.ErrorDeriveKey)
-			return code
-		}
-		saltedKey := c.EmbedSalt(encryptedEmail, user.Salt)
-		err = bucket.Put(saltedKey, user.ID.Bytes())
-		if err != nil {
-			user.Logger.Debug("Error saving user map - ", err)
-			code := codes.New(codes.ScopeUser, codes.ErrorWriteBucket)
-			return code
-		}
-		return nil
-	})
-	if err != nil {
-		if codes.IsInternalError(err) {
-			return err
-		}
-		user.Logger.Debug("Error mapping user - ", err)
 		code := codes.New(codes.ScopeUser, codes.ErrorSave)
 		return code
 	}

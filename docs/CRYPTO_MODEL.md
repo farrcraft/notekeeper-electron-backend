@@ -37,6 +37,19 @@ To access content:
 
 Decrypted keys can be cached in memory while application is active (like 1password)
 
+## Encryption Keys
+
+The encrypted version of a DB's encryption key is stored in the metadata index bucket for that DB type.
+
+Key types & locations:
+
+* Master
+* Account
+* User
+* Shelf
+* Collection
+* Notebook
+
 
 ## Decryption Flow
 
@@ -46,7 +59,7 @@ Here is how everything is decrypted going all the way down from the start.
 Given:
 * account name
 * user email
-* use passphrase
+* user passphrase
 
 Database Files:
 

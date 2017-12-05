@@ -60,7 +60,7 @@ func GetTags(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create a new tag instance to act as a proxy
-	t := tag.New(nil, scope, server.DBFactory, server.Logger)
+	t := tag.New(nil, scope, server.DBRegistry, server.Logger)
 	tags, err := t.LoadAll(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -113,7 +113,7 @@ func CreateTag(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	newTag := tag.New(t, scope, server.DBFactory, server.Logger)
+	newTag := tag.New(t, scope, server.DBRegistry, server.Logger)
 	err = newTag.Save(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -156,7 +156,7 @@ func SaveTag(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	newTag := tag.New(t, scope, server.DBFactory, server.Logger)
+	newTag := tag.New(t, scope, server.DBRegistry, server.Logger)
 	newTag.ID = id
 	err = newTag.Save(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
@@ -197,7 +197,7 @@ func DeleteTag(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	t := tag.New(nil, scope, server.DBFactory, server.Logger)
+	t := tag.New(nil, scope, server.DBRegistry, server.Logger)
 	t.ID = id
 	err = t.Delete(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {

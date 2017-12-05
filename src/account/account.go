@@ -1,7 +1,6 @@
 package account
 
 import (
-	"crypto/subtle"
 	"encoding/json"
 	"time"
 
@@ -17,34 +16,17 @@ import (
 
 // Account is the database holding one or more users and their collection of notes
 type Account struct {
-	ID         uuid.UUID       `json:"id"`
-	Name       string          `json:"name"`
-	Users      []*user.Profile `json:"users"`
-	ActiveUser *user.User      `json:"-"`           // ActiveUser is the currently active user of the account
-	DBFactory  *db.Factory     `json:"-"`           // DB provides access to databases
-	LicenseKey string          `json:"license_key"` // LicenseKey is the token which determines the available application features
-	Shelves    []*shelf.Shelf  `json:"-"`
-	Created    time.Time       `json:"created"`
-	Updated    time.Time       `json:"updated"`
-	Logger     *logrus.Logger  `json:"-"`
-}
-
-// MapCount returns the number of records in the account_map table
-func MapCount(factory *db.Factory) int {
-	count := 0
-	db := factory.Find(db.TypeMaster, uuid.Nil)
-	db.DB.View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte("account_map"))
-		if bucket == nil {
-			return nil
-		}
-		cursor := bucket.Cursor()
-		for key, _ := cursor.First(); key != nil; key, _ = cursor.Next() {
-			count++
-		}
-		return nil
-	})
-	return count
+	ID           uuid.UUID       `json:"id"`
+	Name         string          `json:"name"`
+	Users        []*user.Profile `json:"users"`
+	ActiveUser   *user.User      `json:"-"`              // ActiveUser is the currently active user of the account
+	DBRegistry   *db.Registry    `json:"-"`              // DBRegistry provides access to databases
+	LicenseKey   string          `json:"license_key"`    // LicenseKey is the token which determines the available application features
+	EncryptedKey []byte          `json:"encryption_key"` // EncryptedKey is the encrypted encryption key for the account DB
+	Shelves      []*shelf.Shelf  `json:"-"`
+	Created      time.Time       `json:"created"`
+	Updated      time.Time       `json:"updated"`
+	Logger       *logrus.Logger  `json:"-"`
 }
 
 // IsLocked returns whether the account is in a locked state or not
@@ -58,10 +40,14 @@ func (account *Account) IsLocked() bool {
 	return false
 }
 
-// OpenAccountDb opens the database file for a account
+// OpenDB opens the database file for a account
 // The file is created if it doesn't already exist
-func (account *Account) OpenAccountDb() error {
-	_, err := account.DBFactory.DB(db.TypeAccount, account.ID)
+func (account *Account) OpenDB(passphraseKey []byte) error {
+	key := db.Key{
+		ID:   account.ID,
+		Type: db.TypeAccount,
+	}
+	_, err := account.DBRegistry.GetHandle(key, passphraseKey)
 	if err != nil {
 		return err
 	}
@@ -69,24 +55,31 @@ func (account *Account) OpenAccountDb() error {
 }
 
 // New creates a new Account object
-func New(dbFactory *db.Factory, logger *logrus.Logger, name string) *Account {
+func New(dbRegistry *db.Registry, logger *logrus.Logger, name string) *Account {
 	now := time.Now()
 	account := &Account{
-		ID:        uuid.NewV4(),
-		Name:      name,
-		DBFactory: dbFactory,
-		Logger:    logger,
-		Created:   now,
-		Updated:   now,
+		ID:         uuid.NewV4(),
+		Name:       name,
+		DBRegistry: dbRegistry,
+		Logger:     logger,
+		Created:    now,
+		Updated:    now,
 	}
 	return account
 }
 
 // Save saves the account to the database
-func (account *Account) Save() error {
+func (account *Account) Save(passphraseKey []byte) error {
 	// account data is stored in the master database
-	accountDB := account.DBFactory.Find(db.TypeAccount, account.ID)
-	err := accountDB.DB.Update(func(tx *bolt.Tx) error {
+	accountKey := db.Key{
+		ID:   account.ID,
+		Type: db.TypeAccount,
+	}
+	accountDBHandle, err := account.DBRegistry.GetHandle(accountKey, passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = accountDBHandle.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("account"))
 		if err != nil {
 			account.Logger.Debug("Error creating accounts bucket - ", err)
@@ -133,104 +126,20 @@ func (account *Account) Save() error {
 		code := codes.New(codes.ScopeAccount, codes.ErrorSave)
 		return code
 	}
-
-	// Since accounts are keyed by only an unencrypted id in the db
-	// we also need to store a mapping between a key derived from the name and the id
-	// otherwise there is no way to look up an account without taking a brute force decryption test approach
-	masterDB := account.DBFactory.Find(db.TypeMaster, uuid.Nil)
-	err = masterDB.DB.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte("account_map"))
-		if err != nil {
-			account.Logger.Debug("Error creating account_map bucket - ", err)
-			code := codes.New(codes.ScopeAccount, codes.ErrorCreateBucket)
-			return code
-		}
-		c := crypto.New(account.Logger)
-		encryptedName, err := c.DeriveSaltedKey([]byte(account.Name))
-		if err != nil {
-			account.Logger.Debug("Error creating account map key - ", err)
-			code := codes.New(codes.ScopeAccount, codes.ErrorDeriveKey)
-			return code
-		}
-		err = bucket.Put(encryptedName, account.ID.Bytes())
-		if err != nil {
-			account.Logger.Debug("Error saving account map - ", err)
-			code := codes.New(codes.ScopeAccount, codes.ErrorWriteBucket)
-			return code
-		}
-		return nil
-	})
-	if err != nil {
-		if codes.IsInternalError(err) {
-			return err
-		}
-		account.Logger.Debug("Error mapping account - ", err)
-		code := codes.New(codes.ScopeAccount, codes.ErrorSave)
-		return code
-	}
-	return nil
-}
-
-// Lookup searches the database for a matching account name and loads it from the db
-func (account *Account) Lookup() error {
-	originalID := account.ID
-	account.ID = uuid.Nil
-	// we don't expect many accounts to exist in the db (typically just one), so we iterate through them all
-	db := account.DBFactory.Find(db.TypeMaster, uuid.Nil)
-	err := db.DB.View(func(tx *bolt.Tx) error {
-		// Assume bucket exists and has keys
-		bucket := tx.Bucket([]byte("account_map"))
-		// If bucket doesn't exist, no accounts have been created yet
-		if bucket == nil {
-			account.Logger.Debug("account map bucket does not exist")
-			return nil
-		}
-		cursor := bucket.Cursor()
-		c := crypto.New(account.Logger)
-		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
-			// extract the salt from the existing encrypted name
-			salt, encryptedName := crypto.ExtractSalt(key)
-			// create a new key using the extracted salt and the unencrypted name we're searching for
-			checkName, err := c.DeriveKey([]byte(account.Name), salt[:])
-			if err != nil {
-				account.Logger.Debug("Error deriving account map key - ", err)
-				code := codes.New(codes.ScopeAccount, codes.ErrorDeriveKey)
-				return code
-			}
-			// the new key should match the existing key if we have the right name and salt
-			if subtle.ConstantTimeCompare(encryptedName[:], checkName[:]) == 1 {
-				account.ID, err = uuid.FromBytes(value)
-				if err != nil {
-					account.Logger.Debug("Error converting account map uuid - ", err)
-					code := codes.New(codes.ScopeAccount, codes.ErrorConvertID)
-					return code
-				}
-				return nil
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		if codes.IsInternalError(err) {
-			return err
-		}
-		account.Logger.Debug("Error looking up account map - ", err)
-		code := codes.New(codes.ScopeAccount, codes.ErrorLookup)
-		return code
-	}
-	if account.ID == uuid.Nil {
-		account.ID = originalID
-		account.Logger.Debug("account lookup - no account found for [", account.Name, "]")
-		code := codes.New(codes.ScopeAccount, codes.ErrorLookup)
-		return code
-	}
 	return nil
 }
 
 // Load an account from the database
-func (account *Account) Load() error {
-	db := account.DBFactory.Find(db.TypeAccount, account.ID)
-	err := db.DB.View(func(tx *bolt.Tx) error {
+func (account *Account) Load(passphraseKey []byte) error {
+	key := db.Key{
+		ID:   account.ID,
+		Type: db.TypeAccount,
+	}
+	handle, err := account.DBRegistry.GetHandle(key, passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = handle.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("account"))
 		if bucket == nil {
@@ -269,7 +178,7 @@ func (account *Account) Load() error {
 			code := codes.New(codes.ScopeAccount, codes.ErrorDecode)
 			return code
 		}
-		db.EncryptedKey = account.ActiveUser.AccountKey
+		handle.EncryptedKey = account.ActiveUser.AccountKey
 		return nil
 	})
 	if err != nil {

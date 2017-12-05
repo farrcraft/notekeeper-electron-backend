@@ -79,12 +79,12 @@ type Note struct {
 	Updated       time.Time      `json:"updated"`        // Updated is the time when note was last updated
 	Locked        bool           `json:"locked"`         // Locked indicates whether the note can be modified
 	TemplateID    uuid.UUID      `json:"template_id"`    // TemplateID indicates the ID of a template (if the note was created from a template)
-	DBFactory     *db.Factory    `json:"-"`
+	DBRegistry    *db.Registry   `json:"-"`
 	Logger        *logrus.Logger `json:"-"`
 }
 
 // New creates a new note object
-func New(title *title.Title, scope Scope, store StoreType, dbFactory *db.Factory, logger *logrus.Logger) *Note {
+func New(title *title.Title, scope Scope, store StoreType, dbRegistry *db.Registry, logger *logrus.Logger) *Note {
 	now := time.Now()
 	note := &Note{
 		ID:            uuid.NewV4(),
@@ -95,27 +95,31 @@ func New(title *title.Title, scope Scope, store StoreType, dbFactory *db.Factory
 		Updated:       now,
 		Locked:        false,
 		RevisionCount: 0,
-		DBFactory:     dbFactory,
+		DBRegistry:    dbRegistry,
 		Logger:        logger,
 	}
 	return note
 }
 
-func (note *Note) getDB() *db.DB {
-	var noteDB *db.DB
+func (note *Note) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
+	var key db.Key
+	key.ID = note.StoreID
 	if note.StoreType == StoreTypeCollection {
-		noteDB = note.DBFactory.Find(db.TypeCollection, note.StoreID)
+		key.Type = db.TypeCollection
 	} else {
-		noteDB = note.DBFactory.Find(db.TypeShelf, note.StoreID)
+		key.Type = db.TypeShelf
 	}
-	// [FIXME] - open if db nil
-	return noteDB
+	handle, err := note.DBRegistry.GetHandle(key, passphraseKey)
+	return handle, err
 }
 
 // Save a note
 func (note *Note) Save(passphraseKey []byte) error {
-	noteDB := note.getDB()
-	err := noteDB.DB.Update(func(tx *bolt.Tx) error {
+	noteDBHandle, err := note.getDBHandle(passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = noteDBHandle.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		// [FIXME] - notes are grouped into unique buckets by notebook id
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notes"))
@@ -135,7 +139,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 
 		// retrieve the encryption key
 		c := crypto.New(note.Logger)
-		decryptedKey, err := c.Open(passphraseKey, noteDB.EncryptedKey)
+		decryptedKey, err := c.Open(passphraseKey, noteDBHandle.EncryptedKey)
 		if err != nil {
 			note.Logger.Debug("Error retrieving note key - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
@@ -176,16 +180,19 @@ func (note *Note) Save(passphraseKey []byte) error {
 func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 	var notes []*Note
 
-	noteDB := note.getDB()
+	noteDBHandle, err := note.getDBHandle(passphraseKey)
+	if err != nil {
+		return nil, err
+	}
 	c := crypto.New(note.Logger)
-	noteKey, err := c.Open(passphraseKey, noteDB.EncryptedKey)
+	noteKey, err := c.Open(passphraseKey, noteDBHandle.EncryptedKey)
 	if err != nil {
 		note.Logger.Debug("Error opening note key - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
 		return notes, code
 	}
 
-	err = noteDB.DB.View(func(tx *bolt.Tx) error {
+	err = noteDBHandle.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
@@ -198,8 +205,8 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
 			newNote := &Note{
-				DBFactory: note.DBFactory,
-				Logger:    note.Logger,
+				DBRegistry: note.DBRegistry,
+				Logger:     note.Logger,
 			}
 
 			// decrypt value
@@ -236,16 +243,19 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 
 // Load a note
 func (note *Note) Load(passphraseKey []byte) error {
-	noteDB := note.getDB()
+	noteDBHandle, err := note.getDBHandle(passphraseKey)
+	if err != nil {
+		return err
+	}
 	c := crypto.New(note.Logger)
-	noteKey, err := c.Open(passphraseKey, noteDB.EncryptedKey)
+	noteKey, err := c.Open(passphraseKey, noteDBHandle.EncryptedKey)
 	if err != nil {
 		note.Logger.Debug("Error opening note key - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
 		return code
 	}
 
-	err = noteDB.DB.View(func(tx *bolt.Tx) error {
+	err = noteDBHandle.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
@@ -294,8 +304,11 @@ func (note *Note) Load(passphraseKey []byte) error {
 
 // Delete a note
 func (note *Note) Delete(passphraseKey []byte) error {
-	noteDB := note.getDB()
-	err := noteDB.DB.Update(func(tx *bolt.Tx) error {
+	noteDBHandle, err := note.getDBHandle(passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = noteDBHandle.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
 			note.Logger.Debug("note bucket does not exist")

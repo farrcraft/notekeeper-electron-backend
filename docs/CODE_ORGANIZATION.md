@@ -14,6 +14,11 @@ possible.  The domain or api layer takes on all of that logic and gives us an
 independent surface to test against without having to involve RPC in the test
 harness.
 
+## appdir
+
+The `appdir` module provides a simple facility for determining the application's
+data (configuration) directory across different platforms / build modes (release
+vs. debug) at runtime.
 
 ## proto
 

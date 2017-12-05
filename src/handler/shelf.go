@@ -58,15 +58,14 @@ func GetShelves(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	// create a new shelf instance to act as a proxy
-	s := shelf.New(nil, scope, server.DBFactory, server.Logger)
-	shelves, err := s.LoadAll(server.Account.ActiveUser.PassphraseKey)
+	index := shelf.NewIndex(scope, server.DBRegistry, server.Logger)
+	err = index.LoadAll(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 		return response, nil
 	}
 
-	for _, s := range shelves {
+	for _, s := range index.Shelves {
 		m := &messages.Shelf{
 			Id:      s.ID.String(),
 			Name:    rpc.TitleToMessage(s.Title),
@@ -114,8 +113,10 @@ func CreateShelf(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	s := shelf.New(t, scope, server.DBFactory, server.Logger)
-	err = s.Save(server.Account.ActiveUser.PassphraseKey)
+	s := shelf.New(t, scope, server.DBRegistry, server.Logger)
+
+	index := shelf.NewIndex(scope, server.DBRegistry, server.Logger)
+	err = index.Save(s, server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 	} else {
@@ -157,10 +158,12 @@ func SaveShelf(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	s := shelf.New(t, scope, server.DBFactory, server.Logger)
+	s := shelf.New(t, scope, server.DBRegistry, server.Logger)
 	s.ID = id
 	s.Locked = request.Locked
-	err = s.Save(server.Account.ActiveUser.PassphraseKey)
+
+	index := shelf.NewIndex(scope, server.DBRegistry, server.Logger)
+	err = index.Save(s, server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 	}
@@ -199,9 +202,11 @@ func DeleteShelf(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	s := shelf.New(nil, scope, server.DBFactory, server.Logger)
+	s := shelf.New(nil, scope, server.DBRegistry, server.Logger)
 	s.ID = id
-	err = s.Delete(server.Account.ActiveUser.PassphraseKey)
+
+	index := shelf.NewIndex(scope, server.DBRegistry, server.Logger)
+	err = index.Delete(s, server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 	}

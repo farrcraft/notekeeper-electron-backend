@@ -62,7 +62,7 @@ func CreateNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	notebook := notebook.New(t, scope, container, server.DBFactory, server.Logger)
+	notebook := notebook.New(t, scope, container, server.DBRegistry, server.Logger)
 	notebook.OwnerID = ownerID
 	notebook.ContainerID = containerID
 
@@ -129,7 +129,7 @@ func GetNotebooks(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create a new notebook instance to act as a proxy
-	nb := notebook.New(nil, scope, container, server.DBFactory, server.Logger)
+	nb := notebook.New(nil, scope, container, server.DBRegistry, server.Logger)
 	nb.OwnerID = ownerID
 	nb.ContainerID = containerID
 
@@ -217,7 +217,7 @@ func SaveNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	notebook := notebook.New(t, scope, container, server.DBFactory, server.Logger)
+	notebook := notebook.New(t, scope, container, server.DBRegistry, server.Logger)
 	notebook.ID = id
 	notebook.Default = request.Default
 	notebook.Locked = request.Locked
@@ -290,7 +290,7 @@ func DeleteNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	notebook := notebook.New(nil, scope, container, server.DBFactory, server.Logger)
+	notebook := notebook.New(nil, scope, container, server.DBRegistry, server.Logger)
 	notebook.ID = id
 	notebook.OwnerID = ownerID
 	notebook.ContainerID = containerID

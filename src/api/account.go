@@ -14,16 +14,16 @@ import (
 // CreateAccount creates a new account
 func (api *API) CreateAccount(name string, email string, passphrase string) (*account.Account, error) {
 	// create account object
-	newAccount := account.New(api.DBFactory, api.Logger, name)
+	newAccount := account.New(api.DBRegistry, api.Logger, name)
 
 	// create a new db file for the account
-	err := newAccount.OpenAccountDb()
+	err := newAccount.OpenDB()
 	if err != nil {
 		return newAccount, err
 	}
 
 	// create user object & attach it to the account
-	user := user.New(api.DBFactory, api.Logger, newAccount.ID, email)
+	user := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
 
 	err = user.CreateKeys([]byte(passphrase))
 	if err != nil {
@@ -43,21 +43,35 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 		return newAccount, err
 	}
 
-	accountDB := api.DBFactory.Find(db.TypeAccount, newAccount.ID)
-	if accountDB == nil {
+	key := db.Key{
+		ID:   newAccount.ID,
+		Type: db.TypeAccount,
+	}
+	accountDBHandle, err := api.DBRegistry.GetHandle(key)
+	if err != nil {
+		return newAccount, err
+	}
+	if accountDBHandle == nil {
 		api.Logger.Debug("create account - missing account db")
 		code := codes.New(codes.ScopeAPI, codes.ErrorMissingDB)
 		return newAccount, code
 	}
-	accountDB.EncryptedKey = user.AccountKey
+	accountDBHandle.EncryptedKey = user.AccountKey
 
-	userDB := api.DBFactory.Find(db.TypeUser, user.ID)
-	if userDB == nil {
+	userKey := db.Key{
+		ID:   user.ID,
+		Type: db.TypeUser,
+	}
+	userDBHandle, err := api.DBRegistry.GetHandle(userKey)
+	if err != nil {
+		return newAccount, err
+	}
+	if userDBHandle == nil {
 		api.Logger.Debug("create account - missing user db")
 		code := codes.New(codes.ScopeAPI, codes.ErrorMissingDB)
 		return newAccount, code
 	}
-	userDB.EncryptedKey = user.UserKey
+	userDBHandle.EncryptedKey = user.UserKey
 
 	err = api.CreateAccountDefaults(newAccount, user)
 	if err != nil {
@@ -71,20 +85,24 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) error {
 	// Create the account-scoped default shelf 'My Shelf'
 	defaultShelfTitle := title.New("My Shelf")
-	accountShelf := shelf.New(defaultShelfTitle, shelf.ScopeAccount, api.DBFactory, api.Logger)
-	accountShelf.AccountID = acct.ID
+	accountShelf := shelf.New(defaultShelfTitle, shelf.ScopeAccount, api.DBRegistry, api.Logger)
+	accountShelf.OwnerID = acct.ID
 	accountShelf.Default = true
-	err := accountShelf.Save(user.PassphraseKey)
+
+	index := shelf.NewIndex(shelf.ScopeAccount, api.DBRegistry, api.Logger)
+	err := index.Save(accountShelf, user.PassphraseKey)
 	if err != nil {
 		api.Logger.Debug("could not create default account shelf")
 		return err
 	}
 
 	// Create the user-scoped default shelf 'My Shelf'
-	userShelf := shelf.New(defaultShelfTitle, shelf.ScopeUser, api.DBFactory, api.Logger)
-	userShelf.UserID = user.ID
+	userShelf := shelf.New(defaultShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
+	userShelf.OwnerID = user.ID
 	userShelf.Default = true
-	err = userShelf.Save(user.PassphraseKey)
+
+	userIndex := shelf.NewIndex(shelf.ScopeUser, api.DBRegistry, api.Logger)
+	err = userIndex.Save(userShelf, user.PassphraseKey)
 	if err != nil {
 		api.Logger.Debug("could not create default user shelf")
 		return err
@@ -92,7 +110,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 
 	// Create the account-scoped default notebook 'My Notebook' inside the account-scoped default shelf
 	defaultNotebookTitle := title.New("My Notebook")
-	accountNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeAccount, notebook.ContainerTypeShelf, api.DBFactory, api.Logger)
+	accountNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeAccount, notebook.ContainerTypeShelf, api.DBRegistry, api.Logger)
 	accountNotebook.OwnerID = acct.ID
 	accountNotebook.ContainerID = accountShelf.ID
 	accountNotebook.Default = true
@@ -103,7 +121,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	}
 
 	// Create the user-scoped default notebook 'My Notebook' inside the user-scoped default shelf
-	userNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeUser, notebook.ContainerTypeShelf, api.DBFactory, api.Logger)
+	userNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeUser, notebook.ContainerTypeShelf, api.DBRegistry, api.Logger)
 	userNotebook.OwnerID = user.ID
 	userNotebook.ContainerID = userShelf.ID
 	userNotebook.Default = true
@@ -115,20 +133,22 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 
 	// Create the account-scoped special 'Trash' shelf
 	trashShelfTitle := title.New("Trash")
-	accountTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeAccount, api.DBFactory, api.Logger)
-	accountTrashShelf.AccountID = acct.ID
+	accountTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeAccount, api.DBRegistry, api.Logger)
+	accountTrashShelf.OwnerID = acct.ID
 	accountTrashShelf.Trash = true
-	err = accountTrashShelf.Save(user.PassphraseKey)
+
+	err = index.Save(accountTrashShelf, user.PassphraseKey)
 	if err != nil {
 		api.Logger.Debug("could not create account trash shelf")
 		return err
 	}
 
 	// Create the user-scoped special 'Trash' shelf
-	userTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeUser, api.DBFactory, api.Logger)
-	userTrashShelf.UserID = user.ID
+	userTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
+	userTrashShelf.OwnerID = user.ID
 	userTrashShelf.Trash = true
-	err = userTrashShelf.Save(user.PassphraseKey)
+
+	err = userIndex.Save(userTrashShelf, user.PassphraseKey)
 	if err != nil {
 		api.Logger.Debug("could not create user trash shelf")
 		return err
@@ -190,7 +210,7 @@ func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
 // SigninAccount signs in to an account
 func (api *API) SigninAccount(name string, email string, passphrase string) (*account.Account, error) {
 	// attempt to find the account (lookup)
-	newAccount := account.New(api.DBFactory, api.Logger, name)
+	newAccount := account.New(api.DBRegistry, api.Logger, name)
 	err := newAccount.Lookup()
 	if err != nil {
 		return nil, err
@@ -202,17 +222,17 @@ func (api *API) SigninAccount(name string, email string, passphrase string) (*ac
 	}
 
 	// authenticate the user
-	user := user.New(api.DBFactory, api.Logger, newAccount.ID, email)
+	user := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
 	// resolve the user id from the user map in the account db
 	err = user.Lookup()
 	if err != nil {
-		api.DBFactory.CloseAccountDBs()
+		api.DBRegistry.CloseAccountDBs()
 		return nil, err
 	}
 	// load the user from the user db
 	err = user.Load(passphrase)
 	if err != nil {
-		api.DBFactory.CloseAccountDBs()
+		api.DBRegistry.CloseAccountDBs()
 		return nil, err
 	}
 
@@ -222,7 +242,7 @@ func (api *API) SigninAccount(name string, email string, passphrase string) (*ac
 	// load the account
 	err = newAccount.Load()
 	if err != nil {
-		api.DBFactory.CloseAccountDBs()
+		api.DBRegistry.CloseAccountDBs()
 		return nil, err
 	}
 	return newAccount, nil
@@ -239,11 +259,11 @@ func (api *API) SignoutAccount(acct *account.Account) error {
 		return nil
 	}
 	crypto.Zero(acct.ActiveUser.PassphraseKey)
-	if acct.DBFactory == nil {
-		api.Logger.Debug("signout missing db factory")
+	if acct.DBRegistry == nil {
+		api.Logger.Debug("signout missing db registry")
 		return nil
 	}
-	acct.DBFactory.CloseAccountDBs()
+	acct.DBRegistry.CloseAccountDBs()
 	return nil
 }
 
@@ -259,10 +279,10 @@ func (api *API) LockAccount(acct *account.Account) error {
 	}
 	acct.ActiveUser.PassphraseKey = []byte{}
 	//crypto.Zero(acct.ActiveUser.PassphraseKey)
-	if acct.DBFactory == nil {
+	if acct.DBRegistry == nil {
 		api.Logger.Debug("lock account missing db factory")
 		return nil
 	}
-	acct.DBFactory.CloseAccountDBs()
+	acct.DBRegistry.CloseAccountDBs()
 	return nil
 }

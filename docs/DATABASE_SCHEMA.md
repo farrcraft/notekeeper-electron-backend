@@ -15,7 +15,7 @@
 * Collection (1 per collection UUID)
 
 
-## Database Hierarchy
+## Database Indices
 
 Each database contains index buckets for any databases directly below it.
 
@@ -25,6 +25,9 @@ Each database contains index buckets for any databases directly below it.
 * user dbs contain index of user-level shelves
 * shelf dbs contain index of collections & notebook content
 * collection dbs contain notebook content
+
+
+master db -> account db -> user db -> shelf -> collection
 
 
 # Master Database

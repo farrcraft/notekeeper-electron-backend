@@ -49,17 +49,17 @@ func GetCollections(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create a new collection instance to act as a proxy
-	c := collection.New(nil, scope, server.DBFactory, server.Logger)
-	c.ShelfID = shelfID
-	c.OwnerID = ownerID
+	index := collection.NewIndex(scope, server.DBRegistry, server.Logger)
+	index.ShelfID = shelfID
+	index.OwnerID = ownerID
 
-	collections, err := c.LoadAll(server.Account.ActiveUser.PassphraseKey)
+	err = index.LoadAll(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 		return response, nil
 	}
 
-	for _, c := range collections {
+	for _, c := range index.Collections {
 		m := &messages.Collection{
 			Id:      c.ID.String(),
 			ShelfId: shelfID.String(),
@@ -113,11 +113,15 @@ func CreateCollection(server *rpc.Server, message []byte) (proto.Message, error)
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	c := collection.New(t, scope, server.DBFactory, server.Logger)
+	c := collection.New(t, scope, server.DBRegistry, server.Logger)
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID
 
-	err = c.Save(server.Account.ActiveUser.PassphraseKey)
+	index := collection.NewIndex(scope, server.DBRegistry, server.Logger)
+	index.ShelfID = shelfID
+	index.OwnerID = ownerID
+
+	err = index.Save(c, server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 	} else {
@@ -166,12 +170,16 @@ func SaveCollection(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	c := collection.New(t, scope, server.DBFactory, server.Logger)
+	c := collection.New(t, scope, server.DBRegistry, server.Logger)
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID
 	c.Locked = request.Locked
 
-	err = c.Save(server.Account.ActiveUser.PassphraseKey)
+	index := collection.NewIndex(scope, server.DBRegistry, server.Logger)
+	index.ShelfID = shelfID
+	index.OwnerID = ownerID
+
+	err = index.Save(c, server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 	}
@@ -224,12 +232,16 @@ func DeleteCollection(server *rpc.Server, message []byte) (proto.Message, error)
 		return response, nil
 	}
 
-	c := collection.New(nil, scope, server.DBFactory, server.Logger)
+	c := collection.New(nil, scope, server.DBRegistry, server.Logger)
 	c.ID = id
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID
 
-	err = c.Delete(server.Account.ActiveUser.PassphraseKey)
+	index := collection.NewIndex(scope, server.DBRegistry, server.Logger)
+	index.ShelfID = shelfID
+	index.OwnerID = ownerID
+
+	err = index.Delete(c, server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 	}

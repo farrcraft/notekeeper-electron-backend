@@ -22,10 +22,17 @@ import (
 // Handler is an RPC message handler
 type Handler func(*Server, []byte) (proto.Message, error)
 
+// RequestHeader contains the custom headers from a request
+type RequestHeader struct {
+	Signature []byte
+	Method    string
+	Sequence  int32
+}
+
 // Server is a RPC server instance
 type Server struct {
 	Logger          *logrus.Logger
-	DBFactory       *db.Factory
+	DBRegistry      *db.Registry
 	UserState       UserState
 	Account         *account.Account
 	Certificate     tls.Certificate
@@ -49,15 +56,9 @@ func NewServer(logger *logrus.Logger, Status chan string, Shutdown chan bool) *S
 		UserState:   UserStateSignedOut,
 		Status:      Status,
 		Shutdown:    Shutdown,
+		DBRegistry:  db.NewRegistry(logger),
 	}
 	return server
-}
-
-// RequestHeader contains the custom headers from a request
-type RequestHeader struct {
-	Signature []byte
-	Method    string
-	Sequence  int32
 }
 
 // VerifyHeaders checks that a request contains the correct headers &
@@ -249,9 +250,9 @@ func (rpc *Server) Start(port string) bool {
 
 // Stop performs shutdown routines before application termination
 func (rpc *Server) Stop() {
-	if rpc.DBFactory == nil {
+	if rpc.DBRegistry == nil {
 		return
 	}
-	rpc.DBFactory.CloseAll()
-	rpc.DBFactory = nil
+	rpc.DBRegistry.CloseAll()
+	rpc.DBRegistry = nil
 }

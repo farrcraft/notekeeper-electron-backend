@@ -26,50 +26,50 @@ const (
 
 // Tag is used for assigning labels to various object types
 type Tag struct {
-	ID        uuid.UUID      `json:"id"` // ID is the unique identifier of the tag
-	AccountID uuid.UUID      `json:"-"`
-	UserID    uuid.UUID      `json:"-"`
-	Title     *title.Title   `json:"title"` // Title is the title of the tag
-	Created   time.Time      `json:"created"`
-	Updated   time.Time      `json:"updated"`
-	Scope     Scope          `json:"scope"`
-	DBFactory *db.Factory    `json:"-"` // DBFactory provides access to the database
-	Logger    *logrus.Logger `json:"-"` // Logger is the logging facility
+	ID         uuid.UUID      `json:"id"` // ID is the unique identifier of the tag
+	Scope      Scope          `json:"scope"`
+	OwnerID    uuid.UUID      `json:"-"`     // OwnerID is the ID of the account or user owning the shelf
+	Title      *title.Title   `json:"title"` // Title is the title of the tag
+	Created    time.Time      `json:"created"`
+	Updated    time.Time      `json:"updated"`
+	DBRegistry *db.Registry   `json:"-"` // DBRegistry provides access to the database
+	Logger     *logrus.Logger `json:"-"` // Logger is the logging facility
 }
 
 // New creates a new tag object
-func New(title *title.Title, scope Scope, dbFactory *db.Factory, logger *logrus.Logger) *Tag {
+func New(title *title.Title, scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) *Tag {
 	now := time.Now()
 	tag := &Tag{
-		ID:        uuid.NewV4(),
-		Title:     title,
-		Created:   now,
-		Updated:   now,
-		Scope:     scope,
-		DBFactory: dbFactory,
-		Logger:    logger,
+		ID:         uuid.NewV4(),
+		Title:      title,
+		Created:    now,
+		Updated:    now,
+		Scope:      scope,
+		DBRegistry: dbRegistry,
+		Logger:     logger,
 	}
 	return tag
 }
 
-func (tag *Tag) getDB() *db.DB {
-	var dbType db.Type
-	var id uuid.UUID
+func (tag *Tag) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
+	var key db.Key
+	key.ID = tag.OwnerID
 	if tag.Scope == ScopeUser {
-		dbType = db.TypeUser
-		id = tag.UserID
+		key.Type = db.TypeUser
 	} else {
-		dbType = db.TypeAccount
-		id = tag.AccountID
+		key.Type = db.TypeAccount
 	}
-	db := tag.DBFactory.Find(dbType, id)
-	return db
+	handle, err := tag.DBRegistry.GetHandle(key, passphraseKey)
+	return handle, err
 }
 
 // Save a tag to the DB
 func (tag *Tag) Save(passphraseKey []byte) error {
-	db := tag.getDB()
-	err := db.DB.Update(func(tx *bolt.Tx) error {
+	handle, err := tag.getDBHandle(passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = handle.DB.Update(func(tx *bolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("tags"))
 		if err != nil {
@@ -88,7 +88,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 
 		// retrieve the encryption key
 		c := crypto.New(tag.Logger)
-		decryptedKey, err := c.Open(passphraseKey, db.EncryptedKey)
+		decryptedKey, err := c.Open(passphraseKey, handle.EncryptedKey)
 		if err != nil {
 			tag.Logger.Debug("Error retrieving tag key - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorOpenKey)
@@ -128,16 +128,19 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 // LoadAll of the tags from an account or user DB
 func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 	var tags []*Tag
-	tagDB := tag.getDB()
+	tagDBHandle, err := tag.getDBHandle(passphraseKey)
+	if err != nil {
+		return tags, err
+	}
 	c := crypto.New(tag.Logger)
-	tagKey, err := c.Open(passphraseKey, tagDB.EncryptedKey)
+	tagKey, err := c.Open(passphraseKey, tagDBHandle.EncryptedKey)
 	if err != nil {
 		tag.Logger.Debug("Error opening tag key - ", err)
 		code := codes.New(codes.ScopeTag, codes.ErrorOpenKey)
 		return tags, code
 	}
 
-	err = tagDB.DB.View(func(tx *bolt.Tx) error {
+	err = tagDBHandle.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("tags"))
 		if bucket == nil {
@@ -150,8 +153,8 @@ func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 
 		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
 			newTag := &Tag{
-				DBFactory: tag.DBFactory,
-				Logger:    tag.Logger,
+				DBRegistry: tag.DBRegistry,
+				Logger:     tag.Logger,
 			}
 
 			// decrypt value
@@ -180,8 +183,11 @@ func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 
 // Delete a tag
 func (tag *Tag) Delete(passphraseKey []byte) error {
-	tagDB := tag.getDB()
-	err := tagDB.DB.Update(func(tx *bolt.Tx) error {
+	tagDBHandle, err := tag.getDBHandle(passphraseKey)
+	if err != nil {
+		return err
+	}
+	err = tagDBHandle.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("tags"))
 		if bucket == nil {
 			tag.Logger.Debug("tag bucket does not exist")

@@ -11,7 +11,7 @@ import (
 
 // UIState contains the saved settings for the UI
 // The UI state includes only the most generic persistent UI settings
-// !!!!The stored representation **IS NOT ENCRYPTED**!!!
+// !!!!The stored representation **IS NOT ENCRYPTED**!!!!
 type UIState struct {
 	WindowWidth      int32          `json:"window_width" mapstructure:"window_width"`
 	WindowHeight     int32          `json:"window_height" mapstructure:"window_height"`
@@ -24,12 +24,12 @@ type UIState struct {
 	DisplayHeight    int32          `json:"display_height" mapstructure:"display_height"`
 	DisplayXPosition int32          `json:"display_x_position" mapstructure:"display_x_position"`
 	DisplayYPosition int32          `json:"display_y_position" mapstructure:"display_y_position"`
-	DB               *db.DB         `json:"-"`
+	DBRegistry       *db.Registry   `json:"-"`
 	Logger           *logrus.Logger `json:"-"`
 }
 
 // NewUIState returns a new UIState object
-func NewUIState(db *db.DB, logger *logrus.Logger) *UIState {
+func NewUIState(registry *db.Registry, logger *logrus.Logger) *UIState {
 	state := &UIState{
 		WindowWidth:      -1,
 		WindowHeight:     -1,
@@ -42,7 +42,7 @@ func NewUIState(db *db.DB, logger *logrus.Logger) *UIState {
 		DisplayHeight:    -1,
 		DisplayXPosition: -1,
 		DisplayYPosition: -1,
-		DB:               db,
+		DBRegistry:       registry,
 		Logger:           logger,
 	}
 	return state
@@ -50,12 +50,13 @@ func NewUIState(db *db.DB, logger *logrus.Logger) *UIState {
 
 // Create creates a default UI state if none exists yet
 func (state *UIState) Create() error {
-	if state.DB == nil {
+	// for now there is only a single state that is kept in the master db
+	if state.DBRegistry == nil || state.DBRegistry.Master == nil {
 		state.Logger.Debug("ui state create - missing db")
 		code := codes.New(codes.ScopeUIState, codes.ErrorMissingDB)
 		return code
 	}
-	err := state.DB.DB.Update(func(tx *bolt.Tx) error {
+	err := state.DBRegistry.Master.DB.Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte("ui_state"))
 		if bucket == nil {
 			bucket, err := tx.CreateBucket([]byte("ui_state"))
@@ -93,7 +94,8 @@ func (state *UIState) Create() error {
 
 // Load loads the UI's saved state from the database
 func (state *UIState) Load() error {
-	err := state.DB.DB.View(func(tx *bolt.Tx) error {
+	// [FIXME] precondition - expecting open master db here
+	err := state.DBRegistry.Master.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("ui_state"))
 		cursor := bucket.Cursor()
@@ -124,7 +126,8 @@ func (state *UIState) Load() error {
 
 // Save saves the UI's state to the database
 func (state *UIState) Save() error {
-	err := state.DB.DB.Update(func(tx *bolt.Tx) error {
+	// [FIXME] precondition - expecting open master db here
+	err := state.DBRegistry.Master.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("ui_state"))
 		if err != nil {
 			state.Logger.Debug("Error creating UI State Bucket - ", err)

@@ -62,7 +62,7 @@ func GetNotes(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create a new note instance to act as a proxy
-	n := note.New(nil, scope, store, server.DBFactory, server.Logger)
+	n := note.New(nil, scope, store, server.DBRegistry, server.Logger)
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -142,7 +142,7 @@ func LoadNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create a new note instance to act as a proxy
-	n := note.New(nil, scope, store, server.DBFactory, server.Logger)
+	n := note.New(nil, scope, store, server.DBRegistry, server.Logger)
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -219,7 +219,7 @@ func CreateNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	n := note.New(t, scope, store, server.DBFactory, server.Logger)
+	n := note.New(t, scope, store, server.DBRegistry, server.Logger)
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -293,7 +293,7 @@ func SaveNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	n := note.New(t, scope, store, server.DBFactory, server.Logger)
+	n := note.New(t, scope, store, server.DBRegistry, server.Logger)
 	n.ID = id
 	n.OwnerID = ownerID
 	n.StoreID = storeID
@@ -364,7 +364,7 @@ func DeleteNote(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	n := note.New(nil, scope, store, server.DBFactory, server.Logger)
+	n := note.New(nil, scope, store, server.DBRegistry, server.Logger)
 	n.ID = id
 	n.OwnerID = ownerID
 	n.StoreID = storeID

@@ -1,5 +1,19 @@
 # TODO
 
+[] replace account_map db stuff w/ account index stuff instead
+[] replace user_map db stuff w/ user index stuff instead
+
+[] look into keeping a master index of db's in the master db - include e.g. db name (uuid), type, owner, parent to facilitate easily opening db's anywhere in the hierarchy
+
+maybe interfaces:
+db.Handle - an open db instance
+db.Info - information necessary to resolve a db & create a handle
+db.Factory - consumes db.Info objects & returns a db.Handle
+db.Registry ? - manages the index in the master db - holds a db.Factory and a db.Handle for the master db - provides access to create db.Handles via the db.Factory
+(call this registry instead of index to avoid confusion w/ index db term)
+
+[] need a consistent interface for managing encryption keys - retrieving the encrypted encryption key & decrypting it for use for any db
+
 [] create default notebook during account creation
 [] add shutdown rpc handler
 [] need to separate note metadata & note content in db so that loading a list of notes gets the metadata & loading a single note gets the content

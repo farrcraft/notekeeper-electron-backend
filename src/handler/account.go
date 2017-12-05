@@ -24,7 +24,7 @@ func GetAccountState(server *rpc.Server, message []byte) (proto.Message, error) 
 		response.Locked = server.Account.IsLocked()
 		response.Exists = true
 	} else {
-		count := account.MapCount(server.DBFactory)
+		count := account.MapCount(server.DBRegistry)
 		if count > 0 {
 			response.Exists = true
 		}
@@ -49,7 +49,7 @@ func CreateAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create the account
-	api := api.New(server.DBFactory, server.Logger)
+	api := api.New(server.DBRegistry, server.Logger)
 	newAccount, err := api.CreateAccount(request.Name, request.Email, request.Passphrase)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -82,7 +82,7 @@ func UnlockAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	api := api.New(server.DBFactory, server.Logger)
+	api := api.New(server.DBRegistry, server.Logger)
 	err = api.UnlockAccount(server.Account, request.Passphrase)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -108,7 +108,7 @@ func SigninAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	api := api.New(server.DBFactory, server.Logger)
+	api := api.New(server.DBRegistry, server.Logger)
 	newAccount, err := api.SigninAccount(request.Name, request.Email, request.Passphrase)
 	if err == nil {
 		server.Account = newAccount
@@ -128,7 +128,7 @@ func SignoutAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 		Header: rpc.NewResponseHeader(),
 	}
 
-	api := api.New(server.DBFactory, server.Logger)
+	api := api.New(server.DBRegistry, server.Logger)
 	err := api.SignoutAccount(server.Account)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -144,7 +144,7 @@ func LockAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 		Header: rpc.NewResponseHeader(),
 	}
 
-	api := api.New(server.DBFactory, server.Logger)
+	api := api.New(server.DBRegistry, server.Logger)
 	err := api.LockAccount(server.Account)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)

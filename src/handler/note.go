@@ -10,8 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// GetNotes is the RPC method to get a list of notes
-func GetNotes(server *rpc.Server, message []byte) (proto.Message, error) {
+func getNotes(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.GetNotesResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -29,12 +28,12 @@ func GetNotes(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope note.Scope
+	var noteScope note.Scope
 	var store note.StoreType
-	if request.Scope == "account" {
-		scope = note.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = note.ScopeUser
+	if scope == "account" {
+		noteScope = note.ScopeAccount
+	} else if scope == "user" {
+		noteScope = note.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -62,7 +61,7 @@ func GetNotes(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create a new note instance to act as a proxy
-	n := note.New(nil, scope, store, server.DBRegistry, server.Logger)
+	n := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -90,8 +89,7 @@ func GetNotes(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// LoadNote is the RPC method to get a note
-func LoadNote(server *rpc.Server, message []byte) (proto.Message, error) {
+func loadNote(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.LoadNoteResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -109,12 +107,12 @@ func LoadNote(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope note.Scope
+	var noteScope note.Scope
 	var store note.StoreType
-	if request.Scope == "account" {
-		scope = note.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = note.ScopeUser
+	if scope == "account" {
+		noteScope = note.ScopeAccount
+	} else if scope == "user" {
+		noteScope = note.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -142,7 +140,7 @@ func LoadNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create a new note instance to act as a proxy
-	n := note.New(nil, scope, store, server.DBRegistry, server.Logger)
+	n := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -154,7 +152,6 @@ func LoadNote(server *rpc.Server, message []byte) (proto.Message, error) {
 
 	response.Note = &messages.Note{
 		Id:      n.ID.String(),
-		Scope:   request.Scope,
 		Store:   request.Store,
 		OwnerId: request.OwnerId,
 		StoreId: request.StoreId,
@@ -167,8 +164,7 @@ func LoadNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// CreateNote is the RPC method to create a new note
-func CreateNote(server *rpc.Server, message []byte) (proto.Message, error) {
+func createNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -186,12 +182,12 @@ func CreateNote(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope note.Scope
+	var noteScope note.Scope
 	var store note.StoreType
-	if request.Scope == "account" {
-		scope = note.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = note.ScopeUser
+	if scope == "account" {
+		noteScope = note.ScopeAccount
+	} else if scope == "user" {
+		noteScope = note.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -219,7 +215,7 @@ func CreateNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	n := note.New(t, scope, store, server.DBRegistry, server.Logger)
+	n := note.New(t, noteScope, store, server.DBRegistry, server.Logger)
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -234,8 +230,7 @@ func CreateNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// SaveNote is the RPC method to save an existing note
-func SaveNote(server *rpc.Server, message []byte) (proto.Message, error) {
+func saveNote(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -253,12 +248,12 @@ func SaveNote(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope note.Scope
+	var noteScope note.Scope
 	var store note.StoreType
-	if request.Scope == "account" {
-		scope = note.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = note.ScopeUser
+	if scope == "account" {
+		noteScope = note.ScopeAccount
+	} else if scope == "user" {
+		noteScope = note.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -293,7 +288,7 @@ func SaveNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	n := note.New(t, scope, store, server.DBRegistry, server.Logger)
+	n := note.New(t, noteScope, store, server.DBRegistry, server.Logger)
 	n.ID = id
 	n.OwnerID = ownerID
 	n.StoreID = storeID
@@ -306,8 +301,7 @@ func SaveNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// DeleteNote is the RPC method to delete a note
-func DeleteNote(server *rpc.Server, message []byte) (proto.Message, error) {
+func deleteNote(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -325,12 +319,12 @@ func DeleteNote(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope note.Scope
+	var noteScope note.Scope
 	var store note.StoreType
-	if request.Scope == "account" {
-		scope = note.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = note.ScopeUser
+	if scope == "account" {
+		noteScope = note.ScopeAccount
+	} else if scope == "user" {
+		noteScope = note.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -364,7 +358,7 @@ func DeleteNote(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	n := note.New(nil, scope, store, server.DBRegistry, server.Logger)
+	n := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
 	n.ID = id
 	n.OwnerID = ownerID
 	n.StoreID = storeID

@@ -27,7 +27,7 @@ func NewIndex(dbRegistry *db.Registry, logger *logrus.Logger) *Index {
 	return index
 }
 
-// Count returns the number of records in the account_map table
+// Count returns the number of records in the account_index table
 func (index *Index) Count(passphraseKey []byte) int {
 	count := 0
 	key := db.Key{

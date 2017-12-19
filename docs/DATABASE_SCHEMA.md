@@ -47,7 +47,7 @@ position, etc.  It contains no PII data.
 * `key` - "ui_state"
 * `value` - unencrypted serialized JSON
 
-### account_map
+### account_index
 
 This bucket provides a mapping between account names and account UUID's.
 
@@ -72,7 +72,7 @@ The account database file uses the account UUID as its filename with the
 
 ## Buckets
 
-### user_map
+### user_index
 
 This bucket provides a mapping between user email addresses and user UUID's.
 
@@ -85,9 +85,10 @@ The embedded salt is the user's fixed encryption key salt.
 ### users
 
 This bucket stores user profile data for account users.
+The user profile information stored here is visble to all users in the account
 
 * `key` - unencrypted user UUID
-* `value` - serialized JSON encrypted w/ user-level encryption key
+* `value` - serialized JSON encrypted w/ account-level encryption key
 
 
 ### notebooks
@@ -100,3 +101,15 @@ This bucket stores user profile data for account users.
 
 * `key` unencrypted note UUID
 * `value` serialized JSON encrypted w/ notebook-level encryption key
+
+# User Database
+
+## Buckets
+
+# Shelf Database
+
+## Buckets
+
+# Collection Database
+
+## Buckets

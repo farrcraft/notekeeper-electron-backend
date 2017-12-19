@@ -22,31 +22,57 @@ func Handlers() map[string]rpc.Handler {
 	handlers["UIState::load"] = LoadUIState
 	handlers["UIState::save"] = SaveUIState
 
-	handlers["Shelf::loadAll"] = GetShelves
-	handlers["Shelf::create"] = CreateShelf
-	handlers["Shelf::save"] = SaveShelf
-	handlers["Shelf::delete"] = DeleteShelf
+	handlers["User::shelves"] = GetUserShelves
+	handlers["User::Shelf::create"] = CreateUserShelf
+	handlers["User::Shelf::save"] = SaveUserShelf
+	handlers["User::Shelf::delete"] = DeleteUserShelf
 
-	handlers["Collection::loadAll"] = GetCollections
-	handlers["Collection::create"] = CreateCollection
-	handlers["Collection::save"] = SaveCollection
-	handlers["Collection::delete"] = DeleteCollection
+	handlers["Account::shelves"] = GetAccountShelves
+	handlers["Account::Shelf::create"] = CreateAccountShelf
+	handlers["Account::Shelf::save"] = SaveAccountShelf
+	handlers["Account::Shelf::delete"] = DeleteAccountShelf
 
-	handlers["Tag::loadAll"] = GetTags
-	handlers["Tag::create"] = CreateTag
-	handlers["Tag::save"] = SaveTag
-	handlers["Tag::delete"] = DeleteTag
+	handlers["User::collections"] = GetUserCollections
+	handlers["User::Collection::create"] = CreateUserCollection
+	handlers["User::Collection::save"] = SaveUserCollection
+	handlers["User::Collection::delete"] = DeleteUserCollection
 
-	handlers["Notebook::loadAll"] = GetNotebooks
-	handlers["Notebook::create"] = CreateNotebook
-	handlers["Notebook::save"] = SaveNotebook
-	handlers["Notebook::delete"] = DeleteNotebook
+	handlers["Account::collections"] = GetAccountCollections
+	handlers["Account::Collection::create"] = CreateAccountCollection
+	handlers["Account::Collection::save"] = SaveAccountCollection
+	handlers["Account::Collection::delete"] = DeleteAccountCollection
 
-	handlers["Note::loadAll"] = GetNotes
-	handlers["Note::load"] = LoadNote
-	handlers["Note::create"] = CreateNote
-	handlers["Note::save"] = SaveNote
-	handlers["Note::delete"] = DeleteNote
+	handlers["User::tags"] = GetUserTags
+	handlers["User::Tag::create"] = CreateUserTag
+	handlers["User::Tag::save"] = SaveUserTag
+	handlers["User::Tag::delete"] = DeleteUserTag
+
+	handlers["Account::tags"] = GetAccountTags
+	handlers["Account::Tag::create"] = CreateAccountTag
+	handlers["Account::Tag::save"] = SaveAccountTag
+	handlers["Account::Tag::delete"] = DeleteAccountTag
+
+	handlers["User::notebooks"] = GetUserNotebooks
+	handlers["User::Notebook::create"] = CreateUserNotebook
+	handlers["User::Notebook::save"] = SaveUserNotebook
+	handlers["User::Notebook::delete"] = DeleteUserNotebook
+
+	handlers["Account::notebooks"] = GetAccountNotebooks
+	handlers["Account::Notebook::create"] = CreateAccountNotebook
+	handlers["Account::Notebook::save"] = SaveAccountNotebook
+	handlers["Account::Notebook::delete"] = DeleteAccountNotebook
+
+	handlers["User::notes"] = GetUserNotes
+	handlers["User::Note::load"] = LoadUserNote
+	handlers["User::Note::create"] = CreateUserNote
+	handlers["User::Note::save"] = SaveUserNote
+	handlers["User::Note::delete"] = DeleteUserNote
+
+	handlers["Account::notes"] = GetAccountNotes
+	handlers["Account::Note::load"] = LoadAccountNote
+	handlers["Account::Note::create"] = CreateAccountNote
+	handlers["Account::Note::save"] = SaveAccountNote
+	handlers["Account::Note::delete"] = DeleteAccountNote
 
 	return handlers
 }

@@ -10,8 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// GetCollections gets a list of collections
-func GetCollections(server *rpc.Server, message []byte) (proto.Message, error) {
+func getCollections(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.GetCollectionsResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -37,19 +36,19 @@ func GetCollections(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	var ownerID uuid.UUID
-	var scope collection.Scope
-	if request.Scope == "account" {
+	var collectionScope collection.Scope
+	if scope == "account" {
 		ownerID = server.Account.ID
-		scope = collection.ScopeAccount
-	} else if request.Scope == "user" {
+		collectionScope = collection.ScopeAccount
+	} else if scope == "user" {
 		ownerID = server.Account.ActiveUser.ID
-		scope = collection.ScopeUser
+		collectionScope = collection.ScopeUser
 	} else {
 		return response, nil
 	}
 
 	// create a new collection instance to act as a proxy
-	index := collection.NewIndex(scope, server.DBRegistry, server.Logger)
+	index := collection.NewIndex(collectionScope, server.DBRegistry, server.Logger)
 	index.ShelfID = shelfID
 	index.OwnerID = ownerID
 
@@ -74,8 +73,7 @@ func GetCollections(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// CreateCollection saves a new collection
-func CreateCollection(server *rpc.Server, message []byte) (proto.Message, error) {
+func createCollection(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -101,23 +99,23 @@ func CreateCollection(server *rpc.Server, message []byte) (proto.Message, error)
 	}
 
 	var ownerID uuid.UUID
-	var scope collection.Scope
-	if request.Scope == "account" {
+	var collectionScope collection.Scope
+	if scope == "account" {
 		ownerID = server.Account.ID
-		scope = collection.ScopeAccount
-	} else if request.Scope == "user" {
+		collectionScope = collection.ScopeAccount
+	} else if scope == "user" {
 		ownerID = server.Account.ActiveUser.ID
-		scope = collection.ScopeUser
+		collectionScope = collection.ScopeUser
 	} else {
 		return response, nil
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	c := collection.New(t, scope, server.DBRegistry, server.Logger)
+	c := collection.New(t, collectionScope, server.DBRegistry, server.Logger)
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID
 
-	index := collection.NewIndex(scope, server.DBRegistry, server.Logger)
+	index := collection.NewIndex(collectionScope, server.DBRegistry, server.Logger)
 	index.ShelfID = shelfID
 	index.OwnerID = ownerID
 
@@ -131,8 +129,7 @@ func CreateCollection(server *rpc.Server, message []byte) (proto.Message, error)
 	return response, nil
 }
 
-// SaveCollection updates a collection
-func SaveCollection(server *rpc.Server, message []byte) (proto.Message, error) {
+func saveCollection(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -158,24 +155,24 @@ func SaveCollection(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	var ownerID uuid.UUID
-	var scope collection.Scope
-	if request.Scope == "account" {
+	var collectionScope collection.Scope
+	if scope == "account" {
 		ownerID = server.Account.ID
-		scope = collection.ScopeAccount
-	} else if request.Scope == "user" {
+		collectionScope = collection.ScopeAccount
+	} else if scope == "user" {
 		ownerID = server.Account.ActiveUser.ID
-		scope = collection.ScopeUser
+		collectionScope = collection.ScopeUser
 	} else {
 		return response, nil
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	c := collection.New(t, scope, server.DBRegistry, server.Logger)
+	c := collection.New(t, collectionScope, server.DBRegistry, server.Logger)
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID
 	c.Locked = request.Locked
 
-	index := collection.NewIndex(scope, server.DBRegistry, server.Logger)
+	index := collection.NewIndex(collectionScope, server.DBRegistry, server.Logger)
 	index.ShelfID = shelfID
 	index.OwnerID = ownerID
 
@@ -187,8 +184,7 @@ func SaveCollection(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// DeleteCollection deletes a collection
-func DeleteCollection(server *rpc.Server, message []byte) (proto.Message, error) {
+func deleteCollection(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -221,23 +217,23 @@ func DeleteCollection(server *rpc.Server, message []byte) (proto.Message, error)
 	}
 
 	var ownerID uuid.UUID
-	var scope collection.Scope
-	if request.Scope == "account" {
+	var collectionScope collection.Scope
+	if scope == "account" {
 		ownerID = server.Account.ID
-		scope = collection.ScopeAccount
-	} else if request.Scope == "user" {
+		collectionScope = collection.ScopeAccount
+	} else if scope == "user" {
 		ownerID = server.Account.ActiveUser.ID
-		scope = collection.ScopeUser
+		collectionScope = collection.ScopeUser
 	} else {
 		return response, nil
 	}
 
-	c := collection.New(nil, scope, server.DBRegistry, server.Logger)
+	c := collection.New(nil, collectionScope, server.DBRegistry, server.Logger)
 	c.ID = id
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID
 
-	index := collection.NewIndex(scope, server.DBRegistry, server.Logger)
+	index := collection.NewIndex(collectionScope, server.DBRegistry, server.Logger)
 	index.ShelfID = shelfID
 	index.OwnerID = ownerID
 

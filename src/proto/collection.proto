@@ -17,7 +17,6 @@ message Collection {
 message GetCollectionsRequest {
 	RequestHeader header = 1;
 	string shelfId = 2;
-	string scope = 3; // account or user
 }
 
 message GetCollectionsResponse {
@@ -29,7 +28,6 @@ message CreateCollectionRequest {
 	RequestHeader header = 1;
 	Title name = 2;
 	string shelfId = 3;
-	string scope = 4;
 }
 // Response is an IdResponse
 
@@ -37,9 +35,8 @@ message SaveCollectionRequest {
 	RequestHeader header = 1;
 	string id = 2;
 	string shelfId = 3;
-	string scope = 4;
-	Title name = 5;
-	bool locked = 6;
+	Title name = 4;
+	bool locked = 5;
 }
 // Response is an EmptyResponse
 
@@ -47,6 +44,5 @@ message DeleteCollectionRequest {
 	RequestHeader header = 1;
 	string id = 2;
 	string shelfId = 3;
-	string scope = 4;
 }
 // Response is an EmptyResponse

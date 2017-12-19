@@ -10,8 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// CreateNotebook is the RPC method to create a new notebook
-func CreateNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
+func createNotebook(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -29,12 +28,12 @@ func CreateNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope notebook.Scope
+	var notebookScope notebook.Scope
 	var container notebook.ContainerType
-	if request.Scope == "account" {
-		scope = notebook.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = notebook.ScopeUser
+	if scope == "account" {
+		notebookScope = notebook.ScopeAccount
+	} else if scope == "user" {
+		notebookScope = notebook.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -62,7 +61,7 @@ func CreateNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	notebook := notebook.New(t, scope, container, server.DBRegistry, server.Logger)
+	notebook := notebook.New(t, notebookScope, container, server.DBRegistry, server.Logger)
 	notebook.OwnerID = ownerID
 	notebook.ContainerID = containerID
 
@@ -78,7 +77,7 @@ func CreateNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 }
 
 // GetNotebooks gets all of the notebooks
-func GetNotebooks(server *rpc.Server, message []byte) (proto.Message, error) {
+func getNotebooks(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.GetNotebooksResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -96,12 +95,12 @@ func GetNotebooks(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope notebook.Scope
+	var notebookScope notebook.Scope
 	var container notebook.ContainerType
-	if request.Scope == "account" {
-		scope = notebook.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = notebook.ScopeUser
+	if scope == "account" {
+		notebookScope = notebook.ScopeAccount
+	} else if scope == "user" {
+		notebookScope = notebook.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -129,7 +128,7 @@ func GetNotebooks(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	// create a new notebook instance to act as a proxy
-	nb := notebook.New(nil, scope, container, server.DBRegistry, server.Logger)
+	nb := notebook.New(nil, notebookScope, container, server.DBRegistry, server.Logger)
 	nb.OwnerID = ownerID
 	nb.ContainerID = containerID
 
@@ -142,7 +141,6 @@ func GetNotebooks(server *rpc.Server, message []byte) (proto.Message, error) {
 	for _, n := range notebooks {
 		m := &messages.Notebook{
 			Id:          n.ID.String(),
-			Scope:       request.Scope,
 			Container:   request.Container,
 			OwnerId:     request.OwnerId,
 			ContainerId: request.ContainerId,
@@ -158,8 +156,7 @@ func GetNotebooks(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// SaveNotebook saves an existing notebook
-func SaveNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
+func saveNotebook(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -177,12 +174,12 @@ func SaveNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope notebook.Scope
+	var notebookScope notebook.Scope
 	var container notebook.ContainerType
-	if request.Scope == "account" {
-		scope = notebook.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = notebook.ScopeUser
+	if scope == "account" {
+		notebookScope = notebook.ScopeAccount
+	} else if scope == "user" {
+		notebookScope = notebook.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -217,7 +214,7 @@ func SaveNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	notebook := notebook.New(t, scope, container, server.DBRegistry, server.Logger)
+	notebook := notebook.New(t, notebookScope, container, server.DBRegistry, server.Logger)
 	notebook.ID = id
 	notebook.Default = request.Default
 	notebook.Locked = request.Locked
@@ -232,8 +229,7 @@ func SaveNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// DeleteNotebook deletes a notebook
-func DeleteNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
+func deleteNotebook(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -251,12 +247,12 @@ func DeleteNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	var scope notebook.Scope
+	var notebookScope notebook.Scope
 	var container notebook.ContainerType
-	if request.Scope == "account" {
-		scope = notebook.ScopeAccount
-	} else if request.Scope == "user" {
-		scope = notebook.ScopeUser
+	if scope == "account" {
+		notebookScope = notebook.ScopeAccount
+	} else if scope == "user" {
+		notebookScope = notebook.ScopeUser
 	} else {
 		return response, nil
 	}
@@ -290,7 +286,7 @@ func DeleteNotebook(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	notebook := notebook.New(nil, scope, container, server.DBRegistry, server.Logger)
+	notebook := notebook.New(nil, notebookScope, container, server.DBRegistry, server.Logger)
 	notebook.ID = id
 	notebook.OwnerID = ownerID
 	notebook.ContainerID = containerID

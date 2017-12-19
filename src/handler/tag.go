@@ -28,8 +28,7 @@ func strToTagScope(server *rpc.Server, s string, id uuid.UUID) (tag.Scope, bool)
 	return scope, true
 }
 
-// GetTags gets a set of tags
-func GetTags(server *rpc.Server, message []byte) (proto.Message, error) {
+func getTags(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.GetTagsResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -54,13 +53,13 @@ func GetTags(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	scope, ok := strToTagScope(server, request.Scope, id)
+	tagScope, ok := strToTagScope(server, scope, id)
 	if !ok {
 		return response, nil
 	}
 
 	// create a new tag instance to act as a proxy
-	t := tag.New(nil, scope, server.DBRegistry, server.Logger)
+	t := tag.New(nil, tagScope, server.DBRegistry, server.Logger)
 	tags, err := t.LoadAll(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -71,7 +70,6 @@ func GetTags(server *rpc.Server, message []byte) (proto.Message, error) {
 		m := &messages.Tag{
 			Id:      t.ID.String(),
 			Name:    rpc.TitleToMessage(t.Title),
-			Scope:   request.Scope,
 			Created: rpc.TimeToMessage(t.Created),
 			Updated: rpc.TimeToMessage(t.Updated),
 		}
@@ -82,7 +80,7 @@ func GetTags(server *rpc.Server, message []byte) (proto.Message, error) {
 }
 
 // CreateTag creates a new tag
-func CreateTag(server *rpc.Server, message []byte) (proto.Message, error) {
+func createTag(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -107,13 +105,13 @@ func CreateTag(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	scope, ok := strToTagScope(server, request.Scope, id)
+	tagScope, ok := strToTagScope(server, scope, id)
 	if !ok {
 		return response, nil
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	newTag := tag.New(t, scope, server.DBRegistry, server.Logger)
+	newTag := tag.New(t, tagScope, server.DBRegistry, server.Logger)
 	err = newTag.Save(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -124,8 +122,7 @@ func CreateTag(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// SaveTag saves an existing tag
-func SaveTag(server *rpc.Server, message []byte) (proto.Message, error) {
+func saveTag(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -150,13 +147,13 @@ func SaveTag(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	scope, ok := strToTagScope(server, request.Scope, id)
+	tagScope, ok := strToTagScope(server, scope, id)
 	if !ok {
 		return response, nil
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	newTag := tag.New(t, scope, server.DBRegistry, server.Logger)
+	newTag := tag.New(t, tagScope, server.DBRegistry, server.Logger)
 	newTag.ID = id
 	err = newTag.Save(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
@@ -166,8 +163,7 @@ func SaveTag(server *rpc.Server, message []byte) (proto.Message, error) {
 	return response, nil
 }
 
-// DeleteTag deletes a tag
-func DeleteTag(server *rpc.Server, message []byte) (proto.Message, error) {
+func deleteTag(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -192,12 +188,12 @@ func DeleteTag(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
-	scope, ok := strToTagScope(server, request.Scope, id)
+	tagScope, ok := strToTagScope(server, scope, id)
 	if !ok {
 		return response, nil
 	}
 
-	t := tag.New(nil, scope, server.DBRegistry, server.Logger)
+	t := tag.New(nil, tagScope, server.DBRegistry, server.Logger)
 	t.ID = id
 	err = t.Delete(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {

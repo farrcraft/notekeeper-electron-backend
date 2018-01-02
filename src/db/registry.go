@@ -43,8 +43,8 @@ func (registry *Registry) OpenMaster(path string) error {
 	return nil
 }
 
-// GetHandle to an open database
-func (registry *Registry) GetHandle(key Key, passphraseKey []byte) (*Handle, error) {
+// GetHandle to an already open database
+func (registry *Registry) GetHandle(key Key) (*Handle, error) {
 	// db handle already opened?
 	for _, handle := range registry.Handles {
 		if handle.Info.ID == key.ID && handle.Info.Type == key.Type {
@@ -52,6 +52,14 @@ func (registry *Registry) GetHandle(key Key, passphraseKey []byte) (*Handle, err
 		}
 	}
 
+	code := codes.New(codes.ScopeDB, codes.ErrorMissingDB)
+	return nil, code
+}
+
+// NewHandle creates a new database handle.
+// The database file will be opened and the handle registered, but the client
+// will be responsible for assigning the encryption key to the handle.
+func (registry *Registry) NewHandle(key Key) (*Handle, error) {
 	if registry.Factory == nil {
 		code := codes.New(codes.ScopeDB, codes.ErrorDbOpen)
 		return nil, code
@@ -67,10 +75,6 @@ func (registry *Registry) GetHandle(key Key, passphraseKey []byte) (*Handle, err
 	if handle.Info.Type == TypeMaster {
 		registry.Master = handle
 	}
-
-	// need to load the encrypted key for the db
-	// may need to resolve a parent db first. hierarchy chain is:
-	// master db -> account db -> user db -> shelf -> collection
 
 	return handle, nil
 }

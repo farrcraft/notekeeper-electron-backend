@@ -2,7 +2,6 @@ package api
 
 import (
 	"../account"
-	"../codes"
 	"../crypto"
 	"../db"
 	"../notebook"
@@ -17,63 +16,54 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 	newAccount := account.New(api.DBRegistry, api.Logger, name)
 
 	// create a new db file for the account
-	err := newAccount.OpenDB()
+	accountDBKey := db.Key{
+		ID:   newAccount.ID,
+		Type: db.TypeAccount,
+	}
+	accountDBHandle, err := api.DBRegistry.NewHandle(accountDBKey)
 	if err != nil {
 		return newAccount, err
 	}
 
 	// create user object & attach it to the account
-	user := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
+	newUser := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
 
-	err = user.CreateKeys([]byte(passphrase))
+	err = newUser.CreateKeys([]byte(passphrase))
 	if err != nil {
 		return newAccount, err
 	}
+
+	userDBKey := db.Key{
+		ID:   newUser.ID,
+		Type: db.TypeUser,
+	}
+	userDBHandle, err := api.DBRegistry.NewHandle(userDBKey)
+	if err != nil {
+		return newAccount, err
+	}
+
+	// [FIXME] - save user mapping in user index in account db
 
 	// save user
-	err = user.Save()
+	err = newUser.Save()
 	if err != nil {
 		return newAccount, err
 	}
-	newAccount.Users = append(newAccount.Users, user.Profile)
-	newAccount.ActiveUser = user
+
+	// [FIXME] - save user profile in account db
+	// right now users are just stored as part of the account profile data
+	newAccount.Users = append(newAccount.Users, newUser.Profile)
+	newAccount.ActiveUser = newUser
+
+	accountDBHandle.EncryptedKey = newUser.AccountKey
+	userDBHandle.EncryptedKey = newUser.UserKey
 
 	err = newAccount.Save()
 	if err != nil {
 		return newAccount, err
 	}
 
-	key := db.Key{
-		ID:   newAccount.ID,
-		Type: db.TypeAccount,
-	}
-	accountDBHandle, err := api.DBRegistry.GetHandle(key)
-	if err != nil {
-		return newAccount, err
-	}
-	if accountDBHandle == nil {
-		api.Logger.Debug("create account - missing account db")
-		code := codes.New(codes.ScopeAPI, codes.ErrorMissingDB)
-		return newAccount, code
-	}
-	accountDBHandle.EncryptedKey = user.AccountKey
-
-	userKey := db.Key{
-		ID:   user.ID,
-		Type: db.TypeUser,
-	}
-	userDBHandle, err := api.DBRegistry.GetHandle(userKey)
-	if err != nil {
-		return newAccount, err
-	}
-	if userDBHandle == nil {
-		api.Logger.Debug("create account - missing user db")
-		code := codes.New(codes.ScopeAPI, codes.ErrorMissingDB)
-		return newAccount, code
-	}
-	userDBHandle.EncryptedKey = user.UserKey
-
-	err = api.CreateAccountDefaults(newAccount, user)
+	err = api.CreateAccountDefaults(newAccount, newUser)
 	if err != nil {
 		return newAccount, err
 	}
@@ -89,8 +79,18 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	accountShelf.OwnerID = acct.ID
 	accountShelf.Default = true
 
+	shelfDBKey := db.Key{
+		ID:   accountShelf.ID,
+		Type: db.TypeShelf,
+	}
+	accountShelfDBHandle, err := api.DBRegistry.NewHandle(shelfDBKey)
+	if err != nil {
+		return err
+	}
+	// [FIXME] - create shelf encryption key; encrypt w/ passphrase key; set shelf.EncryptedKey
+
 	index := shelf.NewIndex(shelf.ScopeAccount, api.DBRegistry, api.Logger)
-	err := index.Save(accountShelf, user.PassphraseKey)
+	err = index.Save(accountShelf, user.PassphraseKey)
 	if err != nil {
 		api.Logger.Debug("could not create default account shelf")
 		return err
@@ -100,6 +100,14 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	userShelf := shelf.New(defaultShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
 	userShelf.OwnerID = user.ID
 	userShelf.Default = true
+
+	shelfDBKey.ID = userShelf.ID
+	userShelfDBHandle, err := api.DBRegistry.NewHandle(shelfDBKey)
+	if err != nil {
+		return err
+	}
+
+	// [FIXME] - create shelf encryption key; encrypt w/ passphrase key; set shelf.EncryptedKey
 
 	userIndex := shelf.NewIndex(shelf.ScopeUser, api.DBRegistry, api.Logger)
 	err = userIndex.Save(userShelf, user.PassphraseKey)
@@ -137,6 +145,14 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	accountTrashShelf.OwnerID = acct.ID
 	accountTrashShelf.Trash = true
 
+	shelfDBKey.ID = accountTrashShelf.ID
+	accountTrashShelfDBHandle, err := api.DBRegistry.NewHandle(shelfDBKey)
+	if err != nil {
+		return err
+	}
+
+	// [FIXME] - create shelf encryption key; encrypt w/ passphrase key; set shelf.EncryptedKey
+
 	err = index.Save(accountTrashShelf, user.PassphraseKey)
 	if err != nil {
 		api.Logger.Debug("could not create account trash shelf")
@@ -148,59 +164,17 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	userTrashShelf.OwnerID = user.ID
 	userTrashShelf.Trash = true
 
+	shelfDBKey.ID = userTrashShelf.ID
+	userTrashShelfDBHandle, err := api.DBRegistry.NewHandle(shelfDBKey)
+	if err != nil {
+		return err
+	}
+
+	// [FIXME] - create shelf encryption key; encrypt w/ passphrase key; set shelf.EncryptedKey
+
 	err = userIndex.Save(userTrashShelf, user.PassphraseKey)
 	if err != nil {
 		api.Logger.Debug("could not create user trash shelf")
-		return err
-	}
-
-	return nil
-}
-
-// UnlockAccount unlocks an account
-func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
-	if acct == nil {
-		api.Logger.Debug("unlock missing account")
-		return nil
-	}
-
-	if acct.ActiveUser == nil {
-		api.Logger.Debug("unlock missing user")
-		return nil
-	}
-
-	err := acct.OpenAccountDb()
-	if err != nil {
-		api.Logger.Debug("unlock could not open account db")
-		return err
-	}
-
-	err = acct.ActiveUser.Lookup()
-	if err != nil {
-		api.Logger.Debug("unlock could not lookup user")
-		return err
-	}
-
-	// generate the derived key from the input passphrase and the stored salt
-	c := crypto.New(api.Logger)
-	key, err := c.DeriveKey([]byte(passphrase), acct.ActiveUser.Salt)
-	if err != nil {
-		return err
-	}
-
-	// encode the salt into the resulting key and store it in memory
-	acct.ActiveUser.PassphraseKey = key[:]
-
-	// since we never stored the original derived key
-	// the only way we know if the key is valid is to try using it to open something
-	_, err = c.Open(acct.ActiveUser.PassphraseKey, acct.ActiveUser.AccountKey)
-	if err != nil {
-		crypto.Zero(acct.ActiveUser.PassphraseKey)
-		return err
-	}
-
-	err = acct.OpenAccountDb()
-	if err != nil {
 		return err
 	}
 
@@ -284,5 +258,55 @@ func (api *API) LockAccount(acct *account.Account) error {
 		return nil
 	}
 	acct.DBRegistry.CloseAccountDBs()
+	return nil
+}
+
+// UnlockAccount unlocks an account
+func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
+	if acct == nil {
+		api.Logger.Debug("unlock missing account")
+		return nil
+	}
+
+	if acct.ActiveUser == nil {
+		api.Logger.Debug("unlock missing user")
+		return nil
+	}
+
+	err := acct.OpenAccountDb()
+	if err != nil {
+		api.Logger.Debug("unlock could not open account db")
+		return err
+	}
+
+	err = acct.ActiveUser.Lookup()
+	if err != nil {
+		api.Logger.Debug("unlock could not lookup user")
+		return err
+	}
+
+	// generate the derived key from the input passphrase and the stored salt
+	c := crypto.New(api.Logger)
+	key, err := c.DeriveKey([]byte(passphrase), acct.ActiveUser.Salt)
+	if err != nil {
+		return err
+	}
+
+	// encode the salt into the resulting key and store it in memory
+	acct.ActiveUser.PassphraseKey = key[:]
+
+	// since we never stored the original derived key
+	// the only way we know if the key is valid is to try using it to open something
+	_, err = c.Open(acct.ActiveUser.PassphraseKey, acct.ActiveUser.AccountKey)
+	if err != nil {
+		crypto.Zero(acct.ActiveUser.PassphraseKey)
+		return err
+	}
+
+	err = acct.OpenAccountDb()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

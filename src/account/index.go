@@ -28,13 +28,13 @@ func NewIndex(dbRegistry *db.Registry, logger *logrus.Logger) *Index {
 }
 
 // Count returns the number of records in the account_index table
-func (index *Index) Count(passphraseKey []byte) int {
+func (index *Index) Count() int {
 	count := 0
 	key := db.Key{
 		ID:   uuid.Nil,
 		Type: db.TypeMaster,
 	}
-	handle, err := index.DBRegistry.GetHandle(key, passphraseKey)
+	handle, err := index.DBRegistry.GetHandle(key)
 	if err != nil {
 		return count
 	}
@@ -62,7 +62,7 @@ func (index *Index) Save(account *Account, passphraseKey []byte) error {
 		ID:   uuid.Nil,
 		Type: db.TypeMaster,
 	}
-	masterDBHandle, err := index.DBRegistry.GetHandle(masterKey, passphraseKey)
+	masterDBHandle, err := index.DBRegistry.GetHandle(masterKey)
 	if err != nil {
 		return err
 	}
@@ -105,14 +105,14 @@ func (index *Index) Save(account *Account, passphraseKey []byte) error {
 }
 
 // Lookup searches the index for a matching account name and sets the account id if it exists
-func (index *Index) Lookup(account *Account, passphraseKey []byte) error {
+func (index *Index) Lookup(account *Account) error {
 	originalID := account.ID
 	account.ID = uuid.Nil
 	key := db.Key{
 		ID:   uuid.Nil,
 		Type: db.TypeMaster,
 	}
-	handle, err := index.DBRegistry.GetHandle(key, passphraseKey)
+	handle, err := index.DBRegistry.GetHandle(key)
 	if err != nil {
 		return err
 	}

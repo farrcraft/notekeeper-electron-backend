@@ -40,20 +40,6 @@ func (account *Account) IsLocked() bool {
 	return false
 }
 
-// OpenDB opens the database file for a account
-// The file is created if it doesn't already exist
-func (account *Account) OpenDB(passphraseKey []byte) error {
-	key := db.Key{
-		ID:   account.ID,
-		Type: db.TypeAccount,
-	}
-	_, err := account.DBRegistry.GetHandle(key, passphraseKey)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // New creates a new Account object
 func New(dbRegistry *db.Registry, logger *logrus.Logger, name string) *Account {
 	now := time.Now()
@@ -69,18 +55,18 @@ func New(dbRegistry *db.Registry, logger *logrus.Logger, name string) *Account {
 }
 
 // Save saves the account to the database
-func (account *Account) Save(passphraseKey []byte) error {
+func (account *Account) Save() error {
 	// account data is stored in the master database
-	accountKey := db.Key{
+	accountDBKey := db.Key{
 		ID:   account.ID,
 		Type: db.TypeAccount,
 	}
-	accountDBHandle, err := account.DBRegistry.GetHandle(accountKey, passphraseKey)
+	accountDBHandle, err := account.DBRegistry.GetHandle(accountDBKey)
 	if err != nil {
 		return err
 	}
 	err = accountDBHandle.DB.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte("account"))
+		bucket, err := tx.CreateBucketIfNotExists([]byte("profile"))
 		if err != nil {
 			account.Logger.Debug("Error creating accounts bucket - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorCreateBucket)
@@ -95,7 +81,7 @@ func (account *Account) Save(passphraseKey []byte) error {
 
 		// account data must be encrypted with the account key and not the user key
 		c := crypto.New(account.Logger)
-		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
+		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, accountDBHandle.EncryptedKey)
 		if err != nil {
 			account.Logger.Debug("Error opening account key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
@@ -129,19 +115,19 @@ func (account *Account) Save(passphraseKey []byte) error {
 	return nil
 }
 
-// Load an account from the database
-func (account *Account) Load(passphraseKey []byte) error {
+// Load account profile data from the database
+func (account *Account) Load() error {
 	key := db.Key{
 		ID:   account.ID,
 		Type: db.TypeAccount,
 	}
-	handle, err := account.DBRegistry.GetHandle(key, passphraseKey)
+	handle, err := account.DBRegistry.GetHandle(key)
 	if err != nil {
 		return err
 	}
 	err = handle.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
-		bucket := tx.Bucket([]byte("account"))
+		bucket := tx.Bucket([]byte("profile"))
 		if bucket == nil {
 			account.Logger.Debug("account bucket does not exist")
 			code := codes.New(codes.ScopeAccount, codes.ErrorBucketMissing)
@@ -157,7 +143,8 @@ func (account *Account) Load(passphraseKey []byte) error {
 
 		// account data is encrypted with the account key and not the user key
 		c := crypto.New(account.Logger)
-		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.AccountKey)
+		// EncryptedKey is the same as account.ActiveUser.AccountKey
+		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, handle.EncryptedKey)
 		if err != nil {
 			account.Logger.Debug("Error opening account key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)

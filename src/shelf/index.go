@@ -32,7 +32,7 @@ func NewIndex(scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) *Inde
 	return index
 }
 
-func (index *Index) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
+func (index *Index) getDBHandle() (*db.Handle, error) {
 	var key db.Key
 	key.ID = index.OwnerID
 	if index.Scope == ScopeUser {
@@ -40,33 +40,13 @@ func (index *Index) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
 	} else {
 		key.Type = db.TypeAccount
 	}
-	handle, err := index.DBRegistry.GetHandle(key, passphraseKey)
-	/*
-		[FIXME]
-		if shelfDBHandle != nil {
-			return shelfDBHandle, nil
-		}
-
-		key = db.Key{
-			ID:   shelf.ID,
-			Type: db.TypeShelf,
-		}
-		parentKey := db.Key{
-			ID:   id,
-			Type: dbType,
-		}
-		var err error
-		shelfDBHandle, err = shelf.DBFactory.Open(key, parentKey, id, passphraseKey)
-		if err != nil {
-			return shelfDBHandle, err
-		}
-	*/
+	handle, err := index.DBRegistry.GetHandle(key)
 	return handle, err
 }
 
 // Save a shelf in the index
 func (index *Index) Save(shelf *Shelf, passphraseKey []byte) error {
-	handle, err := index.getDBHandle(passphraseKey)
+	handle, err := index.getDBHandle()
 	if err != nil {
 		return err
 	}
@@ -128,7 +108,7 @@ func (index *Index) Save(shelf *Shelf, passphraseKey []byte) error {
 
 // LoadAll of the shelves from an account or user DB
 func (index *Index) LoadAll(passphraseKey []byte) error {
-	handle, err := index.getDBHandle(passphraseKey)
+	handle, err := index.getDBHandle()
 	if err != nil {
 		return err
 	}
@@ -184,7 +164,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 
 // Delete a shelf from the index
 func (index *Index) Delete(shelf *Shelf, passphraseKey []byte) error {
-	handle, err := index.getDBHandle(passphraseKey)
+	handle, err := index.getDBHandle()
 	if err != nil {
 		return err
 	}

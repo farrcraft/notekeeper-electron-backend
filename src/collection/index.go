@@ -33,14 +33,14 @@ func NewIndex(scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) *Inde
 	return index
 }
 
-func (index *Index) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
+func (index *Index) getDBHandle() (*db.Handle, error) {
 	// even though the *content* of a collection gets its own db, the collection
 	// itself is stored in the parent db
 	shelfKey := db.Key{
 		Type: db.TypeShelf,
 		ID:   index.ShelfID,
 	}
-	collectionDBHandle, err := index.DBRegistry.GetHandle(shelfKey, passphraseKey)
+	collectionDBHandle, err := index.DBRegistry.GetHandle(shelfKey)
 	/*
 		[FIXME]
 		if err != nil {
@@ -80,7 +80,7 @@ func (index *Index) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
 
 // Save a collection in the collection index
 func (index *Index) Save(collection *Collection, passphraseKey []byte) error {
-	shelfDBHandle, err := index.getDBHandle(passphraseKey)
+	shelfDBHandle, err := index.getDBHandle()
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (index *Index) Save(collection *Collection, passphraseKey []byte) error {
 
 // LoadAll collections
 func (index *Index) LoadAll(passphraseKey []byte) error {
-	shelfDBHandle, err := index.getDBHandle(passphraseKey)
+	shelfDBHandle, err := index.getDBHandle()
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 
 // Delete a collection from the collection index
 func (index *Index) Delete(collection *Collection, passphraseKey []byte) error {
-	shelfDBHandle, err := index.getDBHandle(passphraseKey)
+	shelfDBHandle, err := index.getDBHandle()
 	if err != nil {
 		return err
 	}

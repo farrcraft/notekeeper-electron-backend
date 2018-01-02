@@ -77,7 +77,7 @@ func New(title *title.Title, scope Scope, container ContainerType, dbRegistry *d
 	return notebook
 }
 
-func (notebook *Notebook) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
+func (notebook *Notebook) getDBHandle() (*db.Handle, error) {
 	var key db.Key
 	key.ID = notebook.ContainerID
 	if notebook.ContainerType == ContainerTypeCollection {
@@ -85,7 +85,7 @@ func (notebook *Notebook) getDBHandle(passphraseKey []byte) (*db.Handle, error) 
 	} else {
 		key.Type = db.TypeShelf
 	}
-	notebookDBHandle, err := notebook.DBRegistry.GetHandle(key, passphraseKey)
+	notebookDBHandle, err := notebook.DBRegistry.GetHandle(key)
 	/*
 		// [FIXME] - open if db nil
 		if notebookDB == nil {
@@ -120,7 +120,7 @@ func (notebook *Notebook) getDBHandle(passphraseKey []byte) (*db.Handle, error) 
 // Save a notebook to the database
 // Account.ActiveUser.PassphraseKey
 func (notebook *Notebook) Save(passphraseKey []byte) error {
-	notebookDBHandle, err := notebook.getDBHandle(passphraseKey)
+	notebookDBHandle, err := notebook.getDBHandle()
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 	var notebooks []*Notebook
 
-	notebookDBHandle, err := notebook.getDBHandle(passphraseKey)
+	notebookDBHandle, err := notebook.getDBHandle()
 	if err != nil {
 		return notebooks, err
 	}
@@ -247,7 +247,7 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 
 // Delete a notebook
 func (notebook *Notebook) Delete(passphraseKey []byte) error {
-	notebookDBHandle, err := notebook.getDBHandle(passphraseKey)
+	notebookDBHandle, err := notebook.getDBHandle()
 	if err != nil {
 		return err
 	}

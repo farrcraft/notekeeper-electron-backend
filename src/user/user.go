@@ -13,13 +13,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-// Profile contains the minimal user information that is visible to all users of an account
-type Profile struct {
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-}
-
 // User is a single user in an account
 type User struct {
 	ID            uuid.UUID      `json:"id"`             // ID is the unique identifier of the user
@@ -66,14 +59,17 @@ func (user *User) Load(passphrase string) error {
 		return code
 	}
 
-	userKey := db.Key{Type: db.TypeUser, ID: user.ID}
-	userDBHandle, err := user.DBRegistry.GetHandle(userKey, passphraseKey[:])
+	userKey := db.Key{
+		Type: db.TypeUser,
+		ID:   user.ID,
+	}
+	userDBHandle, err := user.DBRegistry.GetHandle(userKey)
 	if err != nil {
 		return err
 	}
 	err = userDBHandle.DB.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
-		bucket := tx.Bucket([]byte("user"))
+		bucket := tx.Bucket([]byte("profile"))
 		cursor := bucket.Cursor()
 		key, value := cursor.Seek(user.ID.Bytes())
 		if key == nil {
@@ -101,6 +97,18 @@ func (user *User) Load(passphrase string) error {
 		}
 		user.PassphraseKey = passphraseKey[:]
 		userDBHandle.EncryptedKey = user.UserKey
+
+		// update the account DB handle with the account-level encryption key
+		accountDBKey := db.Key{
+			Type: db.TypeAccount,
+			ID:   user.AccountID,
+		}
+		accountDBHandle, err := user.DBRegistry.GetHandle(accountDBKey)
+		if err != nil {
+			return err
+		}
+		accountDBHandle.EncryptedKey = user.AccountKey
+
 		return nil
 	})
 	if err != nil {
@@ -115,7 +123,7 @@ func (user *User) Load(passphrase string) error {
 // Save saves the user to the database
 func (user *User) Save() error {
 	userKey := db.Key{Type: db.TypeUser, ID: user.ID}
-	userDBHandle, err := user.DBRegistry.GetHandle(userKey, user.PassphraseKey)
+	userDBHandle, err := user.DBRegistry.GetHandle(userKey)
 	if err != nil {
 		return err
 	}
@@ -159,14 +167,25 @@ func (user *User) Save() error {
 	return nil
 }
 
-// CreateKeys creates the account and user key from a passphrase
-func (user *User) CreateKeys(passphrase []byte) error {
-	// generate account-level encryption key
+// CreateAccountKey generates an account-wide encryption key
+// The user must already have their own encryption key
+func (user *User) CreateAccountKey() error {
 	c := crypto.New(user.Logger)
 	accountKey, err := c.GenerateKey()
 	if err != nil {
 		return err
 	}
+	user.AccountKey, err = c.Seal(user.PassphraseKey, accountKey[:])
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CreateUserKey generates a user-specific encryption key
+func (user *User) CreateUserKey(passphrase []byte) error {
+	c := crypto.New(user.Logger)
 
 	// we already have a user key in the form of the passphrase key
 	// so having a separate user key is a bit redundant, but it does
@@ -187,12 +206,23 @@ func (user *User) CreateKeys(passphrase []byte) error {
 	//user.PassphraseKey = append(user.Salt, slicedKey...)
 	user.PassphraseKey = key[:]
 
-	user.AccountKey, err = c.Seal(user.PassphraseKey, accountKey[:])
+	user.UserKey, err = c.Seal(user.PassphraseKey, userKey[:])
 	if err != nil {
 		return err
 	}
 
-	user.UserKey, err = c.Seal(user.PassphraseKey, userKey[:])
+	return nil
+}
+
+// CreateKeys for both account and user.
+// Both keys are encrypted with a key derived from the passphrase.
+func (user *User) CreateKeys(passphrase []byte) error {
+	err := user.CreateUserKey(passphrase)
+	if err != nil {
+		return err
+	}
+
+	err = user.CreateAccountKey()
 	if err != nil {
 		return err
 	}

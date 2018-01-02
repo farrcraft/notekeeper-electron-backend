@@ -51,7 +51,9 @@ func New(title *title.Title, scope Scope, dbRegistry *db.Registry, logger *logru
 	return tag
 }
 
-func (tag *Tag) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
+// getDBHandle of the database that owns the tag
+// The tag will either be in the user or account db.
+func (tag *Tag) getDBHandle() (*db.Handle, error) {
 	var key db.Key
 	key.ID = tag.OwnerID
 	if tag.Scope == ScopeUser {
@@ -59,13 +61,13 @@ func (tag *Tag) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
 	} else {
 		key.Type = db.TypeAccount
 	}
-	handle, err := tag.DBRegistry.GetHandle(key, passphraseKey)
+	handle, err := tag.DBRegistry.GetHandle(key)
 	return handle, err
 }
 
 // Save a tag to the DB
 func (tag *Tag) Save(passphraseKey []byte) error {
-	handle, err := tag.getDBHandle(passphraseKey)
+	handle, err := tag.getDBHandle()
 	if err != nil {
 		return err
 	}
@@ -128,7 +130,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 // LoadAll of the tags from an account or user DB
 func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 	var tags []*Tag
-	tagDBHandle, err := tag.getDBHandle(passphraseKey)
+	tagDBHandle, err := tag.getDBHandle()
 	if err != nil {
 		return tags, err
 	}
@@ -183,7 +185,7 @@ func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 
 // Delete a tag
 func (tag *Tag) Delete(passphraseKey []byte) error {
-	tagDBHandle, err := tag.getDBHandle(passphraseKey)
+	tagDBHandle, err := tag.getDBHandle()
 	if err != nil {
 		return err
 	}

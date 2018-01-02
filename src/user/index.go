@@ -35,8 +35,11 @@ func (index *Index) Save(user *User, passphraseKey []byte) error {
 	// Since users are keyed by only an unencrypted id in the db
 	// we also need to store a mapping between a key derived from the email address and the id
 	// otherwise there is no way to look up a user without taking a brute force decryption test approach
-	accountKey := db.Key{Type: db.TypeAccount, ID: user.AccountID}
-	accountDBHandle, err := index.DBRegistry.GetHandle(accountKey, passphraseKey)
+	accountKey := db.Key{
+		Type: db.TypeAccount,
+		ID:   user.AccountID,
+	}
+	accountDBHandle, err := index.DBRegistry.GetHandle(accountKey)
 	if err != nil {
 		return err
 	}
@@ -81,7 +84,7 @@ func (index *Index) Lookup(user *User, passphraseKey []byte) error {
 		Type: db.TypeAccount,
 		ID:   user.AccountID,
 	}
-	accountDBHandle, err := index.DBRegistry.GetHandle(accountKey, passphraseKey)
+	accountDBHandle, err := index.DBRegistry.GetHandle(accountKey)
 	if err != nil {
 		return err
 	}

@@ -101,7 +101,7 @@ func New(title *title.Title, scope Scope, store StoreType, dbRegistry *db.Regist
 	return note
 }
 
-func (note *Note) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
+func (note *Note) getDBHandle() (*db.Handle, error) {
 	var key db.Key
 	key.ID = note.StoreID
 	if note.StoreType == StoreTypeCollection {
@@ -109,13 +109,13 @@ func (note *Note) getDBHandle(passphraseKey []byte) (*db.Handle, error) {
 	} else {
 		key.Type = db.TypeShelf
 	}
-	handle, err := note.DBRegistry.GetHandle(key, passphraseKey)
+	handle, err := note.DBRegistry.GetHandle(key)
 	return handle, err
 }
 
 // Save a note
 func (note *Note) Save(passphraseKey []byte) error {
-	noteDBHandle, err := note.getDBHandle(passphraseKey)
+	noteDBHandle, err := note.getDBHandle()
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 	var notes []*Note
 
-	noteDBHandle, err := note.getDBHandle(passphraseKey)
+	noteDBHandle, err := note.getDBHandle()
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 
 // Load a note
 func (note *Note) Load(passphraseKey []byte) error {
-	noteDBHandle, err := note.getDBHandle(passphraseKey)
+	noteDBHandle, err := note.getDBHandle()
 	if err != nil {
 		return err
 	}
@@ -304,7 +304,7 @@ func (note *Note) Load(passphraseKey []byte) error {
 
 // Delete a note
 func (note *Note) Delete(passphraseKey []byte) error {
-	noteDBHandle, err := note.getDBHandle(passphraseKey)
+	noteDBHandle, err := note.getDBHandle()
 	if err != nil {
 		return err
 	}

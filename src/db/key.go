@@ -10,6 +10,7 @@ import (
 )
 
 // LoadEncryptedKey loads the encrypted key from an index bucket
+// [FIXME] doesn't work for account-scoped db's - not sure we actually need this method anyway. maybe delete?
 func (registry *Registry) LoadEncryptedKey(dbKey Key, passphraseKey []byte, handle *Handle) ([]byte, error) {
 	var encryptedKey []byte
 	var bucketName []byte

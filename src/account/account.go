@@ -14,15 +14,25 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// EncryptionKeyType indicates the type of encryption key
+type EncryptionKeyType int
+
+// Encryption Key Types
+const (
+	TypeAccount EncryptionKeyType = iota
+	TypeUser
+	TypePassphrase
+)
+
 // Account is the database holding one or more users and their collection of notes
 type Account struct {
 	ID           uuid.UUID       `json:"id"`
 	Name         string          `json:"name"`
 	Users        []*user.Profile `json:"users"`
-	ActiveUser   *user.User      `json:"-"`              // ActiveUser is the currently active user of the account
-	DBRegistry   *db.Registry    `json:"-"`              // DBRegistry provides access to databases
-	LicenseKey   string          `json:"license_key"`    // LicenseKey is the token which determines the available application features
-	EncryptedKey []byte          `json:"encryption_key"` // EncryptedKey is the encrypted encryption key for the account DB
+	ActiveUser   *user.User      `json:"-"`           // ActiveUser is the currently active user of the account
+	DBRegistry   *db.Registry    `json:"-"`           // DBRegistry provides access to databases
+	LicenseKey   string          `json:"license_key"` // LicenseKey is the token which determines the available application features
+	EncryptedKey []byte          `json:"-"`           // EncryptedKey is the encrypted encryption key for the account DB
 	Shelves      []*shelf.Shelf  `json:"-"`
 	Created      time.Time       `json:"created"`
 	Updated      time.Time       `json:"updated"`
@@ -54,9 +64,71 @@ func New(dbRegistry *db.Registry, logger *logrus.Logger, name string) *Account {
 	return account
 }
 
+// CreateEncryptedKey generates a new encryption key that is encrypted with the account key
+// The account key must already exist
+func (account *Account) CreateEncryptedKey() ([]byte, error) {
+	// create the new key
+	var encryptedKey []byte
+	c := crypto.New(account.Logger)
+	newKey, err := c.GenerateKey()
+	if err != nil {
+		return encryptedKey, err
+	}
+
+	// we need to open up the account key
+	// our copy of the account key has been sealed with the active user's passphrase key
+	accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.EncryptedKey)
+	if err != nil {
+		account.Logger.Debug("Error opening account key - ", err)
+		code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
+		return encryptedKey, code
+	}
+
+	// now we can seal our newly created key
+	encryptedKey, err = c.Seal(accountKey, newKey[:])
+	if err != nil {
+		return encryptedKey, err
+	}
+
+	return encryptedKey, nil
+}
+
+// UnsealKey unseals a key sealed with one of either the user, account or passphrase key
+func (account *Account) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) ([]byte, error) {
+	var emptyKey []byte
+	var unsealKey []byte
+	c := crypto.New(account.Logger)
+	if keyType == TypeAccount {
+		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.EncryptedKey)
+		if err != nil {
+			account.Logger.Debug("Error opening account key - ", err)
+			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
+			return emptyKey, code
+		}
+		unsealKey = accountKey
+	} else if keyType == TypeUser {
+		userKey, err := c.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.UserKey)
+		if err != nil {
+			account.Logger.Debug("Error opening user key - ", err)
+			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
+			return emptyKey, code
+		}
+		unsealKey = userKey
+	} else if keyType == TypePassphrase {
+		unsealKey = account.ActiveUser.PassphraseKey
+	}
+
+	unsealedKey, err := c.Open(unsealKey, sealedKey)
+	if err != nil {
+		account.Logger.Debug("Error opening key - ", err)
+		code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
+		return emptyKey, code
+	}
+	return unsealedKey, nil
+}
+
 // Save saves the account to the database
 func (account *Account) Save() error {
-	// account data is stored in the master database
 	accountDBKey := db.Key{
 		ID:   account.ID,
 		Type: db.TypeAccount,

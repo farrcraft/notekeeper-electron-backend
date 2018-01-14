@@ -21,8 +21,8 @@ type User struct {
 	Active        bool           `json:"-"`              // Active indicates whether the user is active or not
 	Created       time.Time      `json:"created"`        // Created is the time when the user was created
 	Updated       time.Time      `json:"updated"`        // Updated is the time when the user was last created
-	AccountKey    []byte         `json:"account_key"`    // AccountKey is the encrypted version of the account-level encryption key
-	UserKey       []byte         `json:"encryption_key"` // UserKey is the encrypted version of the user-level encryption key
+	AccountKey    []byte         `json:"account_key"`    // AccountKey account-level encryption key encrypted with the passphrase key
+	UserKey       []byte         `json:"encryption_key"` // UserKey is the user-level encryption key encrypted with the passphrase key
 	PassphraseKey []byte         `json:"-"`              // PassphraseKey is the key derived from the passphrase
 	Salt          []byte         `json:"-"`              // Salt is the unique salt for generating the passphrase key
 	Shelves       []*shelf.Shelf `json:"-"`              // Shelves is the set of shelves that belong to the user
@@ -167,29 +167,27 @@ func (user *User) Save() error {
 	return nil
 }
 
-// CreateAccountKey generates an account-wide encryption key
+// CreateEncryptedKey generates a new encryption key that is encrypted with the user's passphrase key
 // The user must already have their own encryption key
-func (user *User) CreateAccountKey() error {
+func (user *User) CreateEncryptedKey() ([]byte, error) {
+	var encryptedKey []byte
 	c := crypto.New(user.Logger)
-	accountKey, err := c.GenerateKey()
+	newKey, err := c.GenerateKey()
 	if err != nil {
-		return err
+		return encryptedKey, err
 	}
-	user.AccountKey, err = c.Seal(user.PassphraseKey, accountKey[:])
+	encryptedKey, err = c.Seal(user.PassphraseKey, newKey[:])
 	if err != nil {
-		return err
+		return encryptedKey, err
 	}
 
-	return nil
+	return encryptedKey, nil
 }
 
 // CreateUserKey generates a user-specific encryption key
 func (user *User) CreateUserKey(passphrase []byte) error {
 	c := crypto.New(user.Logger)
 
-	// we already have a user key in the form of the passphrase key
-	// so having a separate user key is a bit redundant, but it does
-	// make things consistent and easier overall in the long run.
 	userKey, err := c.GenerateKey()
 	if err != nil {
 		return err
@@ -222,7 +220,8 @@ func (user *User) CreateKeys(passphrase []byte) error {
 		return err
 	}
 
-	err = user.CreateAccountKey()
+	// generate an account-wide encryption key
+	user.AccountKey, err = user.CreateEncryptedKey()
 	if err != nil {
 		return err
 	}

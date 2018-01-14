@@ -77,7 +77,7 @@ func (index *Index) Save(user *User, passphraseKey []byte) error {
 }
 
 // Lookup a user id in the account database
-func (index *Index) Lookup(user *User, passphraseKey []byte) error {
+func (index *Index) Lookup(user *User) error {
 	originalID := user.ID
 	user.ID = uuid.Nil
 	accountKey := db.Key{

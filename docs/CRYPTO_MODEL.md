@@ -48,6 +48,10 @@ There are 3 special encryption keys:
 * The user and account encryption keys are randomly generated when the user/account is created.
 * The passphrase key is derived from the passphrase content.
 * The user & account encryption key are stored encrypted in the <user UUID>.db as part of the profile bucket value.
+* The passphrase key is used to encrypt/decrypt the account & user keys. It is never used for any other content.
+* The user key encrypts content in the user DB.
+* The account key encrypts content in the account DB.
+* Remaining DB types each have their own encryption key, sealed with either the user or account key.
 
 The encrypted version of a DB's encryption key is stored in the metadata index bucket for that DB type.
 

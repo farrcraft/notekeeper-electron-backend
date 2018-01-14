@@ -55,6 +55,7 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 	newAccount.Users = append(newAccount.Users, newUser.Profile)
 	newAccount.ActiveUser = newUser
 
+	newAccount.EncryptedKey = newUser.AccountKey
 	accountDBHandle.EncryptedKey = newUser.AccountKey
 	userDBHandle.EncryptedKey = newUser.UserKey
 
@@ -87,10 +88,20 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	if err != nil {
 		return err
 	}
-	// [FIXME] - create shelf encryption key; encrypt w/ passphrase key; set shelf.EncryptedKey
 
-	index := shelf.NewIndex(shelf.ScopeAccount, api.DBRegistry, api.Logger)
-	err = index.Save(accountShelf, user.PassphraseKey)
+	accountShelf.EncryptedKey, err = acct.CreateEncryptedKey()
+	if err != nil {
+		return err
+	}
+	accountShelfDBHandle.EncryptedKey = accountShelf.EncryptedKey
+
+	// shelf metadata will be saved in an index (user or account db)
+	accountShelfIndex := shelf.NewIndex(shelf.ScopeAccount, api.DBRegistry, api.Logger)
+	unsealedAccountKey, err := acct.UnsealKey(account.TypePassphrase, acct.EncryptedKey)
+	if err != nil {
+		return err
+	}
+	err = accountShelfIndex.Save(accountShelf, unsealedAccountKey)
 	if err != nil {
 		api.Logger.Debug("could not create default account shelf")
 		return err
@@ -107,10 +118,15 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 		return err
 	}
 
-	// [FIXME] - create shelf encryption key; encrypt w/ passphrase key; set shelf.EncryptedKey
+	userShelf.EncryptedKey, err = user.CreateEncryptedKey()
+	if err != nil {
+		return err
+	}
+	userShelfDBHandle.EncryptedKey = userShelf.EncryptedKey
 
-	userIndex := shelf.NewIndex(shelf.ScopeUser, api.DBRegistry, api.Logger)
-	err = userIndex.Save(userShelf, user.PassphraseKey)
+	userShelfIndex := shelf.NewIndex(shelf.ScopeUser, api.DBRegistry, api.Logger)
+	unsealedUserKey, err := acct.UnsealKey(account.TypePassphrase, acct.ActiveUser.UserKey)
+	err = userShelfIndex.Save(userShelf, unsealedUserKey)
 	if err != nil {
 		api.Logger.Debug("could not create default user shelf")
 		return err
@@ -122,7 +138,12 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	accountNotebook.OwnerID = acct.ID
 	accountNotebook.ContainerID = accountShelf.ID
 	accountNotebook.Default = true
-	err = accountNotebook.Save(user.PassphraseKey)
+	accountShelfKey, err := acct.UnsealKey(account.TypeAccount, accountShelfDBHandle.EncryptedKey)
+	if err != nil {
+		api.Logger.Debug("could not unseal default account shelf key")
+		return err
+	}
+	err = accountNotebook.Save(accountShelfKey)
 	if err != nil {
 		api.Logger.Debug("could not create default account notebook")
 		return err
@@ -133,7 +154,12 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	userNotebook.OwnerID = user.ID
 	userNotebook.ContainerID = userShelf.ID
 	userNotebook.Default = true
-	err = userNotebook.Save(user.PassphraseKey)
+	userShelfKey, err := acct.UnsealKey(account.TypeUser, userShelfDBHandle.EncryptedKey)
+	if err != nil {
+		api.Logger.Debug("could not unseal default user shelf key")
+		return err
+	}
+	err = userNotebook.Save(userShelfKey)
 	if err != nil {
 		api.Logger.Debug("could not create default user notebook")
 		return err
@@ -151,9 +177,13 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 		return err
 	}
 
-	// [FIXME] - create shelf encryption key; encrypt w/ passphrase key; set shelf.EncryptedKey
+	accountTrashShelf.EncryptedKey, err = acct.CreateEncryptedKey()
+	if err != nil {
+		return err
+	}
+	accountTrashShelfDBHandle.EncryptedKey = accountTrashShelf.EncryptedKey
 
-	err = index.Save(accountTrashShelf, user.PassphraseKey)
+	err = accountShelfIndex.Save(accountTrashShelf, unsealedAccountKey)
 	if err != nil {
 		api.Logger.Debug("could not create account trash shelf")
 		return err
@@ -170,9 +200,13 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 		return err
 	}
 
-	// [FIXME] - create shelf encryption key; encrypt w/ passphrase key; set shelf.EncryptedKey
+	userTrashShelf.EncryptedKey, err = acct.CreateEncryptedKey()
+	if err != nil {
+		return err
+	}
+	userTrashShelfDBHandle.EncryptedKey = accountTrashShelf.EncryptedKey
 
-	err = userIndex.Save(userTrashShelf, user.PassphraseKey)
+	err = userShelfIndex.Save(userTrashShelf, unsealedUserKey)
 	if err != nil {
 		api.Logger.Debug("could not create user trash shelf")
 		return err
@@ -185,33 +219,51 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 func (api *API) SigninAccount(name string, email string, passphrase string) (*account.Account, error) {
 	// attempt to find the account (lookup)
 	newAccount := account.New(api.DBRegistry, api.Logger, name)
-	err := newAccount.Lookup()
+	accountIndex := account.NewIndex(api.DBRegistry, api.Logger)
+	err := accountIndex.Lookup(newAccount)
 	if err != nil {
 		return nil, err
 	}
 
-	err = newAccount.OpenAccountDb()
+	accountDBKey := db.Key{
+		ID:   newAccount.ID,
+		Type: db.TypeAccount,
+	}
+	accountDBHandle, err := api.DBRegistry.NewHandle(accountDBKey)
 	if err != nil {
 		return nil, err
 	}
 
 	// authenticate the user
-	user := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
+	newUser := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
 	// resolve the user id from the user map in the account db
-	err = user.Lookup()
+	userIndex := user.NewIndex(newAccount.ID, api.DBRegistry, api.Logger)
+	err = userIndex.Lookup(newUser)
 	if err != nil {
 		api.DBRegistry.CloseAccountDBs()
 		return nil, err
 	}
 	// load the user from the user db
-	err = user.Load(passphrase)
+	userDBKey := db.Key{
+		ID:   newUser.ID,
+		Type: db.TypeUser,
+	}
+	_, err = api.DBRegistry.NewHandle(userDBKey)
+	if err != nil {
+		return nil, err
+	}
+	err = newUser.Load(passphrase)
 	if err != nil {
 		api.DBRegistry.CloseAccountDBs()
 		return nil, err
 	}
 
 	// connect the user to the account & make it the active user
-	newAccount.ActiveUser = user
+	newAccount.ActiveUser = newUser
+
+	// set remaining encryption keys
+	newAccount.EncryptedKey = newUser.AccountKey
+	accountDBHandle.EncryptedKey = newUser.AccountKey
 
 	// load the account
 	err = newAccount.Load()
@@ -252,6 +304,9 @@ func (api *API) LockAccount(acct *account.Account) error {
 		return nil
 	}
 	acct.ActiveUser.PassphraseKey = []byte{}
+	acct.ActiveUser.UserKey = []byte{}
+	acct.ActiveUser.AccountKey = []byte{}
+	acct.EncryptedKey = []byte{}
 	//crypto.Zero(acct.ActiveUser.PassphraseKey)
 	if acct.DBRegistry == nil {
 		api.Logger.Debug("lock account missing db factory")
@@ -273,15 +328,29 @@ func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
 		return nil
 	}
 
-	err := acct.OpenAccountDb()
+	accountDBKey := db.Key{
+		ID:   acct.ID,
+		Type: db.TypeAccount,
+	}
+	accountDBHandle, err := api.DBRegistry.NewHandle(accountDBKey)
 	if err != nil {
 		api.Logger.Debug("unlock could not open account db")
 		return err
 	}
 
-	err = acct.ActiveUser.Lookup()
+	// load the user db
+	userDBKey := db.Key{
+		ID:   acct.ActiveUser.ID,
+		Type: db.TypeUser,
+	}
+	_, err = api.DBRegistry.NewHandle(userDBKey)
 	if err != nil {
-		api.Logger.Debug("unlock could not lookup user")
+		return err
+	}
+
+	err = acct.ActiveUser.Load(passphrase)
+	if err != nil {
+		api.DBRegistry.CloseAccountDBs()
 		return err
 	}
 
@@ -303,10 +372,7 @@ func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
 		return err
 	}
 
-	err = acct.OpenAccountDb()
-	if err != nil {
-		return err
-	}
+	accountDBHandle.EncryptedKey = acct.ActiveUser.AccountKey
 
 	return nil
 }

@@ -86,40 +86,11 @@ func (notebook *Notebook) getDBHandle() (*db.Handle, error) {
 		key.Type = db.TypeShelf
 	}
 	notebookDBHandle, err := notebook.DBRegistry.GetHandle(key)
-	/*
-		// [FIXME] - open if db nil
-		if notebookDB == nil {
-			// notebook db is either a shelf or collection db
-			key := db.Key{
-				ID:   notebook.ContainerID,
-				Type: dbType,
-			}
-			var parentDBType db.Type
-			if notebook.Scope == ScopeAccount {
-				parentDBType = db.TypeAccount
-			} else {
-				parentDBType = db.TypeUser
-			}
-			parentKey := db.Key{
-				ID:   notebook.OwnerID,
-				Type: parentDBType,
-			}
-			var err error
-			notebookDB, err = notebook.DBFactory.Open(key, parentKey, parentKey, passphraseKey)
-			if err != nil {
-				return nil
-			}
-			notebook.Logger.Debug("opened notebook parent db")
-		} else {
-			notebook.Logger.Debug("notebook db already open")
-		}
-	*/
 	return notebookDBHandle, err
 }
 
 // Save a notebook to the database
-// Account.ActiveUser.PassphraseKey
-func (notebook *Notebook) Save(passphraseKey []byte) error {
+func (notebook *Notebook) Save(encryptionKey []byte) error {
 	notebookDBHandle, err := notebook.getDBHandle()
 	if err != nil {
 		return err
@@ -141,17 +112,9 @@ func (notebook *Notebook) Save(passphraseKey []byte) error {
 			return code
 		}
 
-		// retrieve the encryption key
-		c := crypto.New(notebook.Logger)
-		decryptedKey, err := c.Open(passphraseKey, notebookDBHandle.EncryptedKey)
-		if err != nil {
-			notebook.Logger.Debug("Error retrieving notebook key - ", err)
-			code := codes.New(codes.ScopeNotebook, codes.ErrorOpenKey)
-			return code
-		}
-
 		// encrypt the data
-		encryptedData, err := c.Seal(decryptedKey, data)
+		c := crypto.New(notebook.Logger)
+		encryptedData, err := c.Seal(encryptionKey, data)
 		if err != nil {
 			notebook.Logger.Debug("Error encrypting notebook data - ", err)
 			code := codes.New(codes.ScopeNotebook, codes.ErrorEncrypt)

@@ -45,7 +45,7 @@ func (index *Index) getDBHandle() (*db.Handle, error) {
 }
 
 // Save a shelf in the index
-func (index *Index) Save(shelf *Shelf, passphraseKey []byte) error {
+func (index *Index) Save(shelf *Shelf, encryptionKey []byte) error {
 	handle, err := index.getDBHandle()
 	if err != nil {
 		return err
@@ -67,17 +67,9 @@ func (index *Index) Save(shelf *Shelf, passphraseKey []byte) error {
 			return code
 		}
 
-		// retrieve the encryption key
-		c := crypto.New(index.Logger)
-		decryptedKey, err := c.Open(passphraseKey, handle.EncryptedKey)
-		if err != nil {
-			index.Logger.Debug("Error retrieving shelf key - ", err)
-			code := codes.New(codes.ScopeShelf, codes.ErrorOpenKey)
-			return code
-		}
-
 		// encrypt the data
-		encryptedData, err := c.Seal(decryptedKey, data)
+		c := crypto.New(index.Logger)
+		encryptedData, err := c.Seal(encryptionKey, data)
 		if err != nil {
 			index.Logger.Debug("Error encrypting shelf data - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorEncrypt)
@@ -113,6 +105,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 		return err
 	}
 
+	// [FIXME] - method should recieve unsealed encryption key directly
 	c := crypto.New(index.Logger)
 	shelfKey, err := c.Open(passphraseKey, handle.EncryptedKey)
 	if err != nil {
@@ -163,7 +156,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 }
 
 // Delete a shelf from the index
-func (index *Index) Delete(shelf *Shelf, passphraseKey []byte) error {
+func (index *Index) Delete(shelf *Shelf) error {
 	handle, err := index.getDBHandle()
 	if err != nil {
 		return err

@@ -21,11 +21,13 @@ func GetAccountNotes(server *rpc.Server, message []byte) (proto.Message, error) 
 // LoadUserNote is the RPC method to get a user note
 func LoadUserNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	response, err := loadNote(server, message, "user")
+	return response, err
 }
 
 // LoadAccountNote is the RPC method to get a account note
 func LoadAccountNote(server *rpc.Server, message []byte) (proto.Message, error) {
 	response, err := loadNote(server, message, "account")
+	return response, err
 }
 
 // CreateUserNote is the RPC method to create a new user note

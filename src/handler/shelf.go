@@ -201,7 +201,7 @@ func deleteShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 	s.ID = id
 
 	index := shelf.NewIndex(shelfScope, server.DBRegistry, server.Logger)
-	err = index.Delete(s, server.Account.ActiveUser.PassphraseKey)
+	err = index.Delete(s)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
 	}

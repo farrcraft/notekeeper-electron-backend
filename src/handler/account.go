@@ -24,7 +24,8 @@ func GetAccountState(server *rpc.Server, message []byte) (proto.Message, error) 
 		response.Locked = server.Account.IsLocked()
 		response.Exists = true
 	} else {
-		count := account.MapCount(server.DBRegistry)
+		accountIndex := account.NewIndex(server.DBRegistry, server.Logger)
+		count := accountIndex.Count()
 		if count > 0 {
 			response.Exists = true
 		}

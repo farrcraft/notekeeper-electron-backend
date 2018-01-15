@@ -164,7 +164,7 @@ func loadNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	return response, nil
 }
 
-func createNote(server *rpc.Server, message []byte) (proto.Message, error) {
+func createNote(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}

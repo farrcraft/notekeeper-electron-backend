@@ -34,11 +34,11 @@ func (registry *Registry) OpenMaster(path string) error {
 		ID:   uuid.Nil,
 		Type: TypeMaster,
 	}
-	handle, err := registry.GetHandle(key)
-	registry.Logger.Info("Opened master db file [", handle.Info.Filename, "]")
+	handle, err := registry.NewHandle(key)
 	if err != nil {
 		return err
 	}
+	registry.Logger.Info("Opened master db file [", handle.Info.Filename, "]")
 
 	return nil
 }

@@ -23,9 +23,10 @@ type Index struct {
 }
 
 // NewIndex returns a new index object
-func NewIndex(scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) *Index {
+func NewIndex(scope Scope, ownerID uuid.UUID, dbRegistry *db.Registry, logger *logrus.Logger) *Index {
 	index := &Index{
 		Scope:      scope,
+		OwnerID:    ownerID,
 		DBRegistry: dbRegistry,
 		Logger:     logger,
 	}

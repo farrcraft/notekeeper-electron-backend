@@ -57,7 +57,7 @@ func getShelves(server *rpc.Server, message []byte, scope string) (proto.Message
 		return response, nil
 	}
 
-	index := shelf.NewIndex(shelfScope, server.DBRegistry, server.Logger)
+	index := shelf.NewIndex(shelfScope, id, server.DBRegistry, server.Logger)
 	err = index.LoadAll(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -97,22 +97,23 @@ func createShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 		return response, nil
 	}
 
-	id, err := uuid.FromString(request.Id)
+	ownerID, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid id - ", err)
+		server.Logger.Debug("Invalid owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
-	shelfScope, ok := strToShelfScope(server, scope, id)
+	shelfScope, ok := strToShelfScope(server, scope, ownerID)
 	if !ok {
 		return response, nil
 	}
 
 	t := rpc.MessageToTitle(request.Name)
 	s := shelf.New(t, shelfScope, server.DBRegistry, server.Logger)
+	s.OwnerID = ownerID
 
-	index := shelf.NewIndex(shelfScope, server.DBRegistry, server.Logger)
+	index := shelf.NewIndex(shelfScope, ownerID, server.DBRegistry, server.Logger)
 	err = index.Save(s, server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -123,6 +124,7 @@ func createShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 	return response, nil
 }
 
+// save an existing shelf
 func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
@@ -141,14 +143,21 @@ func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message,
 		return response, nil
 	}
 
-	id, err := uuid.FromString(request.OwnerId)
+	id, err := uuid.FromString(request.Id)
 	if err != nil {
 		server.Logger.Debug("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
-	shelfScope, ok := strToShelfScope(server, scope, id)
+	ownerID, err := uuid.FromString(request.OwnerId)
+	if err != nil {
+		server.Logger.Debug("Invalid owner id - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorDecode)
+		return response, nil
+	}
+
+	shelfScope, ok := strToShelfScope(server, scope, ownerID)
 	if !ok {
 		return response, nil
 	}
@@ -156,9 +165,10 @@ func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message,
 	t := rpc.MessageToTitle(request.Name)
 	s := shelf.New(t, shelfScope, server.DBRegistry, server.Logger)
 	s.ID = id
+	s.OwnerID = ownerID
 	s.Locked = request.Locked
 
-	index := shelf.NewIndex(shelfScope, server.DBRegistry, server.Logger)
+	index := shelf.NewIndex(shelfScope, ownerID, server.DBRegistry, server.Logger)
 	err = index.Save(s, server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -185,22 +195,30 @@ func deleteShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 		return response, nil
 	}
 
-	id, err := uuid.FromString(request.OwnerId)
+	id, err := uuid.FromString(request.Id)
 	if err != nil {
 		server.Logger.Debug("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
-	shelfScope, ok := strToShelfScope(server, scope, id)
+	ownerID, err := uuid.FromString(request.OwnerId)
+	if err != nil {
+		server.Logger.Debug("Invalid owner id - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorDecode)
+		return response, nil
+	}
+
+	shelfScope, ok := strToShelfScope(server, scope, ownerID)
 	if !ok {
 		return response, nil
 	}
 
 	s := shelf.New(nil, shelfScope, server.DBRegistry, server.Logger)
 	s.ID = id
+	s.OwnerID = ownerID
 
-	index := shelf.NewIndex(shelfScope, server.DBRegistry, server.Logger)
+	index := shelf.NewIndex(shelfScope, ownerID, server.DBRegistry, server.Logger)
 	err = index.Delete(s)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)

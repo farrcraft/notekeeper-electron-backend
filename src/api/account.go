@@ -96,7 +96,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	accountShelfDBHandle.EncryptedKey = accountShelf.EncryptedKey
 
 	// shelf metadata will be saved in an index (user or account db)
-	accountShelfIndex := shelf.NewIndex(shelf.ScopeAccount, api.DBRegistry, api.Logger)
+	accountShelfIndex := shelf.NewIndex(shelf.ScopeAccount, acct.ID, api.DBRegistry, api.Logger)
 	unsealedAccountKey, err := acct.UnsealKey(account.TypePassphrase, acct.EncryptedKey)
 	if err != nil {
 		return err
@@ -124,7 +124,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 	}
 	userShelfDBHandle.EncryptedKey = userShelf.EncryptedKey
 
-	userShelfIndex := shelf.NewIndex(shelf.ScopeUser, api.DBRegistry, api.Logger)
+	userShelfIndex := shelf.NewIndex(shelf.ScopeUser, user.ID, api.DBRegistry, api.Logger)
 	unsealedUserKey, err := acct.UnsealKey(account.TypePassphrase, acct.ActiveUser.UserKey)
 	err = userShelfIndex.Save(userShelf, unsealedUserKey)
 	if err != nil {

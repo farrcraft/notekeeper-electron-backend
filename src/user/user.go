@@ -13,6 +13,16 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// EncryptionKeyType indicates the type of encryption key
+type EncryptionKeyType int
+
+// Encryption Key Types
+const (
+	TypeAccount EncryptionKeyType = iota
+	TypeUser
+	TypePassphrase
+)
+
 // User is a single user in an account
 type User struct {
 	ID            uuid.UUID      `json:"id"`             // ID is the unique identifier of the user
@@ -167,6 +177,37 @@ func (user *User) Save() error {
 	return nil
 }
 
+// UnsealKey unseals a key sealed with one of either the user or passphrase key
+// The EncryptionKeyType denotes which key sealedKey was sealed with.
+func (user *User) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) ([]byte, error) {
+	var emptyKey []byte
+	var unsealKey []byte
+	c := crypto.New(user.Logger)
+	if keyType == TypeUser {
+		userKey, err := c.Open(user.PassphraseKey, user.UserKey)
+		if err != nil {
+			user.Logger.Debug("Error opening user key - ", err)
+			code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
+			return emptyKey, code
+		}
+		unsealKey = userKey
+	} else if keyType == TypePassphrase {
+		unsealKey = user.PassphraseKey
+	} else {
+		user.Logger.Debug("Cannot unseal key of unknown key type.")
+		code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
+		return emptyKey, code
+	}
+
+	unsealedKey, err := c.Open(unsealKey, sealedKey)
+	if err != nil {
+		user.Logger.Debug("Error opening key - ", err)
+		code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
+		return emptyKey, code
+	}
+	return unsealedKey, nil
+}
+
 // CreateEncryptedKey generates a new encryption key that is encrypted with the user's passphrase key
 // The user must already have their own encryption key
 func (user *User) CreateEncryptedKey() ([]byte, error) {
@@ -176,7 +217,11 @@ func (user *User) CreateEncryptedKey() ([]byte, error) {
 	if err != nil {
 		return encryptedKey, err
 	}
-	encryptedKey, err = c.Seal(user.PassphraseKey, newKey[:])
+	unsealedUserKey, err := user.UnsealKey(TypePassphrase, user.UserKey)
+	if err != nil {
+		return encryptedKey, err
+	}
+	encryptedKey, err = c.Seal(unsealedUserKey, newKey[:])
 	if err != nil {
 		return encryptedKey, err
 	}

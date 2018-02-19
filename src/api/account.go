@@ -73,7 +73,7 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 }
 
 // CreateAccountDefaults creates default objects and settings for an account
-func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) error {
+func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.User) error {
 	// Create the account-scoped default shelf 'My Shelf'
 	defaultShelfTitle := title.New("My Shelf")
 	accountShelf := shelf.New(defaultShelfTitle, shelf.ScopeAccount, api.DBRegistry, api.Logger)
@@ -109,7 +109,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 
 	// Create the user-scoped default shelf 'My Shelf'
 	userShelf := shelf.New(defaultShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
-	userShelf.OwnerID = user.ID
+	userShelf.OwnerID = currentUser.ID
 	userShelf.Default = true
 
 	shelfDBKey.ID = userShelf.ID
@@ -118,14 +118,18 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 		return err
 	}
 
-	userShelf.EncryptedKey, err = user.CreateEncryptedKey()
+	userShelf.EncryptedKey, err = currentUser.CreateEncryptedKey()
 	if err != nil {
 		return err
 	}
 	userShelfDBHandle.EncryptedKey = userShelf.EncryptedKey
 
-	userShelfIndex := shelf.NewIndex(shelf.ScopeUser, user.ID, api.DBRegistry, api.Logger)
+	userShelfIndex := shelf.NewIndex(shelf.ScopeUser, currentUser.ID, api.DBRegistry, api.Logger)
 	unsealedUserKey, err := acct.UnsealKey(account.TypePassphrase, acct.ActiveUser.UserKey)
+	if err != nil {
+		api.Logger.Debug("could not unseal user key")
+		return err
+	}
 	err = userShelfIndex.Save(userShelf, unsealedUserKey)
 	if err != nil {
 		api.Logger.Debug("could not create default user shelf")
@@ -151,10 +155,10 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 
 	// Create the user-scoped default notebook 'My Notebook' inside the user-scoped default shelf
 	userNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeUser, notebook.ContainerTypeShelf, api.DBRegistry, api.Logger)
-	userNotebook.OwnerID = user.ID
+	userNotebook.OwnerID = currentUser.ID
 	userNotebook.ContainerID = userShelf.ID
 	userNotebook.Default = true
-	userShelfKey, err := acct.UnsealKey(account.TypeUser, userShelfDBHandle.EncryptedKey)
+	userShelfKey, err := currentUser.UnsealKey(user.TypeUser, userShelfDBHandle.EncryptedKey)
 	if err != nil {
 		api.Logger.Debug("could not unseal default user shelf key")
 		return err
@@ -191,7 +195,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, user *user.User) er
 
 	// Create the user-scoped special 'Trash' shelf
 	userTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
-	userTrashShelf.OwnerID = user.ID
+	userTrashShelf.OwnerID = currentUser.ID
 	userTrashShelf.Trash = true
 
 	shelfDBKey.ID = userTrashShelf.ID

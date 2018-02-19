@@ -94,6 +94,7 @@ func (account *Account) CreateEncryptedKey() ([]byte, error) {
 }
 
 // UnsealKey unseals a key sealed with one of either the user, account or passphrase key
+// The EncryptionKeyType denotes which key sealedKey was sealed with.
 func (account *Account) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) ([]byte, error) {
 	var emptyKey []byte
 	var unsealKey []byte

@@ -86,12 +86,16 @@ func (registry *Registry) CloseAll() {
 		registry.Master.Close()
 		registry.Master = nil
 	}
+	registry.Handles = nil
 }
 
 // CloseAccountDBs closes everything except the master DB
 func (registry *Registry) CloseAccountDBs() {
 	for _, handle := range registry.Handles {
-		handle.Close()
+		if handle.Info.Type != TypeMaster {
+			handle.Close()
+		}
 	}
 	registry.Handles = nil
+	registry.Handles = append(registry.Handles, registry.Master)
 }

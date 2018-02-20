@@ -139,7 +139,7 @@ func (user *User) Save() error {
 	}
 	c := crypto.New(user.Logger)
 	err = userDBHandle.DB.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte("user"))
+		bucket, err := tx.CreateBucketIfNotExists([]byte("profile"))
 		if err != nil {
 			user.Logger.Debug("Error creating users bucket - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorCreateBucket)
@@ -210,18 +210,33 @@ func (user *User) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) ([]byte
 
 // CreateEncryptedKey generates a new encryption key that is encrypted with the user's passphrase key
 // The user must already have their own encryption key
-func (user *User) CreateEncryptedKey() ([]byte, error) {
+// EncryptionKeyType denotes which key is used to seal the generated key
+func (user *User) CreateEncryptedKey(keyType EncryptionKeyType) ([]byte, error) {
 	var encryptedKey []byte
+	var sealingKey []byte
 	c := crypto.New(user.Logger)
 	newKey, err := c.GenerateKey()
 	if err != nil {
 		return encryptedKey, err
 	}
-	unsealedUserKey, err := user.UnsealKey(TypePassphrase, user.UserKey)
-	if err != nil {
-		return encryptedKey, err
+
+	if keyType == TypeUser {
+		userKey, err := c.Open(user.PassphraseKey, user.UserKey)
+		if err != nil {
+			user.Logger.Debug("Error opening user key - ", err)
+			code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
+			return encryptedKey, code
+		}
+		sealingKey = userKey
+	} else if keyType == TypePassphrase {
+		sealingKey = user.PassphraseKey
+	} else {
+		user.Logger.Debug("Cannot unseal key of unknown key type.")
+		code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
+		return encryptedKey, code
 	}
-	encryptedKey, err = c.Seal(unsealedUserKey, newKey[:])
+
+	encryptedKey, err = c.Seal(sealingKey, newKey[:])
 	if err != nil {
 		return encryptedKey, err
 	}
@@ -266,7 +281,7 @@ func (user *User) CreateKeys(passphrase []byte) error {
 	}
 
 	// generate an account-wide encryption key
-	user.AccountKey, err = user.CreateEncryptedKey()
+	user.AccountKey, err = user.CreateEncryptedKey(TypePassphrase)
 	if err != nil {
 		return err
 	}

@@ -61,6 +61,7 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 
 	err = newAccount.Save()
 	if err != nil {
+		api.Logger.Debug("Error saving account - ", err)
 		return newAccount, err
 	}
 
@@ -118,7 +119,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 		return err
 	}
 
-	userShelf.EncryptedKey, err = currentUser.CreateEncryptedKey()
+	userShelf.EncryptedKey, err = currentUser.CreateEncryptedKey(user.TypeUser)
 	if err != nil {
 		return err
 	}

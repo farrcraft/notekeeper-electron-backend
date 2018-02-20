@@ -79,7 +79,7 @@ func (account *Account) CreateEncryptedKey() ([]byte, error) {
 	// our copy of the account key has been sealed with the active user's passphrase key
 	accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.EncryptedKey)
 	if err != nil {
-		account.Logger.Debug("Error opening account key - ", err)
+		account.Logger.Debug("Error opening account key while creating key - ", err)
 		code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 		return encryptedKey, code
 	}
@@ -102,7 +102,7 @@ func (account *Account) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) (
 	if keyType == TypeAccount {
 		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.EncryptedKey)
 		if err != nil {
-			account.Logger.Debug("Error opening account key - ", err)
+			account.Logger.Debug("Error unsealing account key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 			return emptyKey, code
 		}

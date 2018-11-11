@@ -7,8 +7,8 @@ import (
 	"../crypto"
 	"../db"
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
+	"go.etcd.io/bbolt"
 )
 
 // Index contains an index of accounts
@@ -38,7 +38,7 @@ func (index *Index) Count() int {
 	if err != nil {
 		return count
 	}
-	handle.DB.View(func(tx *bolt.Tx) error {
+	handle.DB.View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("account_index"))
 		if bucket == nil {
 			return nil
@@ -56,7 +56,7 @@ func (index *Index) Count() int {
 // Since accounts are keyed by only an unencrypted id in the db
 // we also need to store a mapping between a key derived from the name and the id
 // otherwise there is no way to look up an account without taking a brute force decryption test approach
-func (index *Index) Save(account *Account, passphraseKey []byte) error {
+func (index *Index) Save(account *Account) error {
 	// account index is stored in the master db
 	masterKey := db.Key{
 		ID:   uuid.Nil,
@@ -67,7 +67,7 @@ func (index *Index) Save(account *Account, passphraseKey []byte) error {
 		return err
 	}
 
-	err = masterDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = masterDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("account_index"))
 		if err != nil {
@@ -116,7 +116,7 @@ func (index *Index) Lookup(account *Account) error {
 	if err != nil {
 		return err
 	}
-	err = handle.DB.View(func(tx *bolt.Tx) error {
+	err = handle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("account_index"))
 		// If bucket doesn't exist, no accounts have been created yet

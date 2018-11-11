@@ -13,7 +13,10 @@ import (
 // CreateAccount creates a new account
 func (api *API) CreateAccount(name string, email string, passphrase string) (*account.Account, error) {
 	// create account object
-	newAccount := account.New(api.DBRegistry, api.Logger, name)
+	newAccount, err := account.New(api.DBRegistry, api.Logger, name)
+	if err != nil {
+		return newAccount, err
+	}
 
 	// create a new db file for the account
 	accountDBKey := db.Key{
@@ -26,7 +29,10 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 	}
 
 	// create user object & attach it to the account
-	newUser := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
+	newUser, err := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
+	if err != nil {
+		return newAccount, err
+	}
 
 	err = newUser.CreateKeys([]byte(passphrase))
 	if err != nil {
@@ -65,6 +71,13 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 		return newAccount, err
 	}
 
+	accountIndex := account.NewIndex(api.DBRegistry, api.Logger)
+	err = accountIndex.Save(newAccount)
+	if err != nil {
+		api.Logger.Debug("Error saving account index - ", err)
+		return newAccount, err
+	}
+
 	err = api.CreateAccountDefaults(newAccount, newUser)
 	if err != nil {
 		return newAccount, err
@@ -77,7 +90,12 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.User) error {
 	// Create the account-scoped default shelf 'My Shelf'
 	defaultShelfTitle := title.New("My Shelf")
-	accountShelf := shelf.New(defaultShelfTitle, shelf.ScopeAccount, api.DBRegistry, api.Logger)
+
+	accountShelf, err := shelf.New(defaultShelfTitle, shelf.ScopeAccount, api.DBRegistry, api.Logger)
+	if err != nil {
+		return err
+	}
+
 	accountShelf.OwnerID = acct.ID
 	accountShelf.Default = true
 
@@ -109,7 +127,11 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 	}
 
 	// Create the user-scoped default shelf 'My Shelf'
-	userShelf := shelf.New(defaultShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
+	userShelf, err := shelf.New(defaultShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
+	if err != nil {
+		return err
+	}
+
 	userShelf.OwnerID = currentUser.ID
 	userShelf.Default = true
 
@@ -139,7 +161,12 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 
 	// Create the account-scoped default notebook 'My Notebook' inside the account-scoped default shelf
 	defaultNotebookTitle := title.New("My Notebook")
-	accountNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeAccount, notebook.ContainerTypeShelf, api.DBRegistry, api.Logger)
+
+	accountNotebook, err := notebook.New(defaultNotebookTitle, notebook.ScopeAccount, notebook.ContainerTypeShelf, api.DBRegistry, api.Logger)
+	if err != nil {
+		return err
+	}
+
 	accountNotebook.OwnerID = acct.ID
 	accountNotebook.ContainerID = accountShelf.ID
 	accountNotebook.Default = true
@@ -155,7 +182,11 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 	}
 
 	// Create the user-scoped default notebook 'My Notebook' inside the user-scoped default shelf
-	userNotebook := notebook.New(defaultNotebookTitle, notebook.ScopeUser, notebook.ContainerTypeShelf, api.DBRegistry, api.Logger)
+	userNotebook, err := notebook.New(defaultNotebookTitle, notebook.ScopeUser, notebook.ContainerTypeShelf, api.DBRegistry, api.Logger)
+	if err != nil {
+		return err
+	}
+
 	userNotebook.OwnerID = currentUser.ID
 	userNotebook.ContainerID = userShelf.ID
 	userNotebook.Default = true
@@ -172,7 +203,12 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 
 	// Create the account-scoped special 'Trash' shelf
 	trashShelfTitle := title.New("Trash")
-	accountTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeAccount, api.DBRegistry, api.Logger)
+
+	accountTrashShelf, err := shelf.New(trashShelfTitle, shelf.ScopeAccount, api.DBRegistry, api.Logger)
+	if err != nil {
+		return err
+	}
+
 	accountTrashShelf.OwnerID = acct.ID
 	accountTrashShelf.Trash = true
 
@@ -195,7 +231,11 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 	}
 
 	// Create the user-scoped special 'Trash' shelf
-	userTrashShelf := shelf.New(trashShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
+	userTrashShelf, err := shelf.New(trashShelfTitle, shelf.ScopeUser, api.DBRegistry, api.Logger)
+	if err != nil {
+		return err
+	}
+
 	userTrashShelf.OwnerID = currentUser.ID
 	userTrashShelf.Trash = true
 
@@ -223,9 +263,13 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 // SigninAccount signs in to an account
 func (api *API) SigninAccount(name string, email string, passphrase string) (*account.Account, error) {
 	// attempt to find the account (lookup)
-	newAccount := account.New(api.DBRegistry, api.Logger, name)
+	newAccount, err := account.New(api.DBRegistry, api.Logger, name)
+	if err != nil {
+		return nil, err
+	}
+
 	accountIndex := account.NewIndex(api.DBRegistry, api.Logger)
-	err := accountIndex.Lookup(newAccount)
+	err = accountIndex.Lookup(newAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +284,11 @@ func (api *API) SigninAccount(name string, email string, passphrase string) (*ac
 	}
 
 	// authenticate the user
-	newUser := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
+	newUser, err := user.New(api.DBRegistry, api.Logger, newAccount.ID, email)
+	if err != nil {
+		return nil, err
+	}
+
 	// resolve the user id from the user map in the account db
 	userIndex := user.NewIndex(newAccount.ID, api.DBRegistry, api.Logger)
 	err = userIndex.Lookup(newUser)

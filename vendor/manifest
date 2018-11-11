@@ -31,7 +31,7 @@
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
 			"vcs": "git",
-			"revision": "881bee4e20a5d11a6a88a5667c6f292072ac1963",
+			"revision": "44067abb194b1bc8b342e1f2120f8d3ea691b834",
 			"branch": "master",
 			"notests": true
 		},
@@ -44,10 +44,10 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/boltdb/bolt",
-			"repository": "https://github.com/boltdb/bolt",
+			"importpath": "github.com/codegangsta/cli",
+			"repository": "https://github.com/codegangsta/cli",
 			"vcs": "git",
-			"revision": "e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd",
+			"revision": "b67dcf995b6a7b7f14fad5fcb7cc5441b05e814b",
 			"branch": "master",
 			"notests": true
 		},
@@ -84,10 +84,18 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/konsorten/go-windows-terminal-sequences",
+			"repository": "https://github.com/konsorten/go-windows-terminal-sequences",
+			"vcs": "git",
+			"revision": "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/satori/go.uuid",
 			"repository": "https://github.com/satori/go.uuid",
 			"vcs": "git",
-			"revision": "b061729afc07e77a8aa4fad0a2fd840958f1942a",
+			"revision": "b2ce2384e17bbe0c6d34077efa39dbab3e09123b",
 			"branch": "master",
 			"notests": true
 		},
@@ -103,7 +111,15 @@
 			"importpath": "github.com/urfave/cli",
 			"repository": "https://github.com/urfave/cli",
 			"vcs": "git",
-			"revision": "0bdeddeeb0f650497d603c4ad7b20cfe685682f6",
+			"revision": "b67dcf995b6a7b7f14fad5fcb7cc5441b05e814b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "go.etcd.io/bbolt",
+			"repository": "https://github.com/etcd-io/bbolt",
+			"vcs": "git",
+			"revision": "7ee3ded59d4835e10f3e7d0f7603c42aa5e83820",
 			"branch": "master",
 			"notests": true
 		},
@@ -123,6 +139,60 @@
 			"revision": "f6b343c37ca80bfa8ea539da67a0b621f84fab1d",
 			"branch": "master",
 			"path": "acme",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/internal/subtle",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa",
+			"branch": "master",
+			"path": "internal/subtle",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/nacl/secretbox",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa",
+			"branch": "master",
+			"path": "/nacl/secretbox",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/pbkdf2",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa",
+			"branch": "master",
+			"path": "pbkdf2",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/poly1305",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa",
+			"branch": "master",
+			"path": "poly1305",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/salsa20/salsa",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa",
+			"branch": "master",
+			"path": "salsa20/salsa",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/crypto/scrypt",
+			"repository": "https://go.googlesource.com/crypto",
+			"vcs": "git",
+			"revision": "e4dc69e5b2fd71dcaf8bd5d054eb936deb78d1fa",
+			"branch": "master",
+			"path": "/scrypt",
 			"notests": true
 		},
 		{

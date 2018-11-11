@@ -3,3 +3,4 @@ src/src*
 *.db
 coverage/
 Untitled*.txt
+vendor/src/*

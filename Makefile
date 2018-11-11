@@ -1,6 +1,13 @@
 # default target
 build:
-	cd src; go build -tags debug; cp src.exe ../../notekeeper-electron-frontend/app/resources/backend.exe
+	cd src; GOPATH=`realpath $$(pwd)/../vendor` go build -tags debug; cp src.exe ../../notekeeper-electron-frontend/app/resources/backend.exe
+
+# copy content of vendor/* into vendor/src/*
+# build can't happen until this is done
+VENDOR_DIRS := $(wildcard vendor/*)
+CLEAN_VENDOR_DIRS := $(filter-out vendor/src vendor/manifest,$(VENDOR_DIRS))
+vendor-deps:
+	$(foreach dir,$(CLEAN_VENDOR_DIRS),cp -r $(dir) vendor/src/;)
 
 test:
 	cd src; go test ./... -v -race

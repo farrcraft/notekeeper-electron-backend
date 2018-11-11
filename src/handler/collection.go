@@ -111,7 +111,13 @@ func createCollection(server *rpc.Server, message []byte, scope string) (proto.M
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	c := collection.New(t, collectionScope, server.DBRegistry, server.Logger)
+	c, err := collection.New(t, collectionScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating collection - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
+
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID
 
@@ -167,7 +173,12 @@ func saveCollection(server *rpc.Server, message []byte, scope string) (proto.Mes
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	c := collection.New(t, collectionScope, server.DBRegistry, server.Logger)
+	c, err := collection.New(t, collectionScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating collection - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID
 	c.Locked = request.Locked
@@ -228,7 +239,12 @@ func deleteCollection(server *rpc.Server, message []byte, scope string) (proto.M
 		return response, nil
 	}
 
-	c := collection.New(nil, collectionScope, server.DBRegistry, server.Logger)
+	c, err := collection.New(nil, collectionScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating collection - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	c.ID = id
 	c.ShelfID = shelfID
 	c.OwnerID = ownerID

@@ -10,8 +10,8 @@ import (
 	"../title"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
+	"go.etcd.io/bbolt"
 )
 
 // Scope indicates the scope of the tag
@@ -37,10 +37,16 @@ type Tag struct {
 }
 
 // New creates a new tag object
-func New(title *title.Title, scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) *Tag {
+func New(title *title.Title, scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) (*Tag, error) {
 	now := time.Now()
+
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
 	tag := &Tag{
-		ID:         uuid.NewV4(),
+		ID:         id,
 		Title:      title,
 		Created:    now,
 		Updated:    now,
@@ -48,7 +54,8 @@ func New(title *title.Title, scope Scope, dbRegistry *db.Registry, logger *logru
 		DBRegistry: dbRegistry,
 		Logger:     logger,
 	}
-	return tag
+
+	return tag, nil
 }
 
 // getDBHandle of the database that owns the tag
@@ -71,7 +78,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 	if err != nil {
 		return err
 	}
-	err = handle.DB.Update(func(tx *bolt.Tx) error {
+	err = handle.DB.Update(func(tx *bbolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("tags"))
 		if err != nil {
@@ -142,7 +149,7 @@ func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 		return tags, code
 	}
 
-	err = tagDBHandle.DB.View(func(tx *bolt.Tx) error {
+	err = tagDBHandle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("tags"))
 		if bucket == nil {
@@ -189,7 +196,7 @@ func (tag *Tag) Delete(passphraseKey []byte) error {
 	if err != nil {
 		return err
 	}
-	err = tagDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = tagDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("tags"))
 		if bucket == nil {
 			tag.Logger.Debug("tag bucket does not exist")

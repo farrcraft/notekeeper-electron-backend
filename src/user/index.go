@@ -7,8 +7,8 @@ import (
 	"../crypto"
 	"../db"
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
 	"github.com/satori/go.uuid"
+	"go.etcd.io/bbolt"
 )
 
 // Index contains an index of users
@@ -43,7 +43,7 @@ func (index *Index) Save(user *User, passphraseKey []byte) error {
 	if err != nil {
 		return err
 	}
-	err = accountDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = accountDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("user_index"))
 		if err != nil {
 			index.Logger.Debug("Error creating user index bucket - ", err)
@@ -88,7 +88,7 @@ func (index *Index) Lookup(user *User) error {
 	if err != nil {
 		return err
 	}
-	err = accountDBHandle.DB.View(func(tx *bolt.Tx) error {
+	err = accountDBHandle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("user_index"))
 		if bucket == nil {

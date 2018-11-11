@@ -7,8 +7,8 @@ import (
 	"../crypto"
 	"../db"
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
+	"go.etcd.io/bbolt"
 )
 
 // Index of shelf metadata
@@ -51,7 +51,7 @@ func (index *Index) Save(shelf *Shelf, encryptionKey []byte) error {
 	if err != nil {
 		return err
 	}
-	err = handle.DB.Update(func(tx *bolt.Tx) error {
+	err = handle.DB.Update(func(tx *bbolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("shelf_index"))
 		if err != nil {
@@ -115,7 +115,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 		return code
 	}
 
-	err = handle.DB.View(func(tx *bolt.Tx) error {
+	err = handle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("shelf_index"))
 		if bucket == nil {
@@ -162,7 +162,7 @@ func (index *Index) Delete(shelf *Shelf) error {
 	if err != nil {
 		return err
 	}
-	err = handle.DB.Update(func(tx *bolt.Tx) error {
+	err = handle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("shelf_index"))
 		if bucket == nil {
 			index.Logger.Debug("shelf bucket does not exist")

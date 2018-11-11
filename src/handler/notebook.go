@@ -61,7 +61,12 @@ func createNotebook(server *rpc.Server, message []byte, scope string) (proto.Mes
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	notebook := notebook.New(t, notebookScope, container, server.DBRegistry, server.Logger)
+	notebook, err := notebook.New(t, notebookScope, container, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating notebook - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	notebook.OwnerID = ownerID
 	notebook.ContainerID = containerID
 
@@ -128,7 +133,12 @@ func getNotebooks(server *rpc.Server, message []byte, scope string) (proto.Messa
 	}
 
 	// create a new notebook instance to act as a proxy
-	nb := notebook.New(nil, notebookScope, container, server.DBRegistry, server.Logger)
+	nb, err := notebook.New(nil, notebookScope, container, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating notebook - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	nb.OwnerID = ownerID
 	nb.ContainerID = containerID
 
@@ -214,7 +224,12 @@ func saveNotebook(server *rpc.Server, message []byte, scope string) (proto.Messa
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	notebook := notebook.New(t, notebookScope, container, server.DBRegistry, server.Logger)
+	notebook, err := notebook.New(t, notebookScope, container, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating notebook - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	notebook.ID = id
 	notebook.Default = request.Default
 	notebook.Locked = request.Locked
@@ -286,7 +301,12 @@ func deleteNotebook(server *rpc.Server, message []byte, scope string) (proto.Mes
 		return response, nil
 	}
 
-	notebook := notebook.New(nil, notebookScope, container, server.DBRegistry, server.Logger)
+	notebook, err := notebook.New(nil, notebookScope, container, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating notebook - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	notebook.ID = id
 	notebook.OwnerID = ownerID
 	notebook.ContainerID = containerID

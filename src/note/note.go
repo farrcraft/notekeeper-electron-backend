@@ -11,8 +11,8 @@ import (
 	"../title"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
+	"go.etcd.io/bbolt"
 )
 
 // Type is the type of note
@@ -84,10 +84,16 @@ type Note struct {
 }
 
 // New creates a new note object
-func New(title *title.Title, scope Scope, store StoreType, dbRegistry *db.Registry, logger *logrus.Logger) *Note {
+func New(title *title.Title, scope Scope, store StoreType, dbRegistry *db.Registry, logger *logrus.Logger) (*Note, error) {
 	now := time.Now()
+
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
 	note := &Note{
-		ID:            uuid.NewV4(),
+		ID:            id,
 		Scope:         scope,
 		StoreType:     store,
 		Title:         title,
@@ -98,7 +104,8 @@ func New(title *title.Title, scope Scope, store StoreType, dbRegistry *db.Regist
 		DBRegistry:    dbRegistry,
 		Logger:        logger,
 	}
-	return note
+
+	return note, nil
 }
 
 func (note *Note) getDBHandle() (*db.Handle, error) {
@@ -119,7 +126,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 	if err != nil {
 		return err
 	}
-	err = noteDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = noteDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		// get bucket, creating it if needed
 		// [FIXME] - notes are grouped into unique buckets by notebook id
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notes"))
@@ -192,7 +199,7 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 		return notes, code
 	}
 
-	err = noteDBHandle.DB.View(func(tx *bolt.Tx) error {
+	err = noteDBHandle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
@@ -255,7 +262,7 @@ func (note *Note) Load(passphraseKey []byte) error {
 		return code
 	}
 
-	err = noteDBHandle.DB.View(func(tx *bolt.Tx) error {
+	err = noteDBHandle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
@@ -308,7 +315,7 @@ func (note *Note) Delete(passphraseKey []byte) error {
 	if err != nil {
 		return err
 	}
-	err = noteDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = noteDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
 			note.Logger.Debug("note bucket does not exist")

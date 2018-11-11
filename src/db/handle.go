@@ -6,13 +6,13 @@ import (
 	"../codes"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
+	"go.etcd.io/bbolt"
 )
 
 // Handle to an open database instance
 type Handle struct {
 	Info         Info
-	DB           *bolt.DB
+	DB           *bbolt.DB
 	EncryptedKey []byte
 	Logger       *logrus.Logger
 }
@@ -20,7 +20,7 @@ type Handle struct {
 // Open a database
 func (handle *Handle) Open() error {
 	var err error
-	handle.DB, err = bolt.Open(handle.Info.Filename, 0600, &bolt.Options{Timeout: 1 * time.Second})
+	handle.DB, err = bbolt.Open(handle.Info.Filename, 0600, &bbolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		handle.Logger.Debug("Error opening DB type [", handle.Info.Type, "] file [", handle.Info.Filename, "] - ", err)
 		var scope codes.Scope

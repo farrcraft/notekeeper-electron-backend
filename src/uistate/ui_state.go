@@ -6,7 +6,7 @@ import (
 	"../codes"
 	"../db"
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
+	"go.etcd.io/bbolt"
 )
 
 // UIState contains the saved settings for the UI
@@ -56,7 +56,7 @@ func (state *UIState) Create() error {
 		code := codes.New(codes.ScopeUIState, codes.ErrorMissingDB)
 		return code
 	}
-	err := state.DBRegistry.Master.DB.Update(func(tx *bolt.Tx) error {
+	err := state.DBRegistry.Master.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("ui_state"))
 		if bucket == nil {
 			bucket, err := tx.CreateBucket([]byte("ui_state"))
@@ -95,7 +95,7 @@ func (state *UIState) Create() error {
 // Load loads the UI's saved state from the database
 func (state *UIState) Load() error {
 	// [FIXME] precondition - expecting open master db here
-	err := state.DBRegistry.Master.DB.View(func(tx *bolt.Tx) error {
+	err := state.DBRegistry.Master.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("ui_state"))
 		cursor := bucket.Cursor()
@@ -127,7 +127,7 @@ func (state *UIState) Load() error {
 // Save saves the UI's state to the database
 func (state *UIState) Save() error {
 	// [FIXME] precondition - expecting open master db here
-	err := state.DBRegistry.Master.DB.Update(func(tx *bolt.Tx) error {
+	err := state.DBRegistry.Master.DB.Update(func(tx *bbolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("ui_state"))
 		if err != nil {
 			state.Logger.Debug("Error creating UI State Bucket - ", err)

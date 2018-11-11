@@ -11,7 +11,7 @@ import (
 	"../tag"
 	"../title"
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
+	"go.etcd.io/bbolt"
 
 	uuid "github.com/satori/go.uuid"
 )
@@ -59,10 +59,16 @@ type Notebook struct {
 }
 
 // New creates a new notebook object
-func New(title *title.Title, scope Scope, container ContainerType, dbRegistry *db.Registry, logger *logrus.Logger) *Notebook {
+func New(title *title.Title, scope Scope, container ContainerType, dbRegistry *db.Registry, logger *logrus.Logger) (*Notebook, error) {
 	now := time.Now()
+
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
 	notebook := &Notebook{
-		ID:            uuid.NewV4(),
+		ID:            id,
 		Scope:         scope,
 		ContainerType: container,
 		Title:         title,
@@ -74,7 +80,8 @@ func New(title *title.Title, scope Scope, container ContainerType, dbRegistry *d
 		DBRegistry:    dbRegistry,
 		Logger:        logger,
 	}
-	return notebook
+
+	return notebook, nil
 }
 
 func (notebook *Notebook) getDBHandle() (*db.Handle, error) {
@@ -95,7 +102,7 @@ func (notebook *Notebook) Save(encryptionKey []byte) error {
 	if err != nil {
 		return err
 	}
-	err = notebookDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = notebookDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notebooks"))
 		if err != nil {
@@ -159,7 +166,7 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 		return notebooks, code
 	}
 
-	err = notebookDBHandle.DB.View(func(tx *bolt.Tx) error {
+	err = notebookDBHandle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("notebooks"))
 		if bucket == nil {
@@ -214,7 +221,7 @@ func (notebook *Notebook) Delete(passphraseKey []byte) error {
 	if err != nil {
 		return err
 	}
-	err = notebookDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = notebookDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("notebooks"))
 		if bucket == nil {
 			notebook.Logger.Debug("notebook bucket does not exist")

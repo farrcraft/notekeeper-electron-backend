@@ -69,6 +69,7 @@ const (
 	ErrorLoad
 	ErrorLoadAll
 	ErrorDelete
+	ErrorCreate
 )
 
 // String converts error code to a string
@@ -208,6 +209,8 @@ func defaultMessageFromCode(code Code) string {
 		msg = "error loading all"
 	case ErrorDelete:
 		msg = "error deleting"
+	case ErrorCreate:
+		msg = "error creating"
 	}
 
 	return msg

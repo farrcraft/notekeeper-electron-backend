@@ -59,7 +59,12 @@ func getTags(server *rpc.Server, message []byte, scope string) (proto.Message, e
 	}
 
 	// create a new tag instance to act as a proxy
-	t := tag.New(nil, tagScope, server.DBRegistry, server.Logger)
+	t, err := tag.New(nil, tagScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating tag - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	tags, err := t.LoadAll(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -111,7 +116,12 @@ func createTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	newTag := tag.New(t, tagScope, server.DBRegistry, server.Logger)
+	newTag, err := tag.New(t, tagScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating tag - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	err = newTag.Save(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
 		rpc.SetInternalError(response.Header, err)
@@ -153,7 +163,12 @@ func saveTag(server *rpc.Server, message []byte, scope string) (proto.Message, e
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	newTag := tag.New(t, tagScope, server.DBRegistry, server.Logger)
+	newTag, err := tag.New(t, tagScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating tag - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	newTag.ID = id
 	err = newTag.Save(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {
@@ -193,7 +208,12 @@ func deleteTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 		return response, nil
 	}
 
-	t := tag.New(nil, tagScope, server.DBRegistry, server.Logger)
+	t, err := tag.New(nil, tagScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating tag - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	t.ID = id
 	err = t.Delete(server.Account.ActiveUser.PassphraseKey)
 	if err != nil {

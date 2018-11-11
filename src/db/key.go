@@ -6,7 +6,7 @@ import (
 
 	"../codes"
 	"../crypto"
-	"github.com/boltdb/bolt"
+	"go.etcd.io/bbolt"
 )
 
 // LoadEncryptedKey loads the encrypted key from an index bucket
@@ -15,7 +15,7 @@ func (registry *Registry) LoadEncryptedKey(dbKey Key, passphraseKey []byte, hand
 	var encryptedKey []byte
 	var bucketName []byte
 	bucketName = []byte(fmt.Sprint(TypeToStr(dbKey.Type), "_index"))
-	err := handle.DB.View(func(tx *bolt.Tx) error {
+	err := handle.DB.View(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket(bucketName)
 		if bucket == nil {
 			registry.Logger.Debug(bucketName, " bucket does not exist")

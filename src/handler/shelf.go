@@ -110,7 +110,12 @@ func createShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	s := shelf.New(t, shelfScope, server.DBRegistry, server.Logger)
+	s, err := shelf.New(t, shelfScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating shelf - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	s.OwnerID = ownerID
 
 	index := shelf.NewIndex(shelfScope, ownerID, server.DBRegistry, server.Logger)
@@ -163,7 +168,12 @@ func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message,
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	s := shelf.New(t, shelfScope, server.DBRegistry, server.Logger)
+	s, err := shelf.New(t, shelfScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating shelf - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	s.ID = id
 	s.OwnerID = ownerID
 	s.Locked = request.Locked
@@ -214,7 +224,12 @@ func deleteShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 		return response, nil
 	}
 
-	s := shelf.New(nil, shelfScope, server.DBRegistry, server.Logger)
+	s, err := shelf.New(nil, shelfScope, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating shelf - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	s.ID = id
 	s.OwnerID = ownerID
 

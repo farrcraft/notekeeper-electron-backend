@@ -61,7 +61,12 @@ func getNotes(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	}
 
 	// create a new note instance to act as a proxy
-	n := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
+	n, err := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating note - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -140,7 +145,12 @@ func loadNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	}
 
 	// create a new note instance to act as a proxy
-	n := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
+	n, err := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating note - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -215,7 +225,12 @@ func createNote(server *rpc.Server, message []byte, scope string) (proto.Message
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	n := note.New(t, noteScope, store, server.DBRegistry, server.Logger)
+	n, err := note.New(t, noteScope, store, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating note - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	n.OwnerID = ownerID
 	n.StoreID = storeID
 
@@ -288,7 +303,12 @@ func saveNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	}
 
 	t := rpc.MessageToTitle(request.Name)
-	n := note.New(t, noteScope, store, server.DBRegistry, server.Logger)
+	n, err := note.New(t, noteScope, store, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating note - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	n.ID = id
 	n.OwnerID = ownerID
 	n.StoreID = storeID
@@ -358,7 +378,12 @@ func deleteNote(server *rpc.Server, message []byte, scope string) (proto.Message
 		return response, nil
 	}
 
-	n := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
+	n, err := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
+	if err != nil {
+		server.Logger.Debug("Error creating note - ", err)
+		rpc.SetRPCError(response.Header, codes.ErrorCreate)
+		return response, nil
+	}
 	n.ID = id
 	n.OwnerID = ownerID
 	n.StoreID = storeID

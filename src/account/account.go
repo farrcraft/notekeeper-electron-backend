@@ -10,8 +10,8 @@ import (
 	"../shelf"
 	"../user"
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
+	"go.etcd.io/bbolt"
 )
 
 // EncryptionKeyType indicates the type of encryption key
@@ -51,17 +51,24 @@ func (account *Account) IsLocked() bool {
 }
 
 // New creates a new Account object
-func New(dbRegistry *db.Registry, logger *logrus.Logger, name string) *Account {
+func New(dbRegistry *db.Registry, logger *logrus.Logger, name string) (*Account, error) {
 	now := time.Now()
+
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
 	account := &Account{
-		ID:         uuid.NewV4(),
+		ID:         id,
 		Name:       name,
 		DBRegistry: dbRegistry,
 		Logger:     logger,
 		Created:    now,
 		Updated:    now,
 	}
-	return account
+
+	return account, nil
 }
 
 // CreateEncryptedKey generates a new encryption key that is encrypted with the account key
@@ -138,7 +145,7 @@ func (account *Account) Save() error {
 	if err != nil {
 		return err
 	}
-	err = accountDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = accountDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("profile"))
 		if err != nil {
 			account.Logger.Debug("Error creating accounts bucket - ", err)
@@ -198,7 +205,7 @@ func (account *Account) Load() error {
 	if err != nil {
 		return err
 	}
-	err = handle.DB.View(func(tx *bolt.Tx) error {
+	err = handle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("profile"))
 		if bucket == nil {

@@ -53,17 +53,21 @@ func (factory *Factory) CreateHandle(key Key) (*Handle, error) {
 		Logger: factory.Logger,
 	}
 
+	var err error
 	if key.Type == TypeMaster {
 		handle.Info.Filename = filepath.Join(factory.DataPath, MasterDbFile)
 	} else {
 		if handle.Info.ID == uuid.Nil {
-			handle.Info.ID = uuid.NewV4()
+			handle.Info.ID, err = uuid.NewV4()
+			if err != nil {
+				return nil, err
+			}
 		}
 		dbFile := fmt.Sprint(handle.Info.ID.String(), ".db")
 		handle.Info.Filename = filepath.Join(factory.DataPath, dbFile)
 	}
 
-	err := handle.Open()
+	err = handle.Open()
 	if err != nil {
 		return nil, err
 	}

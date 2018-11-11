@@ -8,7 +8,7 @@ import (
 	"./rpc"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
+	"go.etcd.io/bbolt"
 	//	"google.golang.org/grpc/credentials"
 	//	"golang.org/x/crypto/nacl/box"
 )
@@ -23,7 +23,7 @@ const (
 // Backend is the main service type
 type Backend struct {
 	Logger   *logrus.Logger
-	DB       *bolt.DB // This is the master application DB
+	DB       *bbolt.DB // This is the master application DB
 	RPC      *rpc.Server
 	Status   chan string
 	Shutdown chan bool

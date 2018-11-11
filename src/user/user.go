@@ -9,8 +9,8 @@ import (
 	"../db"
 	"../shelf"
 	"github.com/Sirupsen/logrus"
-	"github.com/boltdb/bolt"
 	uuid "github.com/satori/go.uuid"
+	"go.etcd.io/bbolt"
 )
 
 // EncryptionKeyType indicates the type of encryption key
@@ -41,10 +41,16 @@ type User struct {
 }
 
 // New creates a new user object
-func New(dbRegistry *db.Registry, logger *logrus.Logger, accountID uuid.UUID, email string) *User {
+func New(dbRegistry *db.Registry, logger *logrus.Logger, accountID uuid.UUID, email string) (*User, error) {
 	now := time.Now()
+
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
 	user := &User{
-		ID:        uuid.NewV4(),
+		ID:        id,
 		AccountID: accountID,
 		Profile: &Profile{
 			Email: email,
@@ -55,7 +61,8 @@ func New(dbRegistry *db.Registry, logger *logrus.Logger, accountID uuid.UUID, em
 		DBRegistry: dbRegistry,
 		Logger:     logger,
 	}
-	return user
+
+	return user, nil
 }
 
 // Load the user data for a user from the account database
@@ -77,7 +84,7 @@ func (user *User) Load(passphrase string) error {
 	if err != nil {
 		return err
 	}
-	err = userDBHandle.DB.View(func(tx *bolt.Tx) error {
+	err = userDBHandle.DB.View(func(tx *bbolt.Tx) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("profile"))
 		cursor := bucket.Cursor()
@@ -138,7 +145,7 @@ func (user *User) Save() error {
 		return err
 	}
 	c := crypto.New(user.Logger)
-	err = userDBHandle.DB.Update(func(tx *bolt.Tx) error {
+	err = userDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("profile"))
 		if err != nil {
 			user.Logger.Debug("Error creating users bucket - ", err)

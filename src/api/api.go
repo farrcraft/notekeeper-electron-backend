@@ -2,7 +2,7 @@ package api
 
 import (
 	"../db"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // API interface

@@ -8,8 +8,8 @@ import (
 	"../notebook"
 	"../tag"
 	"../title"
-	"github.com/Sirupsen/logrus"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 )
 
 // Scope indicates the scope of the shelf

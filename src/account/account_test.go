@@ -7,8 +7,8 @@ import (
 	"../db"
 	"../user"
 
-	"github.com/Sirupsen/logrus/hooks/test"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus/hooks/test"
 )
 
 func TestAccount(t *testing.T) {

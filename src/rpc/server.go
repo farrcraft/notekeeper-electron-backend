@@ -14,9 +14,9 @@ import (
 
 	"../account"
 	"../db"
-	"github.com/Sirupsen/logrus"
 	"github.com/agl/ed25519"
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 )
 
 // Handler is an RPC message handler

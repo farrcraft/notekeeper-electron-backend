@@ -5,7 +5,7 @@ import (
 
 	"../codes"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"go.etcd.io/bbolt"
 )
 

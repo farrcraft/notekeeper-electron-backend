@@ -6,7 +6,7 @@ import (
 	"../codes"
 	"../crypto"
 	"../db"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	uuid "github.com/satori/go.uuid"
 	"go.etcd.io/bbolt"
 )

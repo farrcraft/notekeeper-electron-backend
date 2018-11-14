@@ -7,7 +7,7 @@ import (
 	"./handler"
 	"./rpc"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"go.etcd.io/bbolt"
 	//	"google.golang.org/grpc/credentials"
 	//	"golang.org/x/crypto/nacl/box"

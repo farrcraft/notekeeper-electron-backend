@@ -10,7 +10,7 @@ import (
 	"../note"
 	"../tag"
 	"../title"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"go.etcd.io/bbolt"
 
 	uuid "github.com/satori/go.uuid"

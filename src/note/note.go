@@ -10,8 +10,8 @@ import (
 	"../tag"
 	"../title"
 
-	"github.com/Sirupsen/logrus"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"go.etcd.io/bbolt"
 )
 

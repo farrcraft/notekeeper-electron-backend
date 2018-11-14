@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 
 	"../codes"
-	"github.com/Sirupsen/logrus"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 )
 
 const (

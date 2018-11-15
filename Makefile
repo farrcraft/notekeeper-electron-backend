@@ -10,7 +10,7 @@ vendor-deps:
 	$(foreach dir,$(CLEAN_VENDOR_DIRS),cp -r $(dir) vendor/src/;)
 
 test:
-	cd src; go test ./... -v -race
+	cd src; GOPATH=`realpath $$(pwd)/../vendor` go test ./... -v -race
 
 coverage-dep:
 	go get -u github.com/wadey/gocovmerge
@@ -22,7 +22,7 @@ coverage:
 # create a release build
 # The -s ldflag strips symbol table & debug info
 release:
-	cd src; go build -ldflags "-s"
+	cd src; GOPATH=`realpath $$(pwd)/../vendor` go build -ldflags "-s"
 
 gvt:
 	go get -u github.com/FiloSottile/gvt

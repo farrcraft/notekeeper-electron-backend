@@ -3,11 +3,17 @@ package crypto
 import (
 	"bytes"
 	"testing"
+
+	"github.com/sirupsen/logrus/hooks/test"
 )
 
 func TestCrypto(t *testing.T) {
+	logger, hook := test.NewNullLogger()
+
+	context := New(logger)
+
 	// RandBytes
-	randomBytes, err := RandBytes(27)
+	randomBytes, err := context.RandBytes(27)
 	if err != nil {
 		t.Error("Error creating random bytes - ", err)
 	}
@@ -15,7 +21,7 @@ func TestCrypto(t *testing.T) {
 		t.Error("Unexpected random bytes length - ", len(randomBytes))
 	}
 
-	moreBytes, err := RandBytes(27)
+	moreBytes, err := context.RandBytes(27)
 	if err != nil {
 		t.Error("Error creating more random bytes - ", err)
 	}
@@ -25,14 +31,14 @@ func TestCrypto(t *testing.T) {
 	}
 
 	// GenerateKey
-	key, err := GenerateKey()
+	key, err := context.GenerateKey()
 	if err != nil {
 		t.Error("Expected to generate key - ", err)
 	}
 	if len(key) != KeySize {
 		t.Error("Expected key length to be key size")
 	}
-	key2, err := GenerateKey()
+	key2, err := context.GenerateKey()
 	if err != nil {
 		t.Error("Expected to generate key2 - ", err)
 	}
@@ -41,14 +47,14 @@ func TestCrypto(t *testing.T) {
 	}
 
 	// GenerateNonce
-	nonce, err := GenerateNonce()
+	nonce, err := context.GenerateNonce()
 	if err != nil {
 		t.Error("Expected to generate nonce - ", err)
 	}
 	if len(nonce) != NonceSize {
 		t.Error("Expected nonce length to be nonce size")
 	}
-	nonce2, err := GenerateNonce()
+	nonce2, err := context.GenerateNonce()
 	if err != nil {
 		t.Error("Expected to generate nonce2 - ", err)
 	}
@@ -58,7 +64,7 @@ func TestCrypto(t *testing.T) {
 
 	// Encrypt
 	testMessage := []byte("This a test message.")
-	encryptedMessage, err := Encrypt(key, testMessage)
+	encryptedMessage, err := context.Encrypt(key, testMessage)
 	if err != nil {
 		t.Error("Expected to encrypt message")
 	}
@@ -66,7 +72,7 @@ func TestCrypto(t *testing.T) {
 		t.Error("Expected encrypted message not to match original message")
 	}
 
-	encryptedMessage2, err := Encrypt(key2, testMessage)
+	encryptedMessage2, err := context.Encrypt(key2, testMessage)
 	if err != nil {
 		t.Error("Expected to encrypt message2")
 	}
@@ -75,7 +81,7 @@ func TestCrypto(t *testing.T) {
 	}
 
 	// Decrypt
-	decryptedMessage, err := Decrypt(key, encryptedMessage)
+	decryptedMessage, err := context.Decrypt(key, encryptedMessage)
 	if err != nil {
 		t.Error("Expected to decrypt message - ", err)
 	}
@@ -83,18 +89,18 @@ func TestCrypto(t *testing.T) {
 		t.Error("Expected decrypted message to match original message")
 	}
 
-	decryptedMessage, err = Decrypt(key2, encryptedMessage)
+	decryptedMessage, err = context.Decrypt(key2, encryptedMessage)
 	if err == nil {
 		t.Error("Expected decrypt message with wrong key to fail")
 	}
 
 	// DeriveKey
 	passphrase := []byte("supersecret")
-	salt, err := RandBytes(55)
+	salt, err := context.RandBytes(55)
 	if err != nil {
 		t.Error("Expected to create salt - ", err)
 	}
-	derivedKey, err := DeriveKey(passphrase, salt)
+	derivedKey, err := context.DeriveKey(passphrase, salt)
 	if err != nil {
 		t.Error("Expected to derive key - ", err)
 	}
@@ -105,7 +111,7 @@ func TestCrypto(t *testing.T) {
 		t.Error("Expected derived key to be different from passphrase")
 	}
 
-	derivedKey2, err := DeriveKey(passphrase, salt)
+	derivedKey2, err := context.DeriveKey(passphrase, salt)
 	if err != nil {
 		t.Error("Expected to derive second key - ", err)
 	}
@@ -114,7 +120,7 @@ func TestCrypto(t *testing.T) {
 	}
 
 	passphrase2 := []byte("notreallysecret")
-	derivedKey3, err := DeriveKey(passphrase2, salt)
+	derivedKey3, err := context.DeriveKey(passphrase2, salt)
 	if err != nil {
 		t.Error("Expected to derive third key - ", err)
 	}
@@ -122,11 +128,11 @@ func TestCrypto(t *testing.T) {
 		t.Error("Expected derived keys to not match")
 	}
 
-	salt2, err := RandBytes(55)
+	salt2, err := context.RandBytes(55)
 	if err != nil {
 		t.Error("Expected to create second salt - ", err)
 	}
-	derivedKey4, err := DeriveKey(passphrase2, salt2)
+	derivedKey4, err := context.DeriveKey(passphrase2, salt2)
 	if err != nil {
 		t.Error("Expected to derive fourth key - ", err)
 	}
@@ -135,7 +141,7 @@ func TestCrypto(t *testing.T) {
 	}
 
 	// DeriveKeyAndSalt
-	derivedKey5, salt3, err := DeriveKeyAndSalt(passphrase)
+	derivedKey5, salt3, err := context.DeriveKeyAndSalt(passphrase)
 	if err != nil {
 		t.Error("Expected to derive key and salt - ", err)
 	}
@@ -145,7 +151,7 @@ func TestCrypto(t *testing.T) {
 	if len(salt3) != SaltSize {
 		t.Error("Expected salt length to be salt size")
 	}
-	derivedKey6, salt4, err := DeriveKeyAndSalt(passphrase)
+	derivedKey6, salt4, err := context.DeriveKeyAndSalt(passphrase)
 	if err != nil {
 		t.Error("Expected to derive key and salt - ", err)
 	}
@@ -157,11 +163,11 @@ func TestCrypto(t *testing.T) {
 	}
 
 	// DeriveSaltedKey
-	saltedKey, err := DeriveSaltedKey(passphrase2)
+	saltedKey, err := context.DeriveSaltedKey(passphrase2)
 	if err != nil {
 		t.Error("Expected to derive salted key")
 	}
-	saltedKey2, err := DeriveSaltedKey(passphrase2)
+	saltedKey2, err := context.DeriveSaltedKey(passphrase2)
 	if err != nil {
 		t.Error("Expected to derive second salted key")
 	}
@@ -175,7 +181,7 @@ func TestCrypto(t *testing.T) {
 		t.Error("Expected unsalted key to match key size")
 	}
 
-	rederivedKey, err := DeriveKey(passphrase2, extractedSalt)
+	rederivedKey, err := context.DeriveKey(passphrase2, extractedSalt)
 	if err != nil {
 		t.Error("Expected to derive key with extracted salt")
 	}
@@ -185,7 +191,7 @@ func TestCrypto(t *testing.T) {
 
 	// Seal
 	unsealedMessage := []byte("this is an unsealed message")
-	sealedMessage, err := Seal(derivedKey[:], unsealedMessage)
+	sealedMessage, err := context.Seal(derivedKey[:], unsealedMessage)
 	if err != nil {
 		t.Error("Expected to seal message")
 	}
@@ -193,7 +199,7 @@ func TestCrypto(t *testing.T) {
 		t.Error("Expected sealed message to not match unsealed message")
 	}
 
-	resealedMessage, err := Seal(derivedKey[:], unsealedMessage)
+	resealedMessage, err := context.Seal(derivedKey[:], unsealedMessage)
 	if err != nil {
 		t.Error("Expected to reseal message")
 	}
@@ -202,7 +208,7 @@ func TestCrypto(t *testing.T) {
 	}
 
 	// Open
-	openedMessage, err := Open(derivedKey[:], sealedMessage)
+	openedMessage, err := context.Open(derivedKey[:], sealedMessage)
 	if err != nil {
 		t.Error("Expected to open message")
 	}
@@ -210,11 +216,13 @@ func TestCrypto(t *testing.T) {
 		t.Error("Expected opened message to match unsealed message")
 	}
 
-	openedMessage2, err := Open(passphrase, sealedMessage)
+	openedMessage2, err := context.Open(passphrase, sealedMessage)
 	if err == nil {
 		t.Error("Expected open with wrong passphrase to fail")
 	}
 	if openedMessage2 != nil {
 		t.Error("Expected failed opened message to be nil")
 	}
+
+	hook.Reset()
 }

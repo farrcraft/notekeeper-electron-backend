@@ -21,13 +21,20 @@ type Template struct {
 	Locked    bool         `json:"locked"`  // Locked indicates whether the template can be modified
 }
 
-// NewTemplate creates a new note object
-func NewTemplate() *Template {
+// New creates a new template object
+func New() (*Template, error) {
 	now := time.Now()
+
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+
 	template := &Template{
-		ID:      uuid.NewV4(),
+		ID:      id,
 		Created: now,
 		Updated: now,
 	}
-	return template
+
+	return template, nil
 }

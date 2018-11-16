@@ -53,6 +53,7 @@ const (
 	ErrorInvalidType
 	ErrorMissingDB
 	ErrorDbOpen
+	ErrorDbClose
 	ErrorCreateBucket
 	ErrorMarshal
 	ErrorOpenKey

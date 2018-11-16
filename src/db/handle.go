@@ -23,29 +23,42 @@ func (handle *Handle) Open() error {
 	handle.DB, err = bbolt.Open(handle.Info.Filename, 0600, &bbolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		handle.Logger.Debug("Error opening DB type [", handle.Info.Type, "] file [", handle.Info.Filename, "] - ", err)
-		var scope codes.Scope
-		switch handle.Info.Type {
-		case TypeMaster:
-			scope = codes.ScopeGeneral
-		case TypeAccount:
-			scope = codes.ScopeAccount
-		case TypeUser:
-			scope = codes.ScopeUser
-		case TypeCollection:
-			scope = codes.ScopeCollection
-		case TypeShelf:
-			scope = codes.ScopeShelf
-		}
+		scope := dbTypeToErrorCode(handle.Info.Type)
 		code := codes.New(scope, codes.ErrorDbOpen)
 		return code
 	}
 	return nil
 }
 
+// dbTypeToErrorCode takes a DB type and returns a error code scope
+func dbTypeToErrorCode(dbType Type) codes.Scope {
+	var scope codes.Scope
+	switch dbType {
+	case TypeMaster:
+		scope = codes.ScopeGeneral
+	case TypeAccount:
+		scope = codes.ScopeAccount
+	case TypeUser:
+		scope = codes.ScopeUser
+	case TypeCollection:
+		scope = codes.ScopeCollection
+	case TypeShelf:
+		scope = codes.ScopeShelf
+	}
+	return scope
+}
+
 // Close a database
-func (handle *Handle) Close() {
+func (handle *Handle) Close() error {
 	if handle.DB != nil {
-		handle.DB.Close()
+		err := handle.DB.Close()
+		if err != nil {
+			handle.Logger.Debug("Error closing DB type [", handle.Info.Type, "] file [", handle.Info.Filename, "] - ", err)
+			scope := dbTypeToErrorCode(handle.Info.Type)
+			code := codes.New(scope, codes.ErrorDbClose)
+			return code
+		}
 		handle.DB = nil
 	}
+	return nil
 }

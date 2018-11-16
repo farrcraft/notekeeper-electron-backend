@@ -7,39 +7,52 @@ import (
 	"../db"
 	"../user"
 
-	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus/hooks/test"
 )
 
 func TestAccount(t *testing.T) {
 	// Setup
 	logger, hook := test.NewNullLogger()
-	factory := db.NewFactory("./", logger)
+	registry := db.NewRegistry(logger)
 
-	account := New(factory, logger, "test_account")
-	if account.Name != "test_account" {
-		t.Error("Expected account name to be test_account")
-	}
-
-	masterDB, err := factory.DB(db.TypeMaster, uuid.Nil)
+	accountName := "bob's account"
+	newAccount, err := New(registry, logger, accountName)
 	if err != nil {
-		t.Error("Failed to create master db - ", err)
+		t.Error("Expected to create new account - ", err)
+	}
+	if newAccount.Name != accountName {
+		t.Error("Expected account name to be bob's account")
 	}
 
-	count := MapCount(factory)
+	err = registry.OpenMaster("./")
+	if err != nil {
+		t.Error("Failed to open master db - ", err)
+	}
+
+	accountIndex := NewIndex(registry, logger)
+
+	count := accountIndex.Count()
 	if count != 0 {
-		t.Error("Expected account map count to be 0")
+		t.Error("Expected account index count to be 0")
 	}
 
-	err = account.OpenAccountDb()
+	accountDBKey := db.Key{
+		ID:   newAccount.ID,
+		Type: db.TypeAccount,
+	}
+	accountDBHandle, err := registry.NewHandle(accountDBKey)
 	if err != nil {
 		t.Error("Expected to open account db - ", err)
 	}
 
 	userEmail := "bob@notekeeper.io"
 	userPassphrase := "supersecret"
-	user := user.New(factory, logger, account.ID, userEmail)
-	err = user.CreateKeys([]byte(userPassphrase))
+	newUser, err := user.New(registry, logger, newAccount.ID, userEmail)
+	if err != nil {
+		t.Error("Expected to create new user - ", err)
+	}
+
+	err = newUser.CreateKeys([]byte(userPassphrase))
 	if err != nil {
 		t.Error("Expected to create user keys - ", err)
 	}
@@ -51,31 +64,68 @@ func TestAccount(t *testing.T) {
 			t.Error("Expected to save user")
 		}
 	*/
-	account.Users = append(account.Users, user.Profile)
-	account.ActiveUser = user
-
-	err = account.Save()
+	userDBKey := db.Key{
+		ID:   newUser.ID,
+		Type: db.TypeUser,
+	}
+	userDBHandle, err := registry.NewHandle(userDBKey)
 	if err != nil {
-		t.Error("Expected to save account")
+		t.Error("Expected to create user db handle - ", err)
 	}
 
-	count = MapCount(factory)
+	// [FIXME] - save user mapping in user index in account db
+
+	// save user
+	err = newUser.Save()
+	if err != nil {
+		t.Error("Expected to save user - ", err)
+	}
+
+	// [FIXME] - save user profile in account db
+	// right now users are just stored as part of the account profile data
+	newAccount.Users = append(newAccount.Users, newUser.Profile)
+	newAccount.ActiveUser = newUser
+
+	newAccount.EncryptedKey = newUser.AccountKey
+	accountDBHandle.EncryptedKey = newUser.AccountKey
+	userDBHandle.EncryptedKey = newUser.UserKey
+
+	err = newAccount.Save()
+	if err != nil {
+		t.Error("Expected to save account - ", err)
+	}
+
+	err = accountIndex.Save(newAccount)
+	if err != nil {
+		t.Error("Expected to save account index")
+	}
+
+	count = accountIndex.Count()
 	if count != 1 {
-		t.Error("Expected account map count to be 1")
+		t.Error("Expected account index count to be 1")
 	}
 
 	// Teardown
-	masterDB.Close()
-	err = os.Remove(masterDB.Filename)
+	err = registry.Master.DB.Close()
+	if err != nil {
+		t.Error("Failed to close master db - ", err)
+	}
+	err = os.Remove(registry.Master.Info.Filename)
 	if err != nil {
 		t.Error("Failed to cleanup master db - ", err)
 	}
 
-	accountDB := factory.Find(db.TypeAccount, account.ID)
-	accountDB.Close()
-	err = os.Remove(accountDB.Filename)
-	if err != nil {
-		t.Error("Failed to cleanup account db - ", err)
+	for _, handle := range registry.Handles {
+		if handle.Info.Type != db.TypeMaster {
+			err = handle.Close()
+			if err != nil {
+				t.Error("Failed to close db - ", err)
+			}
+			err = os.Remove(handle.Info.Filename)
+			if err != nil {
+				t.Error("Failed to cleanup db - ", err)
+			}
+		}
 	}
 
 	hook.Reset()

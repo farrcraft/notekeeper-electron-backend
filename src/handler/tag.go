@@ -36,7 +36,7 @@ func getTags(server *rpc.Server, message []byte, scope string) (proto.Message, e
 	request := messages.GetTagsRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling get tags request - ", err)
+		server.Logger.Warn("Error unmarshaling get tags request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -48,7 +48,7 @@ func getTags(server *rpc.Server, message []byte, scope string) (proto.Message, e
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid id - ", err)
+		server.Logger.Warn("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -61,7 +61,7 @@ func getTags(server *rpc.Server, message []byte, scope string) (proto.Message, e
 	// create a new tag instance to act as a proxy
 	t, err := tag.New(nil, tagScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating tag - ", err)
+		server.Logger.Warn("Error creating tag - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -93,7 +93,7 @@ func createTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 	request := messages.CreateTagRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling create tag request - ", err)
+		server.Logger.Warn("Error unmarshaling create tag request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -105,7 +105,7 @@ func createTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid id - ", err)
+		server.Logger.Warn("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -118,7 +118,7 @@ func createTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 	t := rpc.MessageToTitle(request.Name)
 	newTag, err := tag.New(t, tagScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating tag - ", err)
+		server.Logger.Warn("Error creating tag - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -140,7 +140,7 @@ func saveTag(server *rpc.Server, message []byte, scope string) (proto.Message, e
 	request := messages.SaveTagRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling save tag request - ", err)
+		server.Logger.Warn("Error unmarshaling save tag request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -152,7 +152,7 @@ func saveTag(server *rpc.Server, message []byte, scope string) (proto.Message, e
 
 	id, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid id - ", err)
+		server.Logger.Warn("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -165,7 +165,7 @@ func saveTag(server *rpc.Server, message []byte, scope string) (proto.Message, e
 	t := rpc.MessageToTitle(request.Name)
 	newTag, err := tag.New(t, tagScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating tag - ", err)
+		server.Logger.Warn("Error creating tag - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -186,7 +186,7 @@ func deleteTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 	request := messages.DeleteTagRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling delete tag request - ", err)
+		server.Logger.Warn("Error unmarshaling delete tag request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -198,7 +198,7 @@ func deleteTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 
 	id, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid id - ", err)
+		server.Logger.Warn("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -210,7 +210,7 @@ func deleteTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 
 	t, err := tag.New(nil, tagScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating tag - ", err)
+		server.Logger.Warn("Error creating tag - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}

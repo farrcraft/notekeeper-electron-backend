@@ -88,7 +88,7 @@ func (index *Index) Save(collection *Collection, passphraseKey []byte) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("collection_index"))
 		if err != nil {
-			index.Logger.Debug("Error creating collection bucket - ", err)
+			index.Logger.Warn("Error creating collection bucket - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorCreateBucket)
 			return code
 		}
@@ -96,7 +96,7 @@ func (index *Index) Save(collection *Collection, passphraseKey []byte) error {
 		// serialize collection data
 		data, err := json.Marshal(collection)
 		if err != nil {
-			index.Logger.Debug("Error marshaling collection - ", err)
+			index.Logger.Warn("Error marshaling collection - ", err)
 			code := codes.New(codes.ScopeCollection, codes.ErrorMarshal)
 			return code
 		}
@@ -105,7 +105,7 @@ func (index *Index) Save(collection *Collection, passphraseKey []byte) error {
 		c := crypto.New(index.Logger)
 		decryptedKey, err := c.Open(passphraseKey, shelfDBHandle.EncryptedKey)
 		if err != nil {
-			index.Logger.Debug("Error retrieving collection key - ", err)
+			index.Logger.Warn("Error retrieving collection key - ", err)
 			code := codes.New(codes.ScopeCollection, codes.ErrorOpenKey)
 			return code
 		}
@@ -113,7 +113,7 @@ func (index *Index) Save(collection *Collection, passphraseKey []byte) error {
 		// encrypt the data
 		encryptedData, err := c.Seal(decryptedKey, data)
 		if err != nil {
-			index.Logger.Debug("Error encrypting collection data - ", err)
+			index.Logger.Warn("Error encrypting collection data - ", err)
 			code := codes.New(codes.ScopeCollection, codes.ErrorEncrypt)
 			return code
 		}
@@ -121,7 +121,7 @@ func (index *Index) Save(collection *Collection, passphraseKey []byte) error {
 		// finally, save it
 		err = bucket.Put(collection.ID.Bytes(), encryptedData)
 		if err != nil {
-			index.Logger.Debug("Error writing collection - ", err)
+			index.Logger.Warn("Error writing collection - ", err)
 			code := codes.New(codes.ScopeCollection, codes.ErrorWriteBucket)
 			return code
 		}
@@ -132,7 +132,7 @@ func (index *Index) Save(collection *Collection, passphraseKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		index.Logger.Debug("Error saving collection - err")
+		index.Logger.Warn("Error saving collection - err")
 		code := codes.New(codes.ScopeCollection, codes.ErrorSave)
 		return code
 	}
@@ -150,7 +150,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 	c := crypto.New(index.Logger)
 	shelfKey, err := c.Open(passphraseKey, shelfDBHandle.EncryptedKey)
 	if err != nil {
-		index.Logger.Debug("Error opening collection key - ", err)
+		index.Logger.Warn("Error opening collection key - ", err)
 		code := codes.New(codes.ScopeCollection, codes.ErrorOpenKey)
 		return code
 	}
@@ -159,7 +159,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("collection_index"))
 		if bucket == nil {
-			index.Logger.Debug("collection index bucket does not exist")
+			index.Logger.Warn("collection index bucket does not exist")
 			code := codes.New(codes.ScopeCollection, codes.ErrorBucketMissing)
 			return code
 		}
@@ -175,14 +175,14 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 			// decrypt value
 			decryptedData, err := c.Open(shelfKey, value)
 			if err != nil {
-				index.Logger.Debug("Error decrypting collection data - ", err)
+				index.Logger.Warn("Error decrypting collection data - ", err)
 				code := codes.New(codes.ScopeCollection, codes.ErrorDecrypt)
 				return code
 			}
 
 			err = json.Unmarshal(decryptedData, newCollection)
 			if err != nil {
-				index.Logger.Debug("Error decoding collection json - ", err)
+				index.Logger.Warn("Error decoding collection json - ", err)
 				code := codes.New(codes.ScopeCollection, codes.ErrorDecode)
 				return code
 			}
@@ -206,14 +206,14 @@ func (index *Index) Delete(collection *Collection, passphraseKey []byte) error {
 	err = shelfDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("collection_index"))
 		if bucket == nil {
-			index.Logger.Debug("collection index bucket does not exist")
+			index.Logger.Warn("collection index bucket does not exist")
 			code := codes.New(codes.ScopeCollection, codes.ErrorBucketMissing)
 			return code
 		}
 
 		err := bucket.Delete(collection.ID.Bytes())
 		if err != nil {
-			index.Logger.Debug("Error deleting collection - ", err)
+			index.Logger.Warn("Error deleting collection - ", err)
 			code := codes.New(codes.ScopeCollection, codes.ErrorDelete)
 			return code
 		}
@@ -225,7 +225,7 @@ func (index *Index) Delete(collection *Collection, passphraseKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		index.Logger.Debug("Error deleting collection - ", err)
+		index.Logger.Warn("Error deleting collection - ", err)
 		code := codes.New(codes.ScopeCollection, codes.ErrorDelete)
 		return code
 	}

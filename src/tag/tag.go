@@ -82,7 +82,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("tags"))
 		if err != nil {
-			tag.Logger.Debug("Error creating tag bucket - ", err)
+			tag.Logger.Warn("Error creating tag bucket - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorCreateBucket)
 			return code
 		}
@@ -90,7 +90,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 		// serialize tag data
 		data, err := json.Marshal(tag)
 		if err != nil {
-			tag.Logger.Debug("Error marshaling tag - ", err)
+			tag.Logger.Warn("Error marshaling tag - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorMarshal)
 			return code
 		}
@@ -99,7 +99,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 		c := crypto.New(tag.Logger)
 		decryptedKey, err := c.Open(passphraseKey, handle.EncryptedKey)
 		if err != nil {
-			tag.Logger.Debug("Error retrieving tag key - ", err)
+			tag.Logger.Warn("Error retrieving tag key - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorOpenKey)
 			return code
 		}
@@ -107,7 +107,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 		// encrypt the data
 		encryptedData, err := c.Seal(decryptedKey, data)
 		if err != nil {
-			tag.Logger.Debug("Error encrypting tag data - ", err)
+			tag.Logger.Warn("Error encrypting tag data - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorEncrypt)
 			return code
 		}
@@ -115,7 +115,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 		// finally, save it
 		err = bucket.Put(tag.ID.Bytes(), encryptedData)
 		if err != nil {
-			tag.Logger.Debug("Error writing tag - ", err)
+			tag.Logger.Warn("Error writing tag - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorWriteBucket)
 			return code
 		}
@@ -126,7 +126,7 @@ func (tag *Tag) Save(passphraseKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		tag.Logger.Debug("Error saving tag - err")
+		tag.Logger.Warn("Error saving tag - err")
 		code := codes.New(codes.ScopeTag, codes.ErrorSave)
 		return code
 	}
@@ -144,7 +144,7 @@ func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 	c := crypto.New(tag.Logger)
 	tagKey, err := c.Open(passphraseKey, tagDBHandle.EncryptedKey)
 	if err != nil {
-		tag.Logger.Debug("Error opening tag key - ", err)
+		tag.Logger.Warn("Error opening tag key - ", err)
 		code := codes.New(codes.ScopeTag, codes.ErrorOpenKey)
 		return tags, code
 	}
@@ -153,7 +153,7 @@ func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("tags"))
 		if bucket == nil {
-			tag.Logger.Debug("tag bucket does not exist")
+			tag.Logger.Warn("tag bucket does not exist")
 			code := codes.New(codes.ScopeTag, codes.ErrorBucketMissing)
 			return code
 		}
@@ -169,14 +169,14 @@ func (tag *Tag) LoadAll(passphraseKey []byte) ([]*Tag, error) {
 			// decrypt value
 			decryptedData, err := c.Open(tagKey, value)
 			if err != nil {
-				tag.Logger.Debug("Error decrypting tag data - ", err)
+				tag.Logger.Warn("Error decrypting tag data - ", err)
 				code := codes.New(codes.ScopeTag, codes.ErrorDecrypt)
 				return code
 			}
 
 			err = json.Unmarshal(decryptedData, newTag)
 			if err != nil {
-				tag.Logger.Debug("Error decoding tag json - ", err)
+				tag.Logger.Warn("Error decoding tag json - ", err)
 				code := codes.New(codes.ScopeTag, codes.ErrorDecode)
 				return code
 			}
@@ -199,14 +199,14 @@ func (tag *Tag) Delete(passphraseKey []byte) error {
 	err = tagDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("tags"))
 		if bucket == nil {
-			tag.Logger.Debug("tag bucket does not exist")
+			tag.Logger.Warn("tag bucket does not exist")
 			code := codes.New(codes.ScopeTag, codes.ErrorBucketMissing)
 			return code
 		}
 
 		err := bucket.Delete(tag.ID.Bytes())
 		if err != nil {
-			tag.Logger.Debug("Error deleting tag - ", err)
+			tag.Logger.Warn("Error deleting tag - ", err)
 			code := codes.New(codes.ScopeTag, codes.ErrorDelete)
 			return code
 		}
@@ -218,7 +218,7 @@ func (tag *Tag) Delete(passphraseKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		tag.Logger.Debug("Error deleting tag - ", err)
+		tag.Logger.Warn("Error deleting tag - ", err)
 		code := codes.New(codes.ScopeTag, codes.ErrorDelete)
 		return code
 	}

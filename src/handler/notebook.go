@@ -18,7 +18,7 @@ func createNotebook(server *rpc.Server, message []byte, scope string) (proto.Mes
 	request := messages.CreateNotebookRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling create notebook request - ", err)
+		server.Logger.Warn("Error unmarshaling create notebook request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -48,14 +48,14 @@ func createNotebook(server *rpc.Server, message []byte, scope string) (proto.Mes
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook owner id - ", err)
+		server.Logger.Warn("Invalid notebook owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	containerID, err := uuid.FromString(request.ContainerId)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook container id - ", err)
+		server.Logger.Warn("Invalid notebook container id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -63,7 +63,7 @@ func createNotebook(server *rpc.Server, message []byte, scope string) (proto.Mes
 	t := rpc.MessageToTitle(request.Name)
 	notebook, err := notebook.New(t, notebookScope, container, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating notebook - ", err)
+		server.Logger.Warn("Error creating notebook - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -90,7 +90,7 @@ func getNotebooks(server *rpc.Server, message []byte, scope string) (proto.Messa
 	request := messages.GetNotebooksRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling get notebooks request - ", err)
+		server.Logger.Warn("Error unmarshaling get notebooks request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -120,14 +120,14 @@ func getNotebooks(server *rpc.Server, message []byte, scope string) (proto.Messa
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook owner id - ", err)
+		server.Logger.Warn("Invalid notebook owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	containerID, err := uuid.FromString(request.ContainerId)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook container id - ", err)
+		server.Logger.Warn("Invalid notebook container id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -135,7 +135,7 @@ func getNotebooks(server *rpc.Server, message []byte, scope string) (proto.Messa
 	// create a new notebook instance to act as a proxy
 	nb, err := notebook.New(nil, notebookScope, container, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating notebook - ", err)
+		server.Logger.Warn("Error creating notebook - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -174,7 +174,7 @@ func saveNotebook(server *rpc.Server, message []byte, scope string) (proto.Messa
 	request := messages.SaveNotebookRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling save notebook request - ", err)
+		server.Logger.Warn("Error unmarshaling save notebook request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -204,21 +204,21 @@ func saveNotebook(server *rpc.Server, message []byte, scope string) (proto.Messa
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook id - ", err)
+		server.Logger.Warn("Invalid notebook id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook owner id - ", err)
+		server.Logger.Warn("Invalid notebook owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	containerID, err := uuid.FromString(request.ContainerId)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook container id - ", err)
+		server.Logger.Warn("Invalid notebook container id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -226,7 +226,7 @@ func saveNotebook(server *rpc.Server, message []byte, scope string) (proto.Messa
 	t := rpc.MessageToTitle(request.Name)
 	notebook, err := notebook.New(t, notebookScope, container, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating notebook - ", err)
+		server.Logger.Warn("Error creating notebook - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -252,7 +252,7 @@ func deleteNotebook(server *rpc.Server, message []byte, scope string) (proto.Mes
 	request := messages.DeleteNotebookRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling create notebook request - ", err)
+		server.Logger.Warn("Error unmarshaling create notebook request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -282,28 +282,28 @@ func deleteNotebook(server *rpc.Server, message []byte, scope string) (proto.Mes
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook id - ", err)
+		server.Logger.Warn("Invalid notebook id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook owner id - ", err)
+		server.Logger.Warn("Invalid notebook owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	containerID, err := uuid.FromString(request.ContainerId)
 	if err != nil {
-		server.Logger.Debug("Invalid notebook container id - ", err)
+		server.Logger.Warn("Invalid notebook container id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	notebook, err := notebook.New(nil, notebookScope, container, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating notebook - ", err)
+		server.Logger.Warn("Error creating notebook - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}

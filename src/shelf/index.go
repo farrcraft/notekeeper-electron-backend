@@ -55,7 +55,7 @@ func (index *Index) Save(shelf *Shelf, encryptionKey []byte) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("shelf_index"))
 		if err != nil {
-			index.Logger.Debug("Error creating shelf index bucket - ", err)
+			index.Logger.Warn("Error creating shelf index bucket - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorCreateBucket)
 			return code
 		}
@@ -63,7 +63,7 @@ func (index *Index) Save(shelf *Shelf, encryptionKey []byte) error {
 		// serialize shelf data
 		data, err := json.Marshal(shelf)
 		if err != nil {
-			index.Logger.Debug("Error marshaling shelf - ", err)
+			index.Logger.Warn("Error marshaling shelf - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorMarshal)
 			return code
 		}
@@ -72,7 +72,7 @@ func (index *Index) Save(shelf *Shelf, encryptionKey []byte) error {
 		c := crypto.New(index.Logger)
 		encryptedData, err := c.Seal(encryptionKey, data)
 		if err != nil {
-			index.Logger.Debug("Error encrypting shelf data - ", err)
+			index.Logger.Warn("Error encrypting shelf data - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorEncrypt)
 			return code
 		}
@@ -80,7 +80,7 @@ func (index *Index) Save(shelf *Shelf, encryptionKey []byte) error {
 		// finally, save it
 		err = bucket.Put(shelf.ID.Bytes(), encryptedData)
 		if err != nil {
-			index.Logger.Debug("Error writing shelf - ", err)
+			index.Logger.Warn("Error writing shelf - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorWriteBucket)
 			return code
 		}
@@ -91,7 +91,7 @@ func (index *Index) Save(shelf *Shelf, encryptionKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		index.Logger.Debug("Error saving shelf - err")
+		index.Logger.Warn("Error saving shelf - err")
 		code := codes.New(codes.ScopeShelf, codes.ErrorSave)
 		return code
 	}
@@ -110,7 +110,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 	c := crypto.New(index.Logger)
 	shelfKey, err := c.Open(passphraseKey, handle.EncryptedKey)
 	if err != nil {
-		index.Logger.Debug("Error opening shelf key - ", err)
+		index.Logger.Warn("Error opening shelf key - ", err)
 		code := codes.New(codes.ScopeShelf, codes.ErrorOpenKey)
 		return code
 	}
@@ -119,7 +119,7 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("shelf_index"))
 		if bucket == nil {
-			index.Logger.Debug("shelf bucket does not exist")
+			index.Logger.Warn("shelf bucket does not exist")
 			code := codes.New(codes.ScopeShelf, codes.ErrorBucketMissing)
 			return code
 		}
@@ -135,14 +135,14 @@ func (index *Index) LoadAll(passphraseKey []byte) error {
 			// decrypt value
 			decryptedData, err := c.Open(shelfKey, value)
 			if err != nil {
-				index.Logger.Debug("Error decrypting shelf data - ", err)
+				index.Logger.Warn("Error decrypting shelf data - ", err)
 				code := codes.New(codes.ScopeShelf, codes.ErrorDecrypt)
 				return code
 			}
 
 			err = json.Unmarshal(decryptedData, newShelf)
 			if err != nil {
-				index.Logger.Debug("Error decoding shelf json - ", err)
+				index.Logger.Warn("Error decoding shelf json - ", err)
 				code := codes.New(codes.ScopeShelf, codes.ErrorDecode)
 				return code
 			}
@@ -165,14 +165,14 @@ func (index *Index) Delete(shelf *Shelf) error {
 	err = handle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("shelf_index"))
 		if bucket == nil {
-			index.Logger.Debug("shelf bucket does not exist")
+			index.Logger.Warn("shelf bucket does not exist")
 			code := codes.New(codes.ScopeShelf, codes.ErrorBucketMissing)
 			return code
 		}
 
 		err := bucket.Delete(shelf.ID.Bytes())
 		if err != nil {
-			index.Logger.Debug("Error deleting shelf - ", err)
+			index.Logger.Warn("Error deleting shelf - ", err)
 			code := codes.New(codes.ScopeShelf, codes.ErrorDelete)
 			return code
 		}

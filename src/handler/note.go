@@ -18,7 +18,7 @@ func getNotes(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	request := messages.GetNotesRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling get notes request - ", err)
+		server.Logger.Warn("Error unmarshaling get notes request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -48,14 +48,14 @@ func getNotes(server *rpc.Server, message []byte, scope string) (proto.Message, 
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid note owner id - ", err)
+		server.Logger.Warn("Invalid note owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	storeID, err := uuid.FromString(request.StoreId)
 	if err != nil {
-		server.Logger.Debug("Invalid note store id - ", err)
+		server.Logger.Warn("Invalid note store id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -63,7 +63,7 @@ func getNotes(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	// create a new note instance to act as a proxy
 	n, err := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating note - ", err)
+		server.Logger.Warn("Error creating note - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -102,7 +102,7 @@ func loadNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	request := messages.LoadNoteRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling load note request - ", err)
+		server.Logger.Warn("Error unmarshaling load note request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -132,14 +132,14 @@ func loadNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid note owner id - ", err)
+		server.Logger.Warn("Invalid note owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	storeID, err := uuid.FromString(request.StoreId)
 	if err != nil {
-		server.Logger.Debug("Invalid note store id - ", err)
+		server.Logger.Warn("Invalid note store id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -147,7 +147,7 @@ func loadNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	// create a new note instance to act as a proxy
 	n, err := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating note - ", err)
+		server.Logger.Warn("Error creating note - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -182,7 +182,7 @@ func createNote(server *rpc.Server, message []byte, scope string) (proto.Message
 	request := messages.CreateNoteRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling create note request - ", err)
+		server.Logger.Warn("Error unmarshaling create note request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -212,14 +212,14 @@ func createNote(server *rpc.Server, message []byte, scope string) (proto.Message
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid note owner id - ", err)
+		server.Logger.Warn("Invalid note owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	storeID, err := uuid.FromString(request.StoreId)
 	if err != nil {
-		server.Logger.Debug("Invalid note store id - ", err)
+		server.Logger.Warn("Invalid note store id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -227,7 +227,7 @@ func createNote(server *rpc.Server, message []byte, scope string) (proto.Message
 	t := rpc.MessageToTitle(request.Name)
 	n, err := note.New(t, noteScope, store, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating note - ", err)
+		server.Logger.Warn("Error creating note - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -253,7 +253,7 @@ func saveNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	request := messages.SaveNoteRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling save note request - ", err)
+		server.Logger.Warn("Error unmarshaling save note request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -283,21 +283,21 @@ func saveNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid note id - ", err)
+		server.Logger.Warn("Invalid note id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid note owner id - ", err)
+		server.Logger.Warn("Invalid note owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	storeID, err := uuid.FromString(request.StoreId)
 	if err != nil {
-		server.Logger.Debug("Invalid note store id - ", err)
+		server.Logger.Warn("Invalid note store id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -305,7 +305,7 @@ func saveNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	t := rpc.MessageToTitle(request.Name)
 	n, err := note.New(t, noteScope, store, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating note - ", err)
+		server.Logger.Warn("Error creating note - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -329,7 +329,7 @@ func deleteNote(server *rpc.Server, message []byte, scope string) (proto.Message
 	request := messages.DeleteNoteRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling load note request - ", err)
+		server.Logger.Warn("Error unmarshaling load note request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -359,28 +359,28 @@ func deleteNote(server *rpc.Server, message []byte, scope string) (proto.Message
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid note id - ", err)
+		server.Logger.Warn("Invalid note id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid note owner id - ", err)
+		server.Logger.Warn("Invalid note owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	storeID, err := uuid.FromString(request.StoreId)
 	if err != nil {
-		server.Logger.Debug("Invalid note store id - ", err)
+		server.Logger.Warn("Invalid note store id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	n, err := note.New(nil, noteScope, store, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating note - ", err)
+		server.Logger.Warn("Error creating note - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}

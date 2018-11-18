@@ -71,7 +71,7 @@ func (user *User) Load(passphrase string) error {
 	c := crypto.New(user.Logger)
 	passphraseKey, err := c.DeriveKey([]byte(passphrase), user.Salt)
 	if err != nil {
-		user.Logger.Debug("Error deriving key from passphrase - ", err)
+		user.Logger.Warn("Error deriving key from passphrase - ", err)
 		code := codes.New(codes.ScopeUser, codes.ErrorDeriveKey)
 		return code
 	}
@@ -90,7 +90,7 @@ func (user *User) Load(passphrase string) error {
 		cursor := bucket.Cursor()
 		key, value := cursor.Seek(user.ID.Bytes())
 		if key == nil {
-			user.Logger.Debug("Error loading user")
+			user.Logger.Warn("Error loading user")
 			code := codes.New(codes.ScopeUser, codes.ErrorLoad)
 			return code
 		}
@@ -101,14 +101,14 @@ func (user *User) Load(passphrase string) error {
 		decryptedData, err := c.Open(passphraseKey[:], value)
 		if err != nil {
 			// this error condition is most likely caused by an incorrect passphrase
-			user.Logger.Debug("Error decrypting user data - ", err)
+			user.Logger.Warn("Error decrypting user data - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorDecrypt)
 			return code
 		}
 
 		err = json.Unmarshal(decryptedData, user)
 		if err != nil {
-			user.Logger.Debug("Error decoding user json - ", err)
+			user.Logger.Warn("Error decoding user json - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorDecode)
 			return code
 		}
@@ -148,26 +148,26 @@ func (user *User) Save() error {
 	err = userDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("profile"))
 		if err != nil {
-			user.Logger.Debug("Error creating users bucket - ", err)
+			user.Logger.Warn("Error creating users bucket - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorCreateBucket)
 			return code
 		}
 		data, err := json.Marshal(user)
 		if err != nil {
-			user.Logger.Debug("Error marshaling user - ", err)
+			user.Logger.Warn("Error marshaling user - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorMarshal)
 			return code
 		}
 		encryptedData, err := c.Seal(user.PassphraseKey, data)
 		if err != nil {
-			user.Logger.Debug("Error encrypting user content - ", err)
+			user.Logger.Warn("Error encrypting user content - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorEncrypt)
 			return code
 		}
 
 		err = bucket.Put(user.ID.Bytes(), encryptedData)
 		if err != nil {
-			user.Logger.Debug("Error writing user - ", err)
+			user.Logger.Warn("Error writing user - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorWriteBucket)
 			return code
 		}
@@ -177,7 +177,7 @@ func (user *User) Save() error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		user.Logger.Debug("Error saving user - ", err)
+		user.Logger.Warn("Error saving user - ", err)
 		code := codes.New(codes.ScopeUser, codes.ErrorSave)
 		return code
 	}
@@ -193,7 +193,7 @@ func (user *User) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) ([]byte
 	if keyType == TypeUser {
 		userKey, err := c.Open(user.PassphraseKey, user.UserKey)
 		if err != nil {
-			user.Logger.Debug("Error opening user key - ", err)
+			user.Logger.Warn("Error opening user key - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
 			return emptyKey, code
 		}
@@ -201,14 +201,14 @@ func (user *User) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) ([]byte
 	} else if keyType == TypePassphrase {
 		unsealKey = user.PassphraseKey
 	} else {
-		user.Logger.Debug("Cannot unseal key of unknown key type.")
+		user.Logger.Warn("Cannot unseal key of unknown key type.")
 		code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
 		return emptyKey, code
 	}
 
 	unsealedKey, err := c.Open(unsealKey, sealedKey)
 	if err != nil {
-		user.Logger.Debug("Error opening key - ", err)
+		user.Logger.Warn("Error opening key - ", err)
 		code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
 		return emptyKey, code
 	}
@@ -230,7 +230,7 @@ func (user *User) CreateEncryptedKey(keyType EncryptionKeyType) ([]byte, error) 
 	if keyType == TypeUser {
 		userKey, err := c.Open(user.PassphraseKey, user.UserKey)
 		if err != nil {
-			user.Logger.Debug("Error opening user key - ", err)
+			user.Logger.Warn("Error opening user key - ", err)
 			code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
 			return encryptedKey, code
 		}
@@ -238,7 +238,7 @@ func (user *User) CreateEncryptedKey(keyType EncryptionKeyType) ([]byte, error) 
 	} else if keyType == TypePassphrase {
 		sealingKey = user.PassphraseKey
 	} else {
-		user.Logger.Debug("Cannot unseal key of unknown key type.")
+		user.Logger.Warn("Cannot unseal key of unknown key type.")
 		code := codes.New(codes.ScopeUser, codes.ErrorOpenKey)
 		return encryptedKey, code
 	}

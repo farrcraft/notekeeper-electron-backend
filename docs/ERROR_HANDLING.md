@@ -5,7 +5,7 @@ Errors generated from 3rd party libraries or stdlib are referred to here as
 
 
 *External Errors* **MUST**:
-* Immediately be logged to the `DEBUG` logger.
+* Immediately be logged to the `ERROR` logger.
 * Never be passed along any further after they have been logged.
 
 

@@ -22,7 +22,7 @@ func OpenMasterDb(server *rpc.Server, message []byte) (proto.Message, error) {
 	request := messages.OpenMasterDbRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling open master db request - ", err)
+		server.Logger.Warn("Error unmarshaling open master db request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}

@@ -17,7 +17,7 @@ func KeyExchange(server *rpc.Server, message []byte) (proto.Message, error) {
 	request := messages.KeyExchangeRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling message - ", err)
+		server.Logger.Warn("Error unmarshaling message - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}

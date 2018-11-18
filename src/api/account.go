@@ -67,14 +67,14 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 
 	err = newAccount.Save()
 	if err != nil {
-		api.Logger.Debug("Error saving account - ", err)
+		api.Logger.Warn("Error saving account - ", err)
 		return newAccount, err
 	}
 
 	accountIndex := account.NewIndex(api.DBRegistry, api.Logger)
 	err = accountIndex.Save(newAccount)
 	if err != nil {
-		api.Logger.Debug("Error saving account index - ", err)
+		api.Logger.Warn("Error saving account index - ", err)
 		return newAccount, err
 	}
 
@@ -122,7 +122,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 	}
 	err = accountShelfIndex.Save(accountShelf, unsealedAccountKey)
 	if err != nil {
-		api.Logger.Debug("could not create default account shelf")
+		api.Logger.Warn("could not create default account shelf")
 		return err
 	}
 
@@ -150,12 +150,12 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 	userShelfIndex := shelf.NewIndex(shelf.ScopeUser, currentUser.ID, api.DBRegistry, api.Logger)
 	unsealedUserKey, err := acct.UnsealKey(account.TypePassphrase, acct.ActiveUser.UserKey)
 	if err != nil {
-		api.Logger.Debug("could not unseal user key")
+		api.Logger.Warn("could not unseal user key")
 		return err
 	}
 	err = userShelfIndex.Save(userShelf, unsealedUserKey)
 	if err != nil {
-		api.Logger.Debug("could not create default user shelf")
+		api.Logger.Warn("could not create default user shelf")
 		return err
 	}
 
@@ -172,12 +172,12 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 	accountNotebook.Default = true
 	accountShelfKey, err := acct.UnsealKey(account.TypeAccount, accountShelfDBHandle.EncryptedKey)
 	if err != nil {
-		api.Logger.Debug("could not unseal default account shelf key")
+		api.Logger.Warn("could not unseal default account shelf key")
 		return err
 	}
 	err = accountNotebook.Save(accountShelfKey)
 	if err != nil {
-		api.Logger.Debug("could not create default account notebook")
+		api.Logger.Warn("could not create default account notebook")
 		return err
 	}
 
@@ -192,12 +192,12 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 	userNotebook.Default = true
 	userShelfKey, err := currentUser.UnsealKey(user.TypeUser, userShelfDBHandle.EncryptedKey)
 	if err != nil {
-		api.Logger.Debug("could not unseal default user shelf key")
+		api.Logger.Warn("could not unseal default user shelf key")
 		return err
 	}
 	err = userNotebook.Save(userShelfKey)
 	if err != nil {
-		api.Logger.Debug("could not create default user notebook")
+		api.Logger.Warn("could not create default user notebook")
 		return err
 	}
 
@@ -226,7 +226,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 
 	err = accountShelfIndex.Save(accountTrashShelf, unsealedAccountKey)
 	if err != nil {
-		api.Logger.Debug("could not create account trash shelf")
+		api.Logger.Warn("could not create account trash shelf")
 		return err
 	}
 
@@ -253,7 +253,7 @@ func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.U
 
 	err = userShelfIndex.Save(userTrashShelf, unsealedUserKey)
 	if err != nil {
-		api.Logger.Debug("could not create user trash shelf")
+		api.Logger.Warn("could not create user trash shelf")
 		return err
 	}
 
@@ -330,16 +330,16 @@ func (api *API) SigninAccount(name string, email string, passphrase string) (*ac
 // SignoutAccount signs out an account
 func (api *API) SignoutAccount(acct *account.Account) error {
 	if acct == nil {
-		api.Logger.Debug("signout missing account")
+		api.Logger.Warn("signout missing account")
 		return nil
 	}
 	if acct.ActiveUser == nil {
-		api.Logger.Debug("signout missing user")
+		api.Logger.Warn("signout missing user")
 		return nil
 	}
 	crypto.Zero(acct.ActiveUser.PassphraseKey)
 	if acct.DBRegistry == nil {
-		api.Logger.Debug("signout missing db registry")
+		api.Logger.Warn("signout missing db registry")
 		return nil
 	}
 	acct.DBRegistry.CloseAccountDBs()
@@ -349,11 +349,11 @@ func (api *API) SignoutAccount(acct *account.Account) error {
 // LockAccount locks an account
 func (api *API) LockAccount(acct *account.Account) error {
 	if acct == nil {
-		api.Logger.Debug("lock account missing account")
+		api.Logger.Warn("lock account missing account")
 		return nil
 	}
 	if acct.ActiveUser == nil {
-		api.Logger.Debug("lock account missing user")
+		api.Logger.Warn("lock account missing user")
 		return nil
 	}
 	acct.ActiveUser.PassphraseKey = []byte{}
@@ -362,7 +362,7 @@ func (api *API) LockAccount(acct *account.Account) error {
 	acct.EncryptedKey = []byte{}
 	//crypto.Zero(acct.ActiveUser.PassphraseKey)
 	if acct.DBRegistry == nil {
-		api.Logger.Debug("lock account missing db factory")
+		api.Logger.Warn("lock account missing db factory")
 		return nil
 	}
 	acct.DBRegistry.CloseAccountDBs()
@@ -372,12 +372,12 @@ func (api *API) LockAccount(acct *account.Account) error {
 // UnlockAccount unlocks an account
 func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
 	if acct == nil {
-		api.Logger.Debug("unlock missing account")
+		api.Logger.Warn("unlock missing account")
 		return nil
 	}
 
 	if acct.ActiveUser == nil {
-		api.Logger.Debug("unlock missing user")
+		api.Logger.Warn("unlock missing user")
 		return nil
 	}
 
@@ -387,7 +387,7 @@ func (api *API) UnlockAccount(acct *account.Account, passphrase string) error {
 	}
 	accountDBHandle, err := api.DBRegistry.NewHandle(accountDBKey)
 	if err != nil {
-		api.Logger.Debug("unlock could not open account db")
+		api.Logger.Warn("unlock could not open account db")
 		return err
 	}
 

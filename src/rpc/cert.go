@@ -30,7 +30,7 @@ func (rpc *Server) createCertificate() bool {
 
 	host, err := os.Hostname()
 	if err != nil {
-		rpc.Logger.Debug("Error getting hostname - ", err)
+		rpc.Logger.Warn("Error getting hostname - ", err)
 		return false
 	}
 
@@ -51,7 +51,7 @@ func (rpc *Server) createCertificate() bool {
 
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
-		rpc.Logger.Debug("error getting interface addresses - ", err)
+		rpc.Logger.Warn("error getting interface addresses - ", err)
 		return false
 	}
 	for _, a := range addrs {
@@ -64,13 +64,13 @@ func (rpc *Server) createCertificate() bool {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		rpc.Logger.Debug("Error creating serial number - ", err)
+		rpc.Logger.Warn("Error creating serial number - ", err)
 		return false
 	}
 
 	privKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
 	if err != nil {
-		rpc.Logger.Debug("Error generating private key - ", err)
+		rpc.Logger.Warn("Error generating private key - ", err)
 		return false
 	}
 
@@ -91,20 +91,20 @@ func (rpc *Server) createCertificate() bool {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &privKey.PublicKey, privKey)
 	if err != nil {
-		rpc.Logger.Debug("Error creating certificate - ", err)
+		rpc.Logger.Warn("Error creating certificate - ", err)
 		return false
 	}
 
 	certBuf := &bytes.Buffer{}
 	err = pem.Encode(certBuf, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	if err != nil {
-		rpc.Logger.Debug("Error encoding certificate - ", err)
+		rpc.Logger.Warn("Error encoding certificate - ", err)
 		return false
 	}
 
 	keyBytes, err := x509.MarshalECPrivateKey(privKey)
 	if err != nil {
-		rpc.Logger.Debug("Error marshaling key bytes - ", err)
+		rpc.Logger.Warn("Error marshaling key bytes - ", err)
 		return false
 	}
 
@@ -117,7 +117,7 @@ func (rpc *Server) createCertificate() bool {
 	keyBuf := &bytes.Buffer{}
 	err = pem.Encode(keyBuf, &pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes})
 	if err != nil {
-		rpc.Logger.Debug("Error encoding key - ", err)
+		rpc.Logger.Warn("Error encoding key - ", err)
 		return false
 	}
 
@@ -131,7 +131,7 @@ func (rpc *Server) createCertificate() bool {
 		certPath := filepath.Join(appdir.AppDataPath(), "certificate")
 		certOut, err := os.Create(certPath)
 		if err != nil {
-			rpc.Logger.Debug("Error creating certificate file - ", err)
+			rpc.Logger.Warn("Error creating certificate file - ", err)
 			return false
 		}
 
@@ -141,14 +141,14 @@ func (rpc *Server) createCertificate() bool {
 	//rpc.Certificate, err = tls.X509KeyPair(pem.EncodeToMemory(&certPemBlock), pem.EncodeToMemory(&keyPemBlock))
 	rpc.Certificate, err = tls.X509KeyPair(certBuf.Bytes(), keyBuf.Bytes())
 	if err != nil {
-		rpc.Logger.Debug("Error converting certificate - ", err)
+		rpc.Logger.Warn("Error converting certificate - ", err)
 		return false
 	}
 
 	certPath := filepath.Join(appdir.AppDataPath(), "certificate")
 	err = ioutil.WriteFile(certPath, certBuf.Bytes(), 0600)
 	if err != nil {
-		rpc.Logger.Debug("Error writing certificate - ", err)
+		rpc.Logger.Warn("Error writing certificate - ", err)
 		return false
 	}
 

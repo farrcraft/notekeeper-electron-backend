@@ -18,7 +18,7 @@ func getCollections(server *rpc.Server, message []byte, scope string) (proto.Mes
 	request := messages.GetCollectionsRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling get collections request - ", err)
+		server.Logger.Warn("Error unmarshaling get collections request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -30,7 +30,7 @@ func getCollections(server *rpc.Server, message []byte, scope string) (proto.Mes
 
 	shelfID, err := uuid.FromString(request.ShelfId)
 	if err != nil {
-		server.Logger.Debug("Invalid shelf id - ", err)
+		server.Logger.Warn("Invalid shelf id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -81,7 +81,7 @@ func createCollection(server *rpc.Server, message []byte, scope string) (proto.M
 	request := messages.CreateCollectionRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling create collection request - ", err)
+		server.Logger.Warn("Error unmarshaling create collection request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -93,7 +93,7 @@ func createCollection(server *rpc.Server, message []byte, scope string) (proto.M
 
 	shelfID, err := uuid.FromString(request.ShelfId)
 	if err != nil {
-		server.Logger.Debug("Invalid shelf id - ", err)
+		server.Logger.Warn("Invalid shelf id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -113,7 +113,7 @@ func createCollection(server *rpc.Server, message []byte, scope string) (proto.M
 	t := rpc.MessageToTitle(request.Name)
 	c, err := collection.New(t, collectionScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating collection - ", err)
+		server.Logger.Warn("Error creating collection - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -143,7 +143,7 @@ func saveCollection(server *rpc.Server, message []byte, scope string) (proto.Mes
 	request := messages.SaveCollectionRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling save collection request - ", err)
+		server.Logger.Warn("Error unmarshaling save collection request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -155,7 +155,7 @@ func saveCollection(server *rpc.Server, message []byte, scope string) (proto.Mes
 
 	shelfID, err := uuid.FromString(request.ShelfId)
 	if err != nil {
-		server.Logger.Debug("Invalid shelf id - ", err)
+		server.Logger.Warn("Invalid shelf id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -175,7 +175,7 @@ func saveCollection(server *rpc.Server, message []byte, scope string) (proto.Mes
 	t := rpc.MessageToTitle(request.Name)
 	c, err := collection.New(t, collectionScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating collection - ", err)
+		server.Logger.Warn("Error creating collection - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -203,7 +203,7 @@ func deleteCollection(server *rpc.Server, message []byte, scope string) (proto.M
 	request := messages.DeleteCollectionRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling delete collection request - ", err)
+		server.Logger.Warn("Error unmarshaling delete collection request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -215,14 +215,14 @@ func deleteCollection(server *rpc.Server, message []byte, scope string) (proto.M
 
 	shelfID, err := uuid.FromString(request.ShelfId)
 	if err != nil {
-		server.Logger.Debug("Invalid shelf id - ", err)
+		server.Logger.Warn("Invalid shelf id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid id - ", err)
+		server.Logger.Warn("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -241,7 +241,7 @@ func deleteCollection(server *rpc.Server, message []byte, scope string) (proto.M
 
 	c, err := collection.New(nil, collectionScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating collection - ", err)
+		server.Logger.Warn("Error creating collection - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}

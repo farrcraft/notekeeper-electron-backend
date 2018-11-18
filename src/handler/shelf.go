@@ -35,7 +35,7 @@ func getShelves(server *rpc.Server, message []byte, scope string) (proto.Message
 	request := messages.GetShelvesRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling get shelves request - ", err)
+		server.Logger.Warn("Error unmarshaling get shelves request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -47,7 +47,7 @@ func getShelves(server *rpc.Server, message []byte, scope string) (proto.Message
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid id - ", err)
+		server.Logger.Warn("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -87,7 +87,7 @@ func createShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 	request := messages.CreateShelfRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling create shelf request - ", err)
+		server.Logger.Warn("Error unmarshaling create shelf request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -99,7 +99,7 @@ func createShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 
 	ownerID, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid owner id - ", err)
+		server.Logger.Warn("Invalid owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -112,7 +112,7 @@ func createShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 	t := rpc.MessageToTitle(request.Name)
 	s, err := shelf.New(t, shelfScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating shelf - ", err)
+		server.Logger.Warn("Error creating shelf - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -138,7 +138,7 @@ func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message,
 	request := messages.SaveShelfRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling save shelf request - ", err)
+		server.Logger.Warn("Error unmarshaling save shelf request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -157,7 +157,7 @@ func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message,
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid owner id - ", err)
+		server.Logger.Warn("Invalid owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -170,7 +170,7 @@ func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message,
 	t := rpc.MessageToTitle(request.Name)
 	s, err := shelf.New(t, shelfScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating shelf - ", err)
+		server.Logger.Warn("Error creating shelf - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}
@@ -195,7 +195,7 @@ func deleteShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 	request := messages.SaveShelfRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling delete shelf request - ", err)
+		server.Logger.Warn("Error unmarshaling delete shelf request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -207,14 +207,14 @@ func deleteShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 
 	id, err := uuid.FromString(request.Id)
 	if err != nil {
-		server.Logger.Debug("Invalid id - ", err)
+		server.Logger.Warn("Invalid id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
 
 	ownerID, err := uuid.FromString(request.OwnerId)
 	if err != nil {
-		server.Logger.Debug("Invalid owner id - ", err)
+		server.Logger.Warn("Invalid owner id - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -226,7 +226,7 @@ func deleteShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 
 	s, err := shelf.New(nil, shelfScope, server.DBRegistry, server.Logger)
 	if err != nil {
-		server.Logger.Debug("Error creating shelf - ", err)
+		server.Logger.Warn("Error creating shelf - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorCreate)
 		return response, nil
 	}

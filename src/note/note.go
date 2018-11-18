@@ -131,7 +131,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 		// [FIXME] - notes are grouped into unique buckets by notebook id
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notes"))
 		if err != nil {
-			note.Logger.Debug("Error creating notes bucket - ", err)
+			note.Logger.Warn("Error creating notes bucket - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorCreateBucket)
 			return code
 		}
@@ -139,7 +139,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 		// serialize note data
 		data, err := json.Marshal(note)
 		if err != nil {
-			note.Logger.Debug("Error marshaling note - ", err)
+			note.Logger.Warn("Error marshaling note - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorMarshal)
 			return code
 		}
@@ -148,7 +148,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 		c := crypto.New(note.Logger)
 		decryptedKey, err := c.Open(passphraseKey, noteDBHandle.EncryptedKey)
 		if err != nil {
-			note.Logger.Debug("Error retrieving note key - ", err)
+			note.Logger.Warn("Error retrieving note key - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
 			return code
 		}
@@ -156,7 +156,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 		// encrypt the data
 		encryptedData, err := c.Seal(decryptedKey, data)
 		if err != nil {
-			note.Logger.Debug("Error encrypting note data - ", err)
+			note.Logger.Warn("Error encrypting note data - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorEncrypt)
 			return code
 		}
@@ -164,7 +164,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 		// finally, save it
 		err = bucket.Put(note.ID.Bytes(), encryptedData)
 		if err != nil {
-			note.Logger.Debug("Error writing note - ", err)
+			note.Logger.Warn("Error writing note - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorWriteBucket)
 			return code
 		}
@@ -175,7 +175,7 @@ func (note *Note) Save(passphraseKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		note.Logger.Debug("Error saving note - err")
+		note.Logger.Warn("Error saving note - err")
 		code := codes.New(codes.ScopeNote, codes.ErrorSave)
 		return code
 	}
@@ -194,7 +194,7 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 	c := crypto.New(note.Logger)
 	noteKey, err := c.Open(passphraseKey, noteDBHandle.EncryptedKey)
 	if err != nil {
-		note.Logger.Debug("Error opening note key - ", err)
+		note.Logger.Warn("Error opening note key - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
 		return notes, code
 	}
@@ -203,7 +203,7 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
-			note.Logger.Debug("note bucket does not exist")
+			note.Logger.Warn("note bucket does not exist")
 			code := codes.New(codes.ScopeNote, codes.ErrorBucketMissing)
 			return code
 		}
@@ -219,14 +219,14 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 			// decrypt value
 			decryptedData, err := c.Open(noteKey, value)
 			if err != nil {
-				note.Logger.Debug("Error decrypting note data - ", err)
+				note.Logger.Warn("Error decrypting note data - ", err)
 				code := codes.New(codes.ScopeNote, codes.ErrorDecrypt)
 				return code
 			}
 
 			err = json.Unmarshal(decryptedData, newNote)
 			if err != nil {
-				note.Logger.Debug("Error decoding note json - ", err)
+				note.Logger.Warn("Error decoding note json - ", err)
 				code := codes.New(codes.ScopeNote, codes.ErrorDecode)
 				return code
 			}
@@ -240,7 +240,7 @@ func (note *Note) LoadAll(passphraseKey []byte) ([]*Note, error) {
 		if codes.IsInternalError(err) {
 			return nil, err
 		}
-		note.Logger.Debug("Error loading all notes - ", err)
+		note.Logger.Warn("Error loading all notes - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorLoadAll)
 		return nil, code
 	}
@@ -257,7 +257,7 @@ func (note *Note) Load(passphraseKey []byte) error {
 	c := crypto.New(note.Logger)
 	noteKey, err := c.Open(passphraseKey, noteDBHandle.EncryptedKey)
 	if err != nil {
-		note.Logger.Debug("Error opening note key - ", err)
+		note.Logger.Warn("Error opening note key - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorOpenKey)
 		return code
 	}
@@ -266,7 +266,7 @@ func (note *Note) Load(passphraseKey []byte) error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
-			note.Logger.Debug("note bucket does not exist")
+			note.Logger.Warn("note bucket does not exist")
 			code := codes.New(codes.ScopeNote, codes.ErrorBucketMissing)
 			return code
 		}
@@ -275,7 +275,7 @@ func (note *Note) Load(passphraseKey []byte) error {
 
 		key, value := cursor.Seek(note.ID.Bytes())
 		if key == nil {
-			note.Logger.Debug("Error loading note")
+			note.Logger.Warn("Error loading note")
 			code := codes.New(codes.ScopeNote, codes.ErrorLoad)
 			return code
 		}
@@ -283,14 +283,14 @@ func (note *Note) Load(passphraseKey []byte) error {
 		// decrypt value
 		decryptedData, err := c.Open(noteKey, value)
 		if err != nil {
-			note.Logger.Debug("Error decrypting note data - ", err)
+			note.Logger.Warn("Error decrypting note data - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorDecrypt)
 			return code
 		}
 
 		err = json.Unmarshal(decryptedData, note)
 		if err != nil {
-			note.Logger.Debug("Error decoding note json - ", err)
+			note.Logger.Warn("Error decoding note json - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorDecode)
 			return code
 		}
@@ -301,7 +301,7 @@ func (note *Note) Load(passphraseKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		note.Logger.Debug("Error loading note - ", err)
+		note.Logger.Warn("Error loading note - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorLoad)
 		return code
 	}
@@ -318,14 +318,14 @@ func (note *Note) Delete(passphraseKey []byte) error {
 	err = noteDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("notes"))
 		if bucket == nil {
-			note.Logger.Debug("note bucket does not exist")
+			note.Logger.Warn("note bucket does not exist")
 			code := codes.New(codes.ScopeNote, codes.ErrorBucketMissing)
 			return code
 		}
 
 		err := bucket.Delete(note.ID.Bytes())
 		if err != nil {
-			note.Logger.Debug("Error deleting note - ", err)
+			note.Logger.Warn("Error deleting note - ", err)
 			code := codes.New(codes.ScopeNote, codes.ErrorDelete)
 			return code
 		}
@@ -337,7 +337,7 @@ func (note *Note) Delete(passphraseKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		note.Logger.Debug("Error deleting note - ", err)
+		note.Logger.Warn("Error deleting note - ", err)
 		code := codes.New(codes.ScopeNote, codes.ErrorDelete)
 		return code
 	}

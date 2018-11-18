@@ -26,7 +26,7 @@ func (rpc *Server) VerifyRequest(message []byte, sig []byte) bool {
 	copy(signature[:], sig)
 	ok := ed25519.Verify(rpc.VerifyPublicKey, message, &signature)
 	if !ok {
-		rpc.Logger.Debug("Request payload signature could not be verified. key [", rpc.VerifyPublicKey[:], "] message [", message, "] signature")
+		rpc.Logger.Warn("Request payload signature could not be verified. key [", rpc.VerifyPublicKey[:], "] message [", message, "] signature")
 		return false
 	}
 	return true

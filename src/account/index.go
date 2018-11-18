@@ -6,8 +6,8 @@ import (
 	"../codes"
 	"../crypto"
 	"../db"
-	"github.com/sirupsen/logrus"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"go.etcd.io/bbolt"
 )
 
@@ -71,7 +71,7 @@ func (index *Index) Save(account *Account) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("account_index"))
 		if err != nil {
-			index.Logger.Debug("Error creating account index bucket - ", err)
+			index.Logger.Warn("Error creating account index bucket - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorCreateBucket)
 			return code
 		}
@@ -79,13 +79,13 @@ func (index *Index) Save(account *Account) error {
 		c := crypto.New(index.Logger)
 		encryptedName, err := c.DeriveSaltedKey([]byte(account.Name))
 		if err != nil {
-			index.Logger.Debug("Error creating account index key - ", err)
+			index.Logger.Warn("Error creating account index key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorDeriveKey)
 			return code
 		}
 		err = bucket.Put(encryptedName, account.ID.Bytes())
 		if err != nil {
-			index.Logger.Debug("Error saving account index - ", err)
+			index.Logger.Warn("Error saving account index - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorWriteBucket)
 			return code
 		}
@@ -96,7 +96,7 @@ func (index *Index) Save(account *Account) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		index.Logger.Debug("Error saving account - err")
+		index.Logger.Warn("Error saving account - err")
 		code := codes.New(codes.ScopeAccount, codes.ErrorSave)
 		return code
 	}
@@ -121,7 +121,7 @@ func (index *Index) Lookup(account *Account) error {
 		bucket := tx.Bucket([]byte("account_index"))
 		// If bucket doesn't exist, no accounts have been created yet
 		if bucket == nil {
-			index.Logger.Debug("account index bucket does not exist")
+			index.Logger.Warn("account index bucket does not exist")
 			return nil
 		}
 		// we don't expect many accounts to exist in the db (typically just one), so we iterate through them all
@@ -133,7 +133,7 @@ func (index *Index) Lookup(account *Account) error {
 			// create a new key using the extracted salt and the unencrypted name we're searching for
 			checkName, err := c.DeriveKey([]byte(account.Name), salt[:])
 			if err != nil {
-				index.Logger.Debug("Error deriving account index key - ", err)
+				index.Logger.Warn("Error deriving account index key - ", err)
 				code := codes.New(codes.ScopeAccount, codes.ErrorDeriveKey)
 				return code
 			}
@@ -141,7 +141,7 @@ func (index *Index) Lookup(account *Account) error {
 			if subtle.ConstantTimeCompare(encryptedName[:], checkName[:]) == 1 {
 				account.ID, err = uuid.FromBytes(value)
 				if err != nil {
-					index.Logger.Debug("Error converting account index uuid - ", err)
+					index.Logger.Warn("Error converting account index uuid - ", err)
 					code := codes.New(codes.ScopeAccount, codes.ErrorConvertID)
 					return code
 				}
@@ -154,13 +154,13 @@ func (index *Index) Lookup(account *Account) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		index.Logger.Debug("Error looking up account index - ", err)
+		index.Logger.Warn("Error looking up account index - ", err)
 		code := codes.New(codes.ScopeAccount, codes.ErrorLookup)
 		return code
 	}
 	if account.ID == uuid.Nil {
 		account.ID = originalID
-		index.Logger.Debug("account lookup - no account found for [", account.Name, "]")
+		index.Logger.Warn("account lookup - no account found for [", account.Name, "]")
 		code := codes.New(codes.ScopeAccount, codes.ErrorLookup)
 		return code
 	}

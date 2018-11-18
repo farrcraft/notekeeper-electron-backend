@@ -104,7 +104,7 @@ func (index *Index) Lookup(user *User) error {
 			// create a new key using the extracted salt and the unencrypted email we're searching for
 			checkEmail, err := c.DeriveKey([]byte(user.Profile.Email), salt[:])
 			if err != nil {
-				index.Logger.Debug("Error deriving user index key - ", err)
+				index.Logger.Warn("Error deriving user index key - ", err)
 				code := codes.New(codes.ScopeUser, codes.ErrorDeriveKey)
 				return code
 			}
@@ -112,7 +112,7 @@ func (index *Index) Lookup(user *User) error {
 			if subtle.ConstantTimeCompare(encryptedEmail[:], checkEmail[:]) == 1 {
 				user.ID, err = uuid.FromBytes(value)
 				if err != nil {
-					index.Logger.Debug("Error converting email index uuid - ", err)
+					index.Logger.Warn("Error converting email index uuid - ", err)
 					code := codes.New(codes.ScopeUser, codes.ErrorConvertID)
 					return code
 				}

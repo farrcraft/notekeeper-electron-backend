@@ -47,7 +47,7 @@ func SaveUIState(server *rpc.Server, message []byte) (proto.Message, error) {
 	request := messages.SaveUIStateRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling save ui state request - ", err)
+		server.Logger.Warn("Error unmarshaling save ui state request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}

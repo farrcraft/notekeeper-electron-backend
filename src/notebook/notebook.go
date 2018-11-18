@@ -106,7 +106,7 @@ func (notebook *Notebook) Save(encryptionKey []byte) error {
 		// get bucket, creating it if needed
 		bucket, err := tx.CreateBucketIfNotExists([]byte("notebooks"))
 		if err != nil {
-			notebook.Logger.Debug("Error creating notebook bucket - ", err)
+			notebook.Logger.Warn("Error creating notebook bucket - ", err)
 			code := codes.New(codes.ScopeNotebook, codes.ErrorCreateBucket)
 			return code
 		}
@@ -114,7 +114,7 @@ func (notebook *Notebook) Save(encryptionKey []byte) error {
 		// serialize notebook data
 		data, err := json.Marshal(notebook)
 		if err != nil {
-			notebook.Logger.Debug("Error marshaling notebook - ", err)
+			notebook.Logger.Warn("Error marshaling notebook - ", err)
 			code := codes.New(codes.ScopeNotebook, codes.ErrorMarshal)
 			return code
 		}
@@ -123,7 +123,7 @@ func (notebook *Notebook) Save(encryptionKey []byte) error {
 		c := crypto.New(notebook.Logger)
 		encryptedData, err := c.Seal(encryptionKey, data)
 		if err != nil {
-			notebook.Logger.Debug("Error encrypting notebook data - ", err)
+			notebook.Logger.Warn("Error encrypting notebook data - ", err)
 			code := codes.New(codes.ScopeNotebook, codes.ErrorEncrypt)
 			return code
 		}
@@ -131,7 +131,7 @@ func (notebook *Notebook) Save(encryptionKey []byte) error {
 		// finally, save it
 		err = bucket.Put(notebook.ID.Bytes(), encryptedData)
 		if err != nil {
-			notebook.Logger.Debug("Error writing notebook - ", err)
+			notebook.Logger.Warn("Error writing notebook - ", err)
 			code := codes.New(codes.ScopeNotebook, codes.ErrorWriteBucket)
 			return code
 		}
@@ -142,7 +142,7 @@ func (notebook *Notebook) Save(encryptionKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		notebook.Logger.Debug("Error saving notebook - err")
+		notebook.Logger.Warn("Error saving notebook - err")
 		code := codes.New(codes.ScopeNotebook, codes.ErrorSave)
 		return code
 	}
@@ -161,7 +161,7 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 	c := crypto.New(notebook.Logger)
 	notebookKey, err := c.Open(passphraseKey, notebookDBHandle.EncryptedKey)
 	if err != nil {
-		notebook.Logger.Debug("Error opening notebook key - ", err)
+		notebook.Logger.Warn("Error opening notebook key - ", err)
 		code := codes.New(codes.ScopeNotebook, codes.ErrorOpenKey)
 		return notebooks, code
 	}
@@ -170,7 +170,7 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("notebooks"))
 		if bucket == nil {
-			notebook.Logger.Debug("notebook bucket does not exist")
+			notebook.Logger.Warn("notebook bucket does not exist")
 			code := codes.New(codes.ScopeNotebook, codes.ErrorBucketMissing)
 			return code
 		}
@@ -186,14 +186,14 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 			// decrypt value
 			decryptedData, err := c.Open(notebookKey, value)
 			if err != nil {
-				notebook.Logger.Debug("Error decrypting notebook data - ", err)
+				notebook.Logger.Warn("Error decrypting notebook data - ", err)
 				code := codes.New(codes.ScopeNotebook, codes.ErrorDecrypt)
 				return code
 			}
 
 			err = json.Unmarshal(decryptedData, newNotebook)
 			if err != nil {
-				notebook.Logger.Debug("Error decoding notebook json - ", err)
+				notebook.Logger.Warn("Error decoding notebook json - ", err)
 				code := codes.New(codes.ScopeNotebook, codes.ErrorDecode)
 				return code
 			}
@@ -207,7 +207,7 @@ func (notebook *Notebook) LoadAll(passphraseKey []byte) ([]*Notebook, error) {
 		if codes.IsInternalError(err) {
 			return notebooks, err
 		}
-		notebook.Logger.Debug("Error loading all notebooks - ", err)
+		notebook.Logger.Warn("Error loading all notebooks - ", err)
 		code := codes.New(codes.ScopeNotebook, codes.ErrorLoadAll)
 		return nil, code
 	}
@@ -224,14 +224,14 @@ func (notebook *Notebook) Delete(passphraseKey []byte) error {
 	err = notebookDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket := tx.Bucket([]byte("notebooks"))
 		if bucket == nil {
-			notebook.Logger.Debug("notebook bucket does not exist")
+			notebook.Logger.Warn("notebook bucket does not exist")
 			code := codes.New(codes.ScopeNotebook, codes.ErrorBucketMissing)
 			return code
 		}
 
 		err := bucket.Delete(notebook.ID.Bytes())
 		if err != nil {
-			notebook.Logger.Debug("Error deleting notebook - ", err)
+			notebook.Logger.Warn("Error deleting notebook - ", err)
 			code := codes.New(codes.ScopeNotebook, codes.ErrorDelete)
 			return code
 		}
@@ -243,7 +243,7 @@ func (notebook *Notebook) Delete(passphraseKey []byte) error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		notebook.Logger.Debug("Error deleting notebook - ", err)
+		notebook.Logger.Warn("Error deleting notebook - ", err)
 		code := codes.New(codes.ScopeNotebook, codes.ErrorDelete)
 		return code
 	}

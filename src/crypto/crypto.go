@@ -47,7 +47,7 @@ func (c *Context) RandBytes(size int) ([]byte, error) {
 	r := make([]byte, size)
 	_, err := rand.Read(r)
 	if err != nil {
-		c.Logger.Debug("Could not read random bytes - ", err)
+		c.Logger.Warn("Could not read random bytes - ", err)
 		code := codes.New(codes.ScopeCrypto, codes.ErrorCrypto)
 		return r, code
 	}
@@ -59,7 +59,7 @@ func (c *Context) GenerateKey() (*[KeySize]byte, error) {
 	key := new([KeySize]byte)
 	_, err := io.ReadFull(rand.Reader, key[:])
 	if err != nil {
-		c.Logger.Debug("Could not read random key bytes - ", err)
+		c.Logger.Warn("Could not read random key bytes - ", err)
 		code := codes.New(codes.ScopeCrypto, codes.ErrorCrypto)
 		return nil, code
 	}
@@ -72,7 +72,7 @@ func (c *Context) GenerateNonce() (*[NonceSize]byte, error) {
 	nonce := new([NonceSize]byte)
 	_, err := io.ReadFull(rand.Reader, nonce[:])
 	if err != nil {
-		c.Logger.Debug("Could not read random nonce bytes - ", err)
+		c.Logger.Warn("Could not read random nonce bytes - ", err)
 		code := codes.New(codes.ScopeCrypto, codes.ErrorCrypto)
 		return nil, code
 	}
@@ -100,7 +100,7 @@ func (c *Context) Encrypt(key *[KeySize]byte, message []byte) ([]byte, error) {
 // decrypt with NaCl's secretbox.
 func (c *Context) Decrypt(key *[KeySize]byte, message []byte) ([]byte, error) {
 	if len(message) < (NonceSize + secretbox.Overhead) {
-		c.Logger.Debug("Message to short to decrypt")
+		c.Logger.Warn("Message to short to decrypt")
 		code := codes.New(codes.ScopeCrypto, codes.ErrorCrypto)
 		return nil, code
 	}
@@ -124,7 +124,7 @@ func (c *Context) DeriveKey(passphrase []byte, salt []byte) (*[KeySize]byte, err
 	copy(key[:], dk)
 	Zero(dk)
 	if err != nil {
-		c.Logger.Debug("Error deriving key - ", err)
+		c.Logger.Warn("Error deriving key - ", err)
 		code := codes.New(codes.ScopeCrypto, codes.ErrorCrypto)
 		return key, code
 	}
@@ -197,7 +197,7 @@ const overhead = SaltSize + secretbox.Overhead + NonceSize
 // Open recovers a message encrypted using a passphrase.
 func (c *Context) Open(pass, message []byte) ([]byte, error) {
 	if len(message) < overhead {
-		c.Logger.Debug("Message too short to open")
+		c.Logger.Warn("Message too short to open")
 		code := codes.New(codes.ScopeCrypto, codes.ErrorCrypto)
 		return nil, code
 	}

@@ -86,7 +86,7 @@ func (account *Account) CreateEncryptedKey() ([]byte, error) {
 	// our copy of the account key has been sealed with the active user's passphrase key
 	accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.EncryptedKey)
 	if err != nil {
-		account.Logger.Debug("Error opening account key while creating key - ", err)
+		account.Logger.Warn("Error opening account key while creating key - ", err)
 		code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 		return encryptedKey, code
 	}
@@ -109,7 +109,7 @@ func (account *Account) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) (
 	if keyType == TypeAccount {
 		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, account.EncryptedKey)
 		if err != nil {
-			account.Logger.Debug("Error unsealing account key - ", err)
+			account.Logger.Warn("Error unsealing account key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 			return emptyKey, code
 		}
@@ -117,7 +117,7 @@ func (account *Account) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) (
 	} else if keyType == TypeUser {
 		userKey, err := c.Open(account.ActiveUser.PassphraseKey, account.ActiveUser.UserKey)
 		if err != nil {
-			account.Logger.Debug("Error opening user key - ", err)
+			account.Logger.Warn("Error opening user key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 			return emptyKey, code
 		}
@@ -128,7 +128,7 @@ func (account *Account) UnsealKey(keyType EncryptionKeyType, sealedKey []byte) (
 
 	unsealedKey, err := c.Open(unsealKey, sealedKey)
 	if err != nil {
-		account.Logger.Debug("Error opening key - ", err)
+		account.Logger.Warn("Error opening key - ", err)
 		code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 		return emptyKey, code
 	}
@@ -148,13 +148,13 @@ func (account *Account) Save() error {
 	err = accountDBHandle.DB.Update(func(tx *bbolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists([]byte("profile"))
 		if err != nil {
-			account.Logger.Debug("Error creating accounts bucket - ", err)
+			account.Logger.Warn("Error creating accounts bucket - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorCreateBucket)
 			return code
 		}
 		data, err := json.Marshal(account)
 		if err != nil {
-			account.Logger.Debug("Error marshaling account - ", err)
+			account.Logger.Warn("Error marshaling account - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorMarshal)
 			return code
 		}
@@ -163,21 +163,21 @@ func (account *Account) Save() error {
 		c := crypto.New(account.Logger)
 		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, accountDBHandle.EncryptedKey)
 		if err != nil {
-			account.Logger.Debug("Error opening account key - ", err)
+			account.Logger.Warn("Error opening account key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 			return code
 		}
 		encryptedData, err := c.Seal(accountKey, data)
 		crypto.Zero(accountKey)
 		if err != nil {
-			account.Logger.Debug("Error encrypting account content - ", err)
+			account.Logger.Warn("Error encrypting account content - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorEncrypt)
 			return code
 		}
 
 		err = bucket.Put(account.ID.Bytes(), encryptedData)
 		if err != nil {
-			account.Logger.Debug("Error writing to account bucket - ", err)
+			account.Logger.Warn("Error writing to account bucket - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorWriteBucket)
 			return code
 		}
@@ -188,7 +188,7 @@ func (account *Account) Save() error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		account.Logger.Debug("Error saving account - ", err)
+		account.Logger.Warn("Error saving account - ", err)
 		code := codes.New(codes.ScopeAccount, codes.ErrorSave)
 		return code
 	}
@@ -209,14 +209,14 @@ func (account *Account) Load() error {
 		// Assume bucket exists and has keys
 		bucket := tx.Bucket([]byte("profile"))
 		if bucket == nil {
-			account.Logger.Debug("account bucket does not exist")
+			account.Logger.Warn("account bucket does not exist")
 			code := codes.New(codes.ScopeAccount, codes.ErrorBucketMissing)
 			return code
 		}
 		cursor := bucket.Cursor()
 		key, value := cursor.Seek(account.ID.Bytes())
 		if key == nil {
-			account.Logger.Debug("Error loading account")
+			account.Logger.Warn("Error loading account")
 			code := codes.New(codes.ScopeAccount, codes.ErrorLoad)
 			return code
 		}
@@ -226,7 +226,7 @@ func (account *Account) Load() error {
 		// EncryptedKey is the same as account.ActiveUser.AccountKey
 		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, handle.EncryptedKey)
 		if err != nil {
-			account.Logger.Debug("Error opening account key - ", err)
+			account.Logger.Warn("Error opening account key - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorOpenKey)
 			return code
 		}
@@ -234,14 +234,14 @@ func (account *Account) Load() error {
 		// decrypt value
 		decryptedData, err := c.Open(accountKey, value)
 		if err != nil {
-			account.Logger.Debug("Error decrypting account data - ", err)
+			account.Logger.Warn("Error decrypting account data - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorDecrypt)
 			return code
 		}
 
 		err = json.Unmarshal(decryptedData, account)
 		if err != nil {
-			account.Logger.Debug("Error decoding account json - ", err)
+			account.Logger.Warn("Error decoding account json - ", err)
 			code := codes.New(codes.ScopeAccount, codes.ErrorDecode)
 			return code
 		}
@@ -252,7 +252,7 @@ func (account *Account) Load() error {
 		if codes.IsInternalError(err) {
 			return err
 		}
-		account.Logger.Debug("Error loading account - ", err)
+		account.Logger.Warn("Error loading account - ", err)
 		code := codes.New(codes.ScopeAccount, codes.ErrorLoad)
 		return code
 	}

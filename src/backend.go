@@ -67,7 +67,7 @@ func (backend *Backend) Run() {
 		case msg := <-backend.Status:
 			fmt.Println(msg)
 		case ok := <-backend.Shutdown:
-			backend.Logger.Debug("Shutting down service...")
+			backend.Logger.Info("Shutting down service...")
 			backend.RPC.Stop()
 			if !ok {
 				os.Exit(1)

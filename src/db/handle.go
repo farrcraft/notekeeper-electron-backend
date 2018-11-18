@@ -22,7 +22,7 @@ func (handle *Handle) Open() error {
 	var err error
 	handle.DB, err = bbolt.Open(handle.Info.Filename, 0600, &bbolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		handle.Logger.Debug("Error opening DB type [", handle.Info.Type, "] file [", handle.Info.Filename, "] - ", err)
+		handle.Logger.Warn("Error opening DB type [", handle.Info.Type, "] file [", handle.Info.Filename, "] - ", err)
 		scope := dbTypeToErrorCode(handle.Info.Type)
 		code := codes.New(scope, codes.ErrorDbOpen)
 		return code
@@ -53,7 +53,7 @@ func (handle *Handle) Close() error {
 	if handle.DB != nil {
 		err := handle.DB.Close()
 		if err != nil {
-			handle.Logger.Debug("Error closing DB type [", handle.Info.Type, "] file [", handle.Info.Filename, "] - ", err)
+			handle.Logger.Warn("Error closing DB type [", handle.Info.Type, "] file [", handle.Info.Filename, "] - ", err)
 			scope := dbTypeToErrorCode(handle.Info.Type)
 			code := codes.New(scope, codes.ErrorDbClose)
 			return code

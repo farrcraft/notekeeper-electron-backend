@@ -68,7 +68,7 @@ func (rpc *Server) VerifyHeaders(req *http.Request) *RequestHeader {
 
 	header.Method = req.Header.Get("NoteKeeper-Request-Method")
 	if header.Method == "" {
-		rpc.Logger.Debug("Missing request method")
+		rpc.Logger.Warn("Missing request method")
 		return nil
 	}
 
@@ -79,31 +79,31 @@ func (rpc *Server) VerifyHeaders(req *http.Request) *RequestHeader {
 	// base64 encoded signature of the request body
 	signature := req.Header.Get("NoteKeeper-Message-Signature")
 	if signature == "" {
-		rpc.Logger.Debug("Missing request signature")
+		rpc.Logger.Warn("Missing request signature")
 		return nil
 	}
 	var err error
 	header.Signature, err = base64.StdEncoding.DecodeString(signature)
 	if err != nil {
-		rpc.Logger.Debug("Error decoding request signature - ", err)
+		rpc.Logger.Warn("Error decoding request signature - ", err)
 		return nil
 	}
 
 	seq := req.Header.Get("NoteKeeper-Message-Sequence")
 	if seq == "" {
-		rpc.Logger.Debug("Missing request sequence")
+		rpc.Logger.Warn("Missing request sequence")
 		return nil
 	}
 	parsedSeq, err := strconv.ParseInt(seq, 10, 32)
 	if err != nil {
-		rpc.Logger.Debug("Error decoding request sequence - ", err)
+		rpc.Logger.Warn("Error decoding request sequence - ", err)
 		return nil
 	}
 	header.Sequence = int32(parsedSeq)
 
 	rpc.RecvCounter++
 	if header.Method != "KeyExchange" && header.Sequence != rpc.RecvCounter {
-		rpc.Logger.Debug("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", header.Sequence, "]")
+		rpc.Logger.Warn("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", header.Sequence, "]")
 		return nil
 	}
 
@@ -116,13 +116,13 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 	// we only accept POST requests
 	if req.Method != "POST" {
-		rpc.Logger.Debug("Unexpected request method - ", req.Method)
+		rpc.Logger.Warn("Unexpected request method - ", req.Method)
 		return
 	}
 
 	// we accept only one URL path of "/rpc"
 	if req.URL.Path != "/rpc" {
-		rpc.Logger.Debug("Unexpected request path - ", req.URL.Path)
+		rpc.Logger.Warn("Unexpected request path - ", req.URL.Path)
 		return
 	}
 
@@ -133,7 +133,7 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		rpc.Logger.Debug("Error reading request body - ", err)
+		rpc.Logger.Warn("Error reading request body - ", err)
 		return
 	}
 
@@ -142,14 +142,14 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		_, err = resp.Write([]byte("OK"))
 		rpc.Logger.Debug("ready!")
 		if err != nil {
-			rpc.Logger.Debug("Error writing response - ", err)
+			rpc.Logger.Warn("Error writing response - ", err)
 		}
 		return
 	}
 
 	handler := rpc.FindHandler(header.Method)
 	if handler == nil {
-		rpc.Logger.Debug("Could not find handler for method - ", header.Method)
+		rpc.Logger.Warn("Could not find handler for method - ", header.Method)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	if header.Method != "KeyExchange" {
 		ok := rpc.VerifyRequest(body, header.Signature)
 		if !ok {
-			rpc.Logger.Debug("Message Verification failed")
+			rpc.Logger.Warn("Message Verification failed")
 			return
 		}
 	}
@@ -171,14 +171,14 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	if header.Method == "KeyExchange" {
 		ok := rpc.VerifyRequest(body, header.Signature)
 		if !ok {
-			rpc.Logger.Debug("Message Verification failed")
+			rpc.Logger.Warn("Message Verification failed")
 			return
 		}
 	}
 
 	responseData, err := proto.Marshal(handlerResponse)
 	if err != nil {
-		rpc.Logger.Debug("Error marshaling response - ", err)
+		rpc.Logger.Warn("Error marshaling response - ", err)
 		return
 	}
 	encodedData := base64.StdEncoding.EncodeToString(responseData)
@@ -195,7 +195,7 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	// send response
 	_, err = resp.Write([]byte(encodedData))
 	if err != nil {
-		rpc.Logger.Debug("Error writing response - ", err)
+		rpc.Logger.Warn("Error writing response - ", err)
 	}
 }
 
@@ -219,13 +219,13 @@ func (rpc *Server) Start(port string) bool {
 	var err error
 	rpc.SignPublicKey, rpc.SignPrivateKey, err = ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		rpc.Logger.Debug("Error generating signing keys - ", err)
+		rpc.Logger.Warn("Error generating signing keys - ", err)
 		return false
 	}
 
 	conn, err := net.Listen("tcp", port)
 	if err != nil {
-		rpc.Logger.Debug("Listen error - ", err)
+		rpc.Logger.Warn("Listen error - ", err)
 		return false
 	}
 	tlsConfig := &tls.Config{

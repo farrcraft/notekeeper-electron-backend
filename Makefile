@@ -9,8 +9,11 @@ CLEAN_VENDOR_DIRS := $(filter-out vendor/src vendor/manifest,$(VENDOR_DIRS))
 vendor-deps:
 	$(foreach dir,$(CLEAN_VENDOR_DIRS),cp -r $(dir) vendor/src/;)
 
-test:
+test: clean-test-db
 	cd src; GOPATH=`realpath $$(pwd)/../vendor` go test ./... -v -race
+
+clean-test-db:
+	rm -f src/account/*.db src/user/*.db
 
 coverage-dep:
 	go get -u github.com/wadey/gocovmerge

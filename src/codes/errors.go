@@ -71,6 +71,7 @@ const (
 	ErrorLoadAll
 	ErrorDelete
 	ErrorCreate
+	ErrorMissingUser
 )
 
 // String converts error code to a string
@@ -212,6 +213,8 @@ func defaultMessageFromCode(code Code) string {
 		msg = "error deleting"
 	case ErrorCreate:
 		msg = "error creating"
+	case ErrorMissingUser:
+		msg = "error missing user"
 	}
 
 	return msg

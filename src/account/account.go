@@ -223,6 +223,11 @@ func (account *Account) Load() error {
 
 		// account data is encrypted with the account key and not the user key
 		c := crypto.New(account.Logger)
+		if account.ActiveUser == nil {
+			account.Logger.Warn("Error missing active user")
+			code := codes.New(codes.ScopeAccount, codes.ErrorMissingUser)
+			return code
+		}
 		// EncryptedKey is the same as account.ActiveUser.AccountKey
 		accountKey, err := c.Open(account.ActiveUser.PassphraseKey, handle.EncryptedKey)
 		if err != nil {

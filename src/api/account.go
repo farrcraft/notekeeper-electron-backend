@@ -48,7 +48,9 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 		return newAccount, err
 	}
 
-	// [FIXME] - save user mapping in user index in account db
+	// save user mapping in user index in account db
+	userIndex := user.NewIndex(newAccount.ID, api.DBRegistry, api.Logger)
+	userIndex.Save(newUser, newUser.PassphraseKey)
 
 	// save user
 	err = newUser.Save()
@@ -87,6 +89,7 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 }
 
 // CreateAccountDefaults creates default objects and settings for an account
+// This includes the default built-in shelves and notebooks and trash destinations
 func (api *API) CreateAccountDefaults(acct *account.Account, currentUser *user.User) error {
 	// Create the account-scoped default shelf 'My Shelf'
 	defaultShelfTitle := title.New("My Shelf")

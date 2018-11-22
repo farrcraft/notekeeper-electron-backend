@@ -29,6 +29,7 @@ func GetAccountState(server *rpc.Server, message []byte) (proto.Message, error) 
 		if count > 0 {
 			response.Exists = true
 		}
+		server.Logger.Debug("Account state counted [", count, "] accounts")
 	}
 
 	return response, nil
@@ -44,7 +45,7 @@ func CreateAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 	request := messages.CreateAccountRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling create account request - ", err)
+		server.Logger.Warn("Error unmarshaling create account request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -77,7 +78,7 @@ func SigninAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 	request := messages.SigninAccountRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling signin account request - ", err)
+		server.Logger.Warn("Error unmarshaling signin account request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}
@@ -138,7 +139,7 @@ func UnlockAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 	request := messages.UnlockAccountRequest{}
 	err := proto.Unmarshal(message, &request)
 	if err != nil {
-		server.Logger.Debug("Error unmarshaling unlock account request - ", err)
+		server.Logger.Warn("Error unmarshaling unlock account request - ", err)
 		rpc.SetRPCError(response.Header, codes.ErrorDecode)
 		return response, nil
 	}

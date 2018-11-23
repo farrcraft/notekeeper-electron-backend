@@ -52,6 +52,7 @@ func (registry *Registry) GetHandle(key Key) (*Handle, error) {
 		}
 	}
 
+	registry.Logger.Debug("registry failed to get db handle with key id - ", key.ID)
 	code := codes.New(codes.ScopeDB, codes.ErrorMissingDB)
 	return nil, code
 }
@@ -75,6 +76,8 @@ func (registry *Registry) NewHandle(key Key) (*Handle, error) {
 	if handle.Info.Type == TypeMaster {
 		registry.Master = handle
 	}
+
+	registry.Logger.Debug("registry created new db handle for key id - ", key.ID)
 
 	return handle, nil
 }

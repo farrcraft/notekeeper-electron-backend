@@ -80,6 +80,7 @@ func (user *User) Load(passphrase string) error {
 		Type: db.TypeUser,
 		ID:   user.ID,
 	}
+	user.Logger.Debug("Getting DB handle for user ID - ", userKey.ID)
 	userDBHandle, err := user.DBRegistry.GetHandle(userKey)
 	if err != nil {
 		return err

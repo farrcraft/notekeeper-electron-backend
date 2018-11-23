@@ -50,7 +50,10 @@ func (api *API) CreateAccount(name string, email string, passphrase string) (*ac
 
 	// save user mapping in user index in account db
 	userIndex := user.NewIndex(newAccount.ID, api.DBRegistry, api.Logger)
-	userIndex.Save(newUser, newUser.PassphraseKey)
+	err = userIndex.Save(newUser, newUser.PassphraseKey)
+	if err != nil {
+		return newAccount, err
+	}
 
 	// save user
 	err = newUser.Save()

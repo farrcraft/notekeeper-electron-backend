@@ -16,6 +16,7 @@ var harness struct {
 	logger   *logrus.Logger
 	registry *db.Registry
 	hook     *test.Hook
+	user     *User
 }
 
 func TestMain(m *testing.M) {
@@ -71,10 +72,12 @@ func TestUser(t *testing.T) {
 	}
 
 	testSaveUser(t)
-	testLoadUser(t)
 
+	// can't test loading user until we've saved the user index and done a user lookup on the index
 	testSaveIndex(t)
 	testLookupIndex(t)
+
+	testLoadUser(t)
 
 	teardown(t)
 }
@@ -102,27 +105,65 @@ func testSaveUser(t *testing.T) {
 		t.Error("Expected to create user db - ", err)
 	}
 
+	// create a new account db file for the user index
+	accountDBKey := db.Key{
+		ID:   newUser.AccountID,
+		Type: db.TypeAccount,
+	}
+	accountDBHandle, err := harness.registry.NewHandle(accountDBKey)
+	if err != nil {
+		t.Error("Expected to create account db - ", err)
+	}
+
 	err = newUser.CreateKeys([]byte(userPassphrase))
 	if err != nil {
 		t.Error("Expected to create user keys - ", err)
 	}
 
 	userDBHandle.EncryptedKey = newUser.UserKey
+	accountDBHandle.EncryptedKey = newUser.AccountKey
 
 	err = newUser.Save()
 	if err != nil {
 		t.Error("Expected to save new user - ", err)
 	}
-}
 
-func testLoadUser(t *testing.T) {
-
+	// Keep a copy of this user for additional testing
+	harness.user = newUser
 }
 
 func testSaveIndex(t *testing.T) {
+	index := NewIndex(harness.user.AccountID, harness.registry, harness.logger)
+	err := index.Save(harness.user, harness.user.PassphraseKey)
+	if err != nil {
+		t.Error("Expected to save index - ", err)
+	}
+}
 
+func testLoadUser(t *testing.T) {
+	email := "bob@notekeeper.io"
+	userPassphrase := "password"
+	newUser, err := New(harness.registry, harness.logger, harness.user.AccountID, email)
+	if err != nil {
+		t.Error("Expected to create new user - ", err)
+	}
+
+	// Normally user ID & Salt come from the index lookup() method
+	newUser.ID = harness.user.ID
+	newUser.Salt = harness.user.Salt
+	err = newUser.Load(userPassphrase)
+	if err != nil {
+		t.Error("Expected to load user - ", err)
+	}
 }
 
 func testLookupIndex(t *testing.T) {
+	email := "bob@notekeeper.io"
+	newUser, err := New(harness.registry, harness.logger, harness.user.AccountID, email)
 
+	index := NewIndex(harness.user.AccountID, harness.registry, harness.logger)
+	err = index.Lookup(newUser)
+	if err != nil {
+		t.Error("Expected to lookup user in index - ", err)
+	}
 }

@@ -179,16 +179,7 @@ func testSigninAccount(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to lookup account in index - ", err)
 	}
-	/*
-		accountDBKey := db.Key{
-			ID:   newAccount.ID,
-			Type: db.TypeAccount,
-		}
-		accountDBHandle, err := harness.registry.GetHandle(accountDBKey)
-		if err != nil {
-			t.Error("Expected to open account db - ", err)
-		}
-	*/
+
 	// authenticate the user
 	userEmail := "bob@notekeeper.io"
 	userPassphrase := "supersecret"
@@ -203,17 +194,7 @@ func testSigninAccount(t *testing.T) {
 	if err != nil {
 		t.Error("Expected to lookup user in index - ", err)
 	}
-	/*
-		// load the user from the user db
-		userDBKey := db.Key{
-			ID:   newUser.ID,
-			Type: db.TypeUser,
-		}
-		_, err = harness.registry.GetHandle(userDBKey)
-		if err != nil {
-			t.Error("Expected to create user db handle - ", err)
-		}
-	*/
+
 	err = newUser.Load(userPassphrase)
 	if err != nil {
 		t.Error("Expected to load user - ", err)

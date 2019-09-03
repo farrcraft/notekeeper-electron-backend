@@ -7,6 +7,7 @@ import public "title.proto";
 message Tag {
 	string id = 1;
 	Title name = 2;
+	string scope = 3; // account or user
 	string created = 4;
 	string updated = 5;
 }
@@ -14,6 +15,7 @@ message Tag {
 message GetTagsRequest {
 	RequestHeader header = 1;
 	string id = 2; // Either a user id or an account id
+	string scope = 3; // account or user
 }
 
 message GetTagsResponse {
@@ -25,6 +27,7 @@ message CreateTagRequest {
 	RequestHeader header = 1;
 	Title name = 2;
 	string id = 3; // Either a user id or an account id
+	string scope = 4; // account or user
 }
 // Response is an IdResponse
 
@@ -32,6 +35,7 @@ message SaveTagRequest {
 	RequestHeader header = 1;
 	string id = 2;
 	string ownerId = 3; // Either a user id or an account id
+	string scope = 4; // account or user
 	Title name = 5;
 }
 // Response is an EmptyResponse
@@ -40,5 +44,6 @@ message DeleteTagRequest {
 	RequestHeader header = 1;
 	string id = 2;
 	string ownerId = 3; // Either a user id or an account id
+	string scope = 4; // account or user
 }
 // Response is an EmptyResponse

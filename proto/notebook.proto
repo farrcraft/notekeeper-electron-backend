@@ -8,22 +8,24 @@ import public "title.proto";
 message Notebook {
 	string id = 1;
 	Title name = 2;
-	string container = 3; // shelf or collection
-	string ownerId = 4; // account or user id
-	string containerId = 5; // shelf or collection id
-	bool default = 6;
-	bool locked = 7;
-	int32 noteCount = 8;
-	string created = 9;
-	string updated = 10;
+	string scope = 3; // account or user
+	string container = 4; // shelf or collection
+	string ownerId = 5; // account or user id
+	string containerId = 6; // shelf or collection id
+	bool default = 7;
+	bool locked = 8;
+	int32 noteCount = 9;
+	string created = 10;
+	string updated = 11;
 }
 
 message CreateNotebookRequest {
 	RequestHeader header = 1;
 	Title name = 2;
-	string container = 3; // shelf or collection
-	string ownerId = 4; // user or account id
-	string containerId = 5; // shelf or collection id
+	string scope = 3; // account or user
+	string container = 4; // shelf or collection
+	string ownerId = 5; // user or account id
+	string containerId = 6; // shelf or collection id
 }
 // Response is an IdResponse
 
@@ -31,19 +33,21 @@ message SaveNotebookRequest {
 	RequestHeader header = 1;
 	string id = 2;
 	Title name = 3;
-	string container = 4; // shelf or collection
-	string ownerId = 5; // user or account id
-	string containerId = 6; // shelf or collection id
-	bool default = 7;
-	bool locked = 8;
+	string scope = 4;
+	string container = 5; // shelf or collection
+	string ownerId = 6; // user or account id
+	string containerId = 7; // shelf or collection id
+	bool default = 8;
+	bool locked = 9;
 }
 // Response is an EmptyResponse
 
 message GetNotebooksRequest {
 	RequestHeader header = 1;
-	string container = 2; // shelf or collection
-	string ownerId = 3; // user or account id
-	string containerId = 4; // shelf or collection id
+	string scope = 2; // account or user
+	string container = 3; // shelf or collection
+	string ownerId = 4; // user or account id
+	string containerId = 5; // shelf or collection id
 }
 
 message GetNotebooksResponse {
@@ -54,8 +58,9 @@ message GetNotebooksResponse {
 message DeleteNotebookRequest {
 	RequestHeader header = 1;
 	string id = 2;
-	string container = 3; // shelf or collection
-	string ownerId = 4; // user or account id
-	string containerId = 5; // shelf or collection id
+	string scope = 3; // account or user
+	string container = 4; // shelf or collection
+	string ownerId = 5; // user or account id
+	string containerId = 6; // shelf or collection id
 }
 // Response is an EmptyResponse

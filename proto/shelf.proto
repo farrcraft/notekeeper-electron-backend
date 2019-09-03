@@ -8,6 +8,7 @@ import public "title.proto";
 message Shelf {
 	string id = 1;
 	Title name = 2;
+	string scope = 3; // account or user
 	bool default = 4;
 	bool trash = 5;
 	bool locked = 6;
@@ -18,6 +19,7 @@ message Shelf {
 message GetShelvesRequest {
 	RequestHeader header = 1;
 	string id = 2; // Either a user id or an account id
+	string scope = 3; // account or user
 }
 
 message GetShelvesResponse {
@@ -29,6 +31,7 @@ message CreateShelfRequest {
 	RequestHeader header = 1;
 	Title name = 2;
 	string id = 3; // Either a user id or an account id
+	string scope = 4; // account or user
 }
 // Response is an IdResponse
 
@@ -36,6 +39,7 @@ message SaveShelfRequest {
 	RequestHeader header = 1;
 	string id = 2; // id of the shelf
 	string ownerId = 3; // Either a user id or an account id
+	string scope = 4; // account or user
 	Title name = 5;
 	bool locked = 6;
 }
@@ -45,5 +49,6 @@ message DeleteShelfRequest {
 	RequestHeader header = 1;
 	string id = 2; // id of the shelf
 	string ownerId = 3; // Either a user id or an account id
+	string scope = 4; // account or user
 }
 // Response is an EmptyResponse

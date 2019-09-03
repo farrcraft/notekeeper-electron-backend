@@ -13,7 +13,7 @@ import (
 
 const flushPeriod = 15 * time.Second
 
-type RequestInfo struct {
+type RouteInfo struct {
 	Method     string
 	Route      string
 	StatusCode int
@@ -24,11 +24,12 @@ type RequestInfo struct {
 type routeKey struct {
 	Method     string    `json:"method"`
 	Route      string    `json:"route"`
-	StatusCode int       `json:"status_code"`
+	StatusCode int       `json:"statusCode"`
 	Time       time.Time `json:"time"`
 }
 
 type routeStat struct {
+	mu      sync.Mutex
 	Count   int     `json:"count"`
 	Sum     float64 `json:"sum"`
 	Sumsq   float64 `json:"sumsq"`
@@ -36,14 +37,19 @@ type routeStat struct {
 	td      *tdigest.TDigest
 }
 
-func newRouteStat() *routeStat {
-	td, err := tdigest.New(tdigest.Compression(20))
-	if err != nil {
-		panic(err)
+func (s *routeStat) Add(ms float64) error {
+	if s.td == nil {
+		td, err := tdigest.New(tdigest.Compression(20))
+		if err != nil {
+			return err
+		}
+		s.td = td
 	}
-	return &routeStat{
-		td: td,
-	}
+
+	s.Count++
+	s.Sum += ms
+	s.Sumsq += ms * ms
+	return s.td.Add(ms)
 }
 
 type routeKeyStat struct {
@@ -51,16 +57,21 @@ type routeKeyStat struct {
 	*routeStat
 }
 
+type routeFilter func(*RouteInfo) *RouteInfo
+
 // routeStats aggregates information about requests and periodically sends
 // collected data to Airbrake.
 type routeStats struct {
 	opt    *NotifierOptions
 	apiURL string
 
+	flushTimer *time.Timer
+	addWG      *sync.WaitGroup
+
+	filters []routeFilter
+
 	mu sync.Mutex
 	m  map[routeKey]*routeStat
-
-	flushTimer *time.Timer
 }
 
 func newRouteStats(opt *NotifierOptions) *routeStats {
@@ -72,28 +83,38 @@ func newRouteStats(opt *NotifierOptions) *routeStats {
 }
 
 func (s *routeStats) init() {
-	if s.m == nil && s.flushTimer == nil {
+	if s.flushTimer == nil {
+		s.flushTimer = time.AfterFunc(flushPeriod, s.Flush)
+		s.addWG = new(sync.WaitGroup)
 		s.m = make(map[routeKey]*routeStat)
-		s.flushTimer = time.AfterFunc(flushPeriod, s.flush)
 	}
 }
 
-func (s *routeStats) flush() {
+// Flush sends to Airbrake route stats.
+func (s *routeStats) Flush() {
 	s.mu.Lock()
 
+	s.flushTimer = nil
+	addWG := s.addWG
+	s.addWG = nil
 	m := s.m
 	s.m = nil
-	s.flushTimer = nil
 
 	s.mu.Unlock()
 
+	if m == nil {
+		return
+	}
+
+	addWG.Wait()
 	err := s.send(m)
 	if err != nil {
 		logger.Printf("routeStats.send failed: %s", err)
 	}
 }
 
-type routesStatsJSONRequest struct {
+type routesOut struct {
+	Env    string         `json:"environment"`
 	Routes []routeKeyStat `json:"routes"`
 }
 
@@ -117,15 +138,15 @@ func (s *routeStats) send(m map[routeKey]*routeStat) error {
 		})
 	}
 
-	jsonReq := routesStatsJSONRequest{
-		Routes: routes,
-	}
-
 	buf := buffers.Get().(*bytes.Buffer)
 	defer buffers.Put(buf)
-
 	buf.Reset()
-	err := json.NewEncoder(buf).Encode(jsonReq)
+
+	out := routesOut{
+		Env:    s.opt.Environment,
+		Routes: routes,
+	}
+	err := json.NewEncoder(buf).Encode(out)
 	if err != nil {
 		return err
 	}
@@ -162,7 +183,16 @@ func (s *routeStats) send(m map[routeKey]*routeStat) error {
 	return err
 }
 
-func (s *routeStats) NotifyRequest(req *RequestInfo) error {
+// Notify adds new route stats.
+func (s *routeStats) Notify(req *RouteInfo) error {
+	for _, fn := range s.filters {
+		req = fn(req)
+
+		if req == nil {
+			return nil
+		}
+	}
+
 	key := routeKey{
 		Method:     req.Method,
 		Route:      req.Route,
@@ -171,24 +201,27 @@ func (s *routeStats) NotifyRequest(req *RequestInfo) error {
 	}
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.init()
-
 	stat, ok := s.m[key]
 	if !ok {
-		stat = newRouteStat()
+		stat = &routeStat{}
 		s.m[key] = stat
 	}
+	addWG := s.addWG
+	s.addWG.Add(1)
+	s.mu.Unlock()
 
-	stat.Count++
 	ms := float64(req.End.Sub(req.Start)) / float64(time.Millisecond)
-	stat.Sum += ms
-	stat.Sumsq += ms * ms
-	err := stat.td.Add(ms)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	stat.mu.Lock()
+	err := stat.Add(ms)
+	addWG.Done()
+	stat.mu.Unlock()
+
+	return err
+}
+
+// AddFilter adds filter that can change route stat or ignore it by returning nil.
+func (s *routeStats) AddFilter(fn func(*RouteInfo) *RouteInfo) {
+	s.filters = append(s.filters, fn)
 }

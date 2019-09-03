@@ -120,7 +120,8 @@ type Notifier struct {
 	limit    chan struct{}
 	wg       sync.WaitGroup
 
-	routes *routeStats
+	Routes  *routeStats
+	Queries *QueryStats
 
 	rateLimitReset uint32 // atomic
 	_closed        uint32 // atomic
@@ -136,7 +137,8 @@ func NewNotifierWithOptions(opt *NotifierOptions) *Notifier {
 
 		limit: make(chan struct{}, 2*runtime.NumCPU()),
 
-		routes: newRouteStats(opt),
+		Routes:  newRouteStats(opt),
+		Queries: newQueryStats(opt),
 	}
 
 	n.AddFilter(newNotifierFilter(n))
@@ -331,8 +333,4 @@ func (n *Notifier) waitTimeout(timeout time.Duration) error {
 	case <-time.After(timeout):
 		return fmt.Errorf("Wait timed out after %s", timeout)
 	}
-}
-
-func (n *Notifier) NotifyRequest(req *RequestInfo) error {
-	return n.routes.NotifyRequest(req)
 }

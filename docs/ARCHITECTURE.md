@@ -8,7 +8,7 @@ How would searching work for encrypted data?
 Bleve supports pluggable index data stores as long as they're key/value-based.
 A boltdb store already exists. We could just copy that & add the encryption layer.
 
-Shelves can be owned by either an Account a User
+Shelves can be owned by either an Account or a User
 All Users in an Account can access content in Account Shelves
 User Shelves can only be accessed by the User they belong to
 each Account has an Account-level Encryption Key

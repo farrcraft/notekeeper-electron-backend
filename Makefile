@@ -1,19 +1,12 @@
 # default target
 build:
-	cd src; GOPATH=`realpath $$(pwd)/../vendor` go build -tags debug; cp src.exe ../../notekeeper-electron-frontend/app/resources/backend.exe
-
-# copy content of vendor/* into vendor/src/*
-# build can't happen until this is done
-VENDOR_DIRS := $(wildcard vendor/*)
-CLEAN_VENDOR_DIRS := $(filter-out vendor/src vendor/manifest,$(VENDOR_DIRS))
-vendor-deps:
-	$(foreach dir,$(CLEAN_VENDOR_DIRS),cp -r $(dir) vendor/src/;)
+	go build -mod=vendor -tags debug; cp notekeeper-electron-backend.exe ../notekeeper-electron-frontend/app/resources/backend.exe
 
 test: clean-test-db
-	cd src; GOPATH=`realpath $$(pwd)/../vendor` go test ./... -v -race
+	go test ./... -v -race -mod=vendor
 
 clean-test-db:
-	rm -f src/account/*.db src/user/*.db
+	rm -f account/*.db user/*.db
 
 coverage-dep:
 	go get -u github.com/wadey/gocovmerge
@@ -25,13 +18,10 @@ coverage:
 # create a release build
 # The -s ldflag strips symbol table & debug info
 release:
-	cd src; GOPATH=`realpath $$(pwd)/../vendor` go build -ldflags "-s"
-
-gvt:
-	go get -u github.com/FiloSottile/gvt
+	go build -ldflags "-s" -mod=vendor
 
 loc:
-	cd src; find . -name '*.go' -not -path './proto/*' | xargs wc -l
+	find . -name '*.go' -not -path './proto/*' -not -path './vendor/*' | xargs wc -l
 
 # install the protoc golang plugin
 # export GOPATH=C:/code/go
@@ -42,14 +32,14 @@ proto-gen:
 # export PATH=$PATH:/cygdrive/c/code/go/bin 
 # export PATH=$PATH:/c/Go/bin (use this)
 proto:
-	cd src/proto; PATH=$$PATH:C:\\code\\go\\bin ../../../protoc -I . *.proto --go_out=.
+	cd proto; PATH=$$PATH:C:\\code\\go\\bin ../../protoc -I . *.proto --go_out=.
 
 proto-copy:
-	cp src/proto/*.proto ../notekeeper-electron-frontend/app/proto/
+	cp proto/*.proto ../notekeeper-electron-frontend/app/proto/
 
 proto-js:
-	cd ../notekeeper-electron-frontend/app/proto; ../../../protoc -I . rpc.proto --js_out=import_style=commonjs,binary:./
+	cd ../notekeeper-electron-frontend/app/proto; ../../protoc -I . rpc.proto --js_out=import_style=commonjs,binary:./
 
 proto-all: proto proto-copy proto-js
 
-.PHONY: coverage
+.PHONY: coverage proto

@@ -1,6 +1,6 @@
 *.log
-src/src*
+notekeeper-electron-backend.exe
 *.db
 coverage/
 Untitled*.txt
-vendor/src/*
+cover.out

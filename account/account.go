@@ -54,11 +54,7 @@ func (account *Account) IsLocked() bool {
 // New creates a new Account object
 func New(dbRegistry *db.Registry, logger *logrus.Logger, name string) (*Account, error) {
 	now := time.Now()
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+	id := uuid.NewV4()
 
 	account := &Account{
 		ID:         id,

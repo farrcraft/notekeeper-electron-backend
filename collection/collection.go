@@ -42,11 +42,7 @@ type Collection struct {
 // New creates a new collection object
 func New(title *title.Title, scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) (*Collection, error) {
 	now := time.Now()
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+	id := uuid.NewV4()
 
 	collection := &Collection{
 		ID:         id,

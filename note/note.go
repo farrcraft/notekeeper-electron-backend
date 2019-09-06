@@ -86,11 +86,7 @@ type Note struct {
 // New creates a new note object
 func New(title *title.Title, scope Scope, store StoreType, dbRegistry *db.Registry, logger *logrus.Logger) (*Note, error) {
 	now := time.Now()
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+	id := uuid.NewV4()
 
 	note := &Note{
 		ID:            id,

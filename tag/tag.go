@@ -39,11 +39,7 @@ type Tag struct {
 // New creates a new tag object
 func New(title *title.Title, scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) (*Tag, error) {
 	now := time.Now()
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+	id := uuid.NewV4()
 
 	tag := &Tag{
 		ID:         id,

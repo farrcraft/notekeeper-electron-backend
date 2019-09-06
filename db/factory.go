@@ -59,10 +59,7 @@ func (factory *Factory) CreateHandle(key Key) (*Handle, error) {
 		handle.Info.Filename = filepath.Join(factory.DataPath, MasterDbFile)
 	} else {
 		if handle.Info.ID == uuid.Nil {
-			handle.Info.ID, err = uuid.NewV4()
-			if err != nil {
-				return nil, err
-			}
+			handle.Info.ID = uuid.NewV4()
 		}
 		dbFile := fmt.Sprint(handle.Info.ID.String(), ".db")
 		handle.Info.Filename = filepath.Join(factory.DataPath, dbFile)

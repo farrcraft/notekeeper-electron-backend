@@ -45,11 +45,7 @@ type Shelf struct {
 // New creates a new shelf object
 func New(title *title.Title, scope Scope, dbRegistry *db.Registry, logger *logrus.Logger) (*Shelf, error) {
 	now := time.Now()
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+	id := uuid.NewV4()
 
 	shelf := &Shelf{
 		ID:         id,

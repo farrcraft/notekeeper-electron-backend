@@ -62,11 +62,7 @@ type Notebook struct {
 // New creates a new notebook object
 func New(title *title.Title, scope Scope, container ContainerType, dbRegistry *db.Registry, logger *logrus.Logger) (*Notebook, error) {
 	now := time.Now()
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+	id := uuid.NewV4()
 
 	notebook := &Notebook{
 		ID:            id,

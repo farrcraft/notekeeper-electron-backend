@@ -3,57 +3,16 @@ module notekeeper-electron-backend
 go 1.12
 
 require (
-	cloud.google.com/go v0.0.0-20190227233607-7e92b4d51047
-	github.com/BurntSushi/toml v0.3.1
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412
-	github.com/airbrake/gobrake v0.0.0-20190222130054-5c8996a1a57f
-	github.com/astaxie/beego v0.0.0-20190226083140-422e8285b566
-	github.com/caio/go-tdigest v0.0.0-20190222111234-1b379242c93d
-	github.com/campoy/embedmd v0.0.0-20181127031020-97c13d6e4160
-	github.com/client9/misspell v0.0.0-20180309020325-c0b55c823952
-	github.com/codegangsta/cli v0.0.0-20190203184040-693af58b4d51
-	github.com/dustin/go-broadcast v0.0.0-20171205050544-f664265f5a66
-	github.com/gin-contrib/sse v0.0.0-20190301062529-5545eab6dad3
-	github.com/gin-gonic/autotls v0.0.0-20190119125636-0b5f4fc15768
-	github.com/gin-gonic/gin v0.0.0-20190301021747-ccb9e902956d
-	github.com/gobwas/glob v0.0.0-20181002190808-e7a84e9525fe
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/mock v0.0.0-20190116182947-c20582278a82
-	github.com/golang/protobuf v1.3.1
-	github.com/googleapis/gax-go v0.0.0-20190111180537-ddfab93c3fae
-	github.com/jessevdk/go-assets v0.0.0-20160921144138-4f4301a06e15
-	github.com/json-iterator/go v0.0.0-20190208075642-5bc93205020f
-	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
-	github.com/kisielk/gotool v1.0.0
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2
-	github.com/manucorporat/stats v0.0.0-20180402194714-3ba42d56d227
-	github.com/mattn/go-isatty v0.0.6
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
-	github.com/modern-go/reflect2 v1.0.1
-	github.com/pkg/errors v0.0.0-20190227000051-27936f6d90f9
-	github.com/pmezard/go-difflib v0.0.0-20181226105442-5d4384ee4fb2
-	github.com/satori/go.uuid v0.0.0-20181028125025-b2ce2384e17b
-	github.com/sirupsen/logrus v0.0.0-20190227124249-fa3c1df5136d
-	github.com/thinkerou/favicon v0.1.0
-	github.com/ugorji/go v0.0.0-20190204201341-e444a5086c43
-	github.com/urfave/cli v0.0.0-20190203184040-693af58b4d51
-	go.etcd.io/bbolt v1.3.2
-	go4.org v0.0.0-20190218023631-ce4c26f7be8e
-	golang.org/x/crypto v0.0.0-20190228161510-8dd112bcdc25
-	golang.org/x/lint v0.0.0-20190227174305-5b3e6a55c961
-	golang.org/x/net v0.0.0-20190228165749-92fc7df08ae7
-	golang.org/x/oauth2 v0.0.0-20161219192954-314dd2c0bf3e
-	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f
-	golang.org/x/sys v0.0.0-20170303135930-e48874b42435
-	golang.org/x/tools v0.0.0-20181114163030-2f5a1a7a23cc
-	google.golang.org/api v0.0.0-20161214193051-55146ba61254
-	google.golang.org/appengine v0.0.0-20161217034650-08a149cfaee0
-	google.golang.org/genproto v0.0.0-20181109154231-b5d43981345b
-	google.golang.org/grpc v0.0.0-20181114001237-0fccf8bf5972
-	gopkg.in/airbrake/gobrake.v2 v2.0.9
-	gopkg.in/gemnasium/logrus-airbrake-hook.v3 v3.0.2
-	gopkg.in/go-playground/validator.v8 v8.18.2
-	gopkg.in/urfave/cli.v1 v1.19.1
-	gopkg.in/yaml.v2 v2.0.0-20160928153709-a5b47d31c556
-	honnef.co/go/tools v0.0.0-20180920025451-e3ad64cb4ed3
+	github.com/golang/protobuf v1.3.2
+	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/satori/go.uuid v1.2.0
+	github.com/sirupsen/logrus v1.4.2
+	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/stretchr/testify v1.4.0 // indirect
+	github.com/urfave/cli v1.21.0
+	go.etcd.io/bbolt v1.3.3
+	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472
+	golang.org/x/sys v0.0.0-20190904005037-43c01164e931 // indirect
+	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )

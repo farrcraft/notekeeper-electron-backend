@@ -44,11 +44,7 @@ type User struct {
 // New creates a new user object
 func New(dbRegistry *db.Registry, logger *logrus.Logger, accountID uuid.UUID, email string) (*User, error) {
 	now := time.Now()
-
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+	id := uuid.NewV4()
 
 	user := &User{
 		ID:        id,

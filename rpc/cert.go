@@ -68,7 +68,12 @@ func (rpc *Server) createCertificate() bool {
 		return false
 	}
 
-	privKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	// There's an old boringssl bug - https://github.com/grpc/grpc/issues/6722
+	// that causes an error on the frontend:
+	// write EPROTO 581636024:error:1000006b:SSL routines: OPENSSL_internal:BAD_ECC_CERT:../../third_party/boringssl/src/ssl/ssl_cert.cc:721:
+	// The workaround seems to be to use a P-256 curve instead of the 521 or 384 versions we'd otherwise want to use.
+	// privKey, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		rpc.Logger.Warn("Error generating private key - ", err)
 		return false

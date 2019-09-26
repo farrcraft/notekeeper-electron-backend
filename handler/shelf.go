@@ -28,7 +28,7 @@ func strToShelfScope(server *rpc.Server, s string, id uuid.UUID) (shelf.Scope, b
 	return scope, true
 }
 
-func getShelves(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func getShelves(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.GetShelvesResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -80,7 +80,7 @@ func getShelves(server *rpc.Server, message []byte, scope string) (proto.Message
 	return response, nil
 }
 
-func createShelf(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func createShelf(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -131,7 +131,7 @@ func createShelf(server *rpc.Server, message []byte, scope string) (proto.Messag
 }
 
 // save an existing shelf
-func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func saveShelf(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -188,7 +188,7 @@ func saveShelf(server *rpc.Server, message []byte, scope string) (proto.Message,
 	return response, nil
 }
 
-func deleteShelf(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func deleteShelf(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}

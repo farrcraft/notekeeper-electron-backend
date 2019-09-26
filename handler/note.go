@@ -10,7 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func getNotes(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func getNotes(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.GetNotesResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -94,7 +94,7 @@ func getNotes(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	return response, nil
 }
 
-func loadNote(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func loadNote(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.LoadNoteResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -174,7 +174,7 @@ func loadNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	return response, nil
 }
 
-func createNote(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func createNote(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -245,7 +245,7 @@ func createNote(server *rpc.Server, message []byte, scope string) (proto.Message
 	return response, nil
 }
 
-func saveNote(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func saveNote(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -321,7 +321,7 @@ func saveNote(server *rpc.Server, message []byte, scope string) (proto.Message, 
 	return response, nil
 }
 
-func deleteNote(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func deleteNote(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 // GetAccountState returns the accessible state of the account
-func GetAccountState(server *rpc.Server, message []byte) (proto.Message, error) {
+func GetAccountState(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.AccountStateResponse{
 		Header:   rpc.NewResponseHeader(),
 		SignedIn: false,
@@ -36,7 +36,7 @@ func GetAccountState(server *rpc.Server, message []byte) (proto.Message, error) 
 }
 
 // CreateAccount is the RPC method to create a new account
-func CreateAccount(server *rpc.Server, message []byte) (proto.Message, error) {
+func CreateAccount(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.UserIdResponse{
 		Header: rpc.NewResponseHeader(),
 		User:   &messages.UserId{},
@@ -69,7 +69,7 @@ func CreateAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 }
 
 // SigninAccount is the RPC method to sign in to an existing account
-func SigninAccount(server *rpc.Server, message []byte) (proto.Message, error) {
+func SigninAccount(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.UserIdResponse{
 		Header: rpc.NewResponseHeader(),
 		User:   &messages.UserId{},
@@ -100,7 +100,7 @@ func SigninAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 }
 
 // SignoutAccount is the RPC method to sign out from the active account
-func SignoutAccount(server *rpc.Server, message []byte) (proto.Message, error) {
+func SignoutAccount(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -116,7 +116,7 @@ func SignoutAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 }
 
 // LockAccount is the RPC method to lock the active account
-func LockAccount(server *rpc.Server, message []byte) (proto.Message, error) {
+func LockAccount(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -131,7 +131,7 @@ func LockAccount(server *rpc.Server, message []byte) (proto.Message, error) {
 }
 
 // UnlockAccount is the RPC method to unlock the current account
-func UnlockAccount(server *rpc.Server, message []byte) (proto.Message, error) {
+func UnlockAccount(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}

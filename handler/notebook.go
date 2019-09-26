@@ -10,7 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func createNotebook(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func createNotebook(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -82,7 +82,7 @@ func createNotebook(server *rpc.Server, message []byte, scope string) (proto.Mes
 }
 
 // GetNotebooks gets all of the notebooks
-func getNotebooks(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func getNotebooks(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.GetNotebooksResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -166,7 +166,7 @@ func getNotebooks(server *rpc.Server, message []byte, scope string) (proto.Messa
 	return response, nil
 }
 
-func saveNotebook(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func saveNotebook(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -244,7 +244,7 @@ func saveNotebook(server *rpc.Server, message []byte, scope string) (proto.Messa
 	return response, nil
 }
 
-func deleteNotebook(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func deleteNotebook(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}

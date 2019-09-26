@@ -28,7 +28,7 @@ func strToTagScope(server *rpc.Server, s string, id uuid.UUID) (tag.Scope, bool)
 	return scope, true
 }
 
-func getTags(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func getTags(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.GetTagsResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -85,7 +85,7 @@ func getTags(server *rpc.Server, message []byte, scope string) (proto.Message, e
 }
 
 // CreateTag creates a new tag
-func createTag(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func createTag(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -132,7 +132,7 @@ func createTag(server *rpc.Server, message []byte, scope string) (proto.Message,
 	return response, nil
 }
 
-func saveTag(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func saveTag(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -178,7 +178,7 @@ func saveTag(server *rpc.Server, message []byte, scope string) (proto.Message, e
 	return response, nil
 }
 
-func deleteTag(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func deleteTag(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}

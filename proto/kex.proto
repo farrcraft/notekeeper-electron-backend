@@ -15,4 +15,5 @@ message KeyExchangeRequest {
 message KeyExchangeResponse {
 	ResponseHeader header = 1;
 	bytes publicKey = 2;
+	string token = 3;
 }

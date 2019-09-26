@@ -5,11 +5,12 @@ import (
 	messages "notekeeper-electron-backend/proto"
 	"notekeeper-electron-backend/rpc"
 	"notekeeper-electron-backend/uistate"
+
 	"github.com/golang/protobuf/proto"
 )
 
 // OpenMasterDb opens the master database in the requested directory
-func OpenMasterDb(server *rpc.Server, message []byte) (proto.Message, error) {
+func OpenMasterDb(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}

@@ -10,7 +10,7 @@ import (
 )
 
 // LoadUIState returns the the UI state as saved by the master DB
-func LoadUIState(server *rpc.Server, message []byte) (proto.Message, error) {
+func LoadUIState(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.LoadUIStateResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -38,7 +38,7 @@ func LoadUIState(server *rpc.Server, message []byte) (proto.Message, error) {
 }
 
 // SaveUIState saves the current UI state to the master DB
-func SaveUIState(server *rpc.Server, message []byte) (proto.Message, error) {
+func SaveUIState(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}

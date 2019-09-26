@@ -10,7 +10,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-func getCollections(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func getCollections(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.GetCollectionsResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -73,7 +73,7 @@ func getCollections(server *rpc.Server, message []byte, scope string) (proto.Mes
 	return response, nil
 }
 
-func createCollection(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func createCollection(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.IdResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -135,7 +135,7 @@ func createCollection(server *rpc.Server, message []byte, scope string) (proto.M
 	return response, nil
 }
 
-func saveCollection(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func saveCollection(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -195,7 +195,7 @@ func saveCollection(server *rpc.Server, message []byte, scope string) (proto.Mes
 	return response, nil
 }
 
-func deleteCollection(server *rpc.Server, message []byte, scope string) (proto.Message, error) {
+func deleteCollection(server *rpc.Server, message []byte, scope string, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.EmptyResponse{
 		Header: rpc.NewResponseHeader(),
 	}

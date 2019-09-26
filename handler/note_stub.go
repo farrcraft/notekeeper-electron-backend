@@ -7,61 +7,61 @@ import (
 )
 
 // GetUserNotes is the RPC method to get a list of user notes
-func GetUserNotes(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := getNotes(server, message, "user")
+func GetUserNotes(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := getNotes(server, message, "user", context)
 	return response, err
 }
 
 // GetAccountNotes is the RPC method to get a list of account notes
-func GetAccountNotes(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := getNotes(server, message, "account")
+func GetAccountNotes(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := getNotes(server, message, "account", context)
 	return response, err
 }
 
 // LoadUserNote is the RPC method to get a user note
-func LoadUserNote(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := loadNote(server, message, "user")
+func LoadUserNote(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := loadNote(server, message, "user", context)
 	return response, err
 }
 
 // LoadAccountNote is the RPC method to get a account note
-func LoadAccountNote(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := loadNote(server, message, "account")
+func LoadAccountNote(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := loadNote(server, message, "account", context)
 	return response, err
 }
 
 // CreateUserNote is the RPC method to create a new user note
-func CreateUserNote(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := createNote(server, message, "user")
+func CreateUserNote(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := createNote(server, message, "user", context)
 	return response, err
 }
 
 // CreateAccountNote is the RPC method to create a new account note
-func CreateAccountNote(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := createNote(server, message, "account")
+func CreateAccountNote(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := createNote(server, message, "account", context)
 	return response, err
 }
 
 // SaveUserNote is the RPC method to save an existing user note
-func SaveUserNote(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := saveNote(server, message, "user")
+func SaveUserNote(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := saveNote(server, message, "user", context)
 	return response, err
 }
 
 // SaveAccountNote is the RPC method to save an existing account note
-func SaveAccountNote(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := saveNote(server, message, "account")
+func SaveAccountNote(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := saveNote(server, message, "account", context)
 	return response, err
 }
 
 // DeleteUserNote is the RPC method to delete a user note
-func DeleteUserNote(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := deleteNote(server, message, "user")
+func DeleteUserNote(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := deleteNote(server, message, "user", context)
 	return response, err
 }
 
 // DeleteAccountNote is the RPC method to delete a account note
-func DeleteAccountNote(server *rpc.Server, message []byte) (proto.Message, error) {
-	response, err := deleteNote(server, message, "account")
+func DeleteAccountNote(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
+	response, err := deleteNote(server, message, "account", context)
 	return response, err
 }

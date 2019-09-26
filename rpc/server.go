@@ -7,7 +7,6 @@ import (
 	"net"
 	"net/http"
 
-	"crypto/rand"
 	"crypto/tls"
 
 	"strconv"
@@ -15,100 +14,117 @@ import (
 	"notekeeper-electron-backend/account"
 	"notekeeper-electron-backend/db"
 
-	"github.com/agl/ed25519"
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 )
 
 // Handler is an RPC message handler
-type Handler func(*Server, []byte) (proto.Message, error)
+type Handler func(*Server, []byte, *RequestContext) (proto.Message, error)
 
 // RequestHeader contains the custom headers from a request
 type RequestHeader struct {
 	Signature []byte
 	Method    string
 	Sequence  int32
+	Token     string
+}
+
+// RequestContext provides contextual information about a request
+type RequestContext struct {
+	Token  *ClientToken
+	Header *RequestHeader
 }
 
 // Server is a RPC server instance
 type Server struct {
-	Logger          *logrus.Logger
-	DBRegistry      *db.Registry
-	UserState       UserState
-	Account         *account.Account
-	Certificate     tls.Certificate
-	Status          chan string
-	Shutdown        chan bool
-	Handlers        map[string]Handler
-	RecvCounter     int32
-	SendCounter     int32
-	SignPublicKey   *[ed25519.PublicKeySize]byte
-	SignPrivateKey  *[ed25519.PrivateKeySize]byte // Key used for signing responses
-	VerifyPublicKey *[ed25519.PublicKeySize]byte  // Key used for verifying requests
+	Logger      *logrus.Logger
+	DBRegistry  *db.Registry
+	UserState   UserState
+	Account     *account.Account
+	Certificate tls.Certificate
+	Status      chan string
+	Shutdown    chan bool
+	Handlers    map[string]Handler
+	Clients     map[string]*ClientToken
 }
 
 // NewServer creates a new RPCServer instance
 func NewServer(logger *logrus.Logger, Status chan string, Shutdown chan bool) *Server {
 	server := &Server{
-		Logger:      logger,
-		Handlers:    make(map[string]Handler, 0),
-		RecvCounter: 0,
-		SendCounter: 0,
-		UserState:   UserStateSignedOut,
-		Status:      Status,
-		Shutdown:    Shutdown,
-		DBRegistry:  db.NewRegistry(logger),
+		Logger:     logger,
+		Handlers:   make(map[string]Handler, 0),
+		UserState:  UserStateSignedOut,
+		Status:     Status,
+		Shutdown:   Shutdown,
+		Clients:    make(map[string]*ClientToken),
+		DBRegistry: db.NewRegistry(logger),
 	}
 	return server
 }
 
 // VerifyHeaders checks that a request contains the correct headers &
 // extracts their values into a working structure
-func (rpc *Server) VerifyHeaders(req *http.Request) *RequestHeader {
-	header := &RequestHeader{}
+func (rpc *Server) VerifyHeaders(req *http.Request, context *RequestContext) bool {
 
-	header.Method = req.Header.Get("NoteKeeper-Request-Method")
-	if header.Method == "" {
+	context.Header = &RequestHeader{}
+
+	context.Header.Method = req.Header.Get("NoteKeeper-Request-Method")
+	if context.Header.Method == "" {
 		rpc.Logger.Warn("Missing request method")
-		return nil
+		return false
 	}
 
-	if header.Method == "SERVICE-READY" {
-		return header
+	if context.Header.Method == "SERVICE-READY" {
+		return true
+	}
+
+	// Token creation is part of key exchange, so it doesn't exist here yet
+	if context.Header.Method != "KeyExchange" {
+		context.Header.Token = req.Header.Get("NoteKeeper-Client-Token")
+		if context.Header.Token == "" {
+			rpc.Logger.Warn("Missing request client token")
+			return false
+		}
+		var ok bool
+		context.Token, ok = rpc.Clients[context.Header.Token]
+		if !ok {
+			rpc.Logger.Warn("Invalid client token")
+			return false
+		}
 	}
 
 	// base64 encoded signature of the request body
 	signature := req.Header.Get("NoteKeeper-Message-Signature")
 	if signature == "" {
 		rpc.Logger.Warn("Missing request signature")
-		return nil
+		return false
 	}
 	var err error
-	header.Signature, err = base64.StdEncoding.DecodeString(signature)
+	context.Header.Signature, err = base64.StdEncoding.DecodeString(signature)
 	if err != nil {
 		rpc.Logger.Warn("Error decoding request signature - ", err)
-		return nil
+		return false
 	}
 
 	seq := req.Header.Get("NoteKeeper-Message-Sequence")
 	if seq == "" {
 		rpc.Logger.Warn("Missing request sequence")
-		return nil
+		return false
 	}
 	parsedSeq, err := strconv.ParseInt(seq, 10, 32)
 	if err != nil {
 		rpc.Logger.Warn("Error decoding request sequence - ", err)
-		return nil
+		return false
 	}
-	header.Sequence = int32(parsedSeq)
+	context.Header.Sequence = int32(parsedSeq)
 
-	rpc.RecvCounter++
-	if header.Method != "KeyExchange" && header.Sequence != rpc.RecvCounter {
-		rpc.Logger.Warn("Invalid message sequence received. Expected [", rpc.RecvCounter, "] but got [", header.Sequence, "]")
-		return nil
+	context.Token.RecvCounter++
+	if context.Header.Method != "KeyExchange" && context.Header.Sequence != context.Token.RecvCounter {
+		rpc.Logger.Warn("Invalid message sequence received. Expected [", context.Token.RecvCounter, "] but got [", context.Header.Sequence, "]")
+		return false
 	}
 
-	return header
+	return true
 }
 
 // ServeHTTP handles HTTP requests
@@ -127,8 +143,9 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	header := rpc.VerifyHeaders(req)
-	if header == nil {
+	context := &RequestContext{}
+
+	if !rpc.VerifyHeaders(req, context) {
 		return
 	}
 
@@ -138,8 +155,8 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	rpc.Logger.Debug(header.Method)
-	if header.Method == "SERVICE-READY" {
+	rpc.Logger.Debug(context.Header.Method)
+	if context.Header.Method == "SERVICE-READY" {
 		_, err = resp.Write([]byte("OK"))
 		rpc.Logger.Debug("ready!")
 		if err != nil {
@@ -148,29 +165,29 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	handler := rpc.FindHandler(header.Method)
+	handler := rpc.FindHandler(context.Header.Method)
 	if handler == nil {
-		rpc.Logger.Warn("Could not find handler for method - ", header.Method)
+		rpc.Logger.Warn("Could not find handler for method - ", context.Header.Method)
 		return
 	}
 
 	// key exchange requests contain the key needed to do verification
 	// so we need to defer until after the request has been handled
-	if header.Method != "KeyExchange" {
-		ok := rpc.VerifyRequest(body, header.Signature)
+	if context.Header.Method != "KeyExchange" {
+		ok := rpc.VerifyRequest(body, context.Header.Signature, context)
 		if !ok {
 			rpc.Logger.Warn("Message Verification failed")
 			return
 		}
 	}
 
-	handlerResponse, err := handler(rpc, body)
+	handlerResponse, err := handler(rpc, body, context)
 	if err != nil {
 		return
 	}
 
-	if header.Method == "KeyExchange" {
-		ok := rpc.VerifyRequest(body, header.Signature)
+	if context.Header.Method == "KeyExchange" {
+		ok := rpc.VerifyRequest(body, context.Header.Signature, context)
 		if !ok {
 			rpc.Logger.Warn("Message Verification failed")
 			return
@@ -185,13 +202,13 @@ func (rpc *Server) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	encodedData := base64.StdEncoding.EncodeToString(responseData)
 
 	// set response headers
-	responseSignature := rpc.CreateSignature(responseData)
+	responseSignature := rpc.CreateSignature(responseData, context)
 	resp.Header().Set("NoteKeeper-Message-Signature", responseSignature)
 
-	rpc.SendCounter++
-	resp.Header().Set("NoteKeeper-Message-Sequence", strconv.FormatInt(int64(rpc.SendCounter), 10))
+	context.Token.SendCounter++
+	resp.Header().Set("NoteKeeper-Message-Sequence", strconv.FormatInt(int64(context.Token.SendCounter), 10))
 	// repackage request method header so client doesn't need to keep track of it
-	resp.Header().Set("NoteKeeper-Request-Method", header.Method)
+	resp.Header().Set("NoteKeeper-Request-Method", context.Header.Method)
 
 	// send response
 	_, err = resp.Write([]byte(encodedData))
@@ -214,13 +231,6 @@ func (rpc *Server) FindHandler(requestMethod string) Handler {
 func (rpc *Server) Start(port string) bool {
 	ok := rpc.createCertificate()
 	if !ok {
-		return false
-	}
-
-	var err error
-	rpc.SignPublicKey, rpc.SignPrivateKey, err = ed25519.GenerateKey(rand.Reader)
-	if err != nil {
-		rpc.Logger.Warn("Error generating signing keys - ", err)
 		return false
 	}
 

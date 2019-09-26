@@ -10,7 +10,7 @@ import (
 )
 
 // KeyExchange performs a key exchange between client & server
-func KeyExchange(server *rpc.Server, message []byte) (proto.Message, error) {
+func KeyExchange(server *rpc.Server, message []byte, context *rpc.RequestContext) (proto.Message, error) {
 	response := &messages.KeyExchangeResponse{
 		Header: rpc.NewResponseHeader(),
 	}
@@ -23,21 +23,31 @@ func KeyExchange(server *rpc.Server, message []byte) (proto.Message, error) {
 		return response, nil
 	}
 
+	// create a new client token
+	context.Token, err = rpc.NewClientToken(server.Logger)
+	if err != nil {
+		rpc.SetRPCError(response.Header, codes.ErrorCrypto)
+		return response, nil
+	}
 	// [FIXME] - assert request key length matches our target array size
 
 	// client sent its own public key so we can verify requests it sends us later
 	// this is a bit weak sauce wrt security since signature & verification key
 	// are contained in the same message body, but it does give us assurance
 	// that we at least have a functional verification key.
-	server.VerifyPublicKey = new([ed25519.PublicKeySize]byte)
-	copy(server.VerifyPublicKey[:], request.PublicKey)
+	context.Token.VerifyPublicKey = new([ed25519.PublicKeySize]byte)
+	copy(context.Token.VerifyPublicKey[:], request.PublicKey)
 
 	// send our own public key so client can verify our responses
-	response.PublicKey = server.SignPublicKey[:]
+	response.PublicKey = context.Token.SignPublicKey[:]
+	// the client will also need to keep track of its identifying token for future requests
+	response.Token = context.Token.Token
 
 	// reset sequence counters
-	server.SendCounter = 0
-	server.RecvCounter = 1
+	context.Token.SendCounter = 0
+	context.Token.RecvCounter = 1
+
+	server.Clients[context.Token.Token] = context.Token
 
 	return response, nil
 	/*

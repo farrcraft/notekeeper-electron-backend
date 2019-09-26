@@ -38,7 +38,7 @@ proto-copy:
 	cp proto/*.proto ../notekeeper-electron-frontend/app/proto/
 
 proto-js:
-	cd ../notekeeper-electron-frontend/app/proto; ../../protoc -I . rpc.proto --js_out=import_style=commonjs,binary:./
+	cd ../notekeeper-electron-frontend/app/proto; ../../../protoc -I . *.proto --js_out=import_style=commonjs,binary:.
 
 proto-all: proto proto-copy proto-js
 
